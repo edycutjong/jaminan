@@ -49,10 +49,10 @@ class GateResult:
 
 
 def normalize(data: bytes) -> Image.Image:
-    img = Image.open(io.BytesIO(data))
-    img = ImageOps.exif_transpose(img).convert("RGB")
+    opened = Image.open(io.BytesIO(data))
+    img = ImageOps.exif_transpose(opened).convert("RGB")
     if img.width != WIDTH:
-        img = img.resize((WIDTH, max(1, round(img.height * WIDTH / img.width))), Image.LANCZOS)
+        img = img.resize((WIDTH, max(1, round(img.height * WIDTH / img.width))), Image.Resampling.LANCZOS)
     return img
 
 
@@ -62,7 +62,7 @@ def to_jpeg(img: Image.Image, max_bytes: int = MAX_JPEG_BYTES) -> bytes:
         img.save(buf, "JPEG", quality=q, optimize=True)
         if buf.tell() <= max_bytes:
             return buf.getvalue()
-    small = img.resize((img.width * 3 // 4, img.height * 3 // 4), Image.LANCZOS)
+    small = img.resize((img.width * 3 // 4, img.height * 3 // 4), Image.Resampling.LANCZOS)
     return to_jpeg(small, max_bytes)
 
 

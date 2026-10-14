@@ -9,7 +9,7 @@ import uuid
 import numpy as np
 from PIL import Image
 
-from jaminan.paypal import PayPal
+from jaminan.paypal import PayPal, Resp
 from jaminan.vision import Call, ClaimAnswer, CloseupLocation, MarkList, TicketRead
 
 

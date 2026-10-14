@@ -10,7 +10,6 @@ import hashlib
 import json
 import secrets
 import time
-import uuid
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
@@ -205,7 +204,7 @@ class Service:
             data = (STAGED / "frames" / f"{sha}.jpg").read_bytes()
         return data
 
-    def add_photo(self, rid: str, key: str, phase: str, angle: int, data: bytes, closeup_angle: int | None = None) -> dict:
+    def add_photo(self, rid: str, key: str | None, phase: str, angle: int, data: bytes, closeup_angle: int | None = None) -> dict:
         r = self.get(rid)
         self.auth(r, key, "renter" if phase != "return" else self.role_of(r, key) or "shop")
         if phase in ("pickup", "pickup_closeup") and r["state"] != "APPROVED":
@@ -233,7 +232,7 @@ class Service:
             self._save(r)
         return {"accepted": True, "gate": res.public(), "photo": photo}
 
-    def premark(self, rid: str, key: str) -> dict:
+    def premark(self, rid: str, key: str | None) -> dict:
         """Model pre-marks visible existing damage per pickup angle and locates the renter's close-ups."""
         r = self.get(rid)
         self.auth(r, key, "renter")
@@ -273,7 +272,7 @@ class Service:
             self._save(r)
             return r
 
-    def edit_mark(self, rid: str, key: str, action: str, mark: dict) -> dict:
+    def edit_mark(self, rid: str, key: str | None, action: str, mark: dict) -> dict:
         """Only the renter can remove a model pre-mark; the shop can only add marks; the renter can add too."""
         with self.lock(rid):
             r = self.get(rid)
@@ -302,7 +301,7 @@ class Service:
             r["confirmations"] = {}
             return self._save(r)
 
-    def request_retake(self, rid: str, key: str, angle: int, reason: str = "low comparability") -> dict:
+    def request_retake(self, rid: str, key: str | None, angle: int, reason: str = "low comparability") -> dict:
         with self.lock(rid):
             r = self.get(rid)
             self.auth(r, key, "shop")
@@ -320,7 +319,7 @@ class Service:
                "tariff": r["tariff_sha256"]}
         return hashlib.sha256(json.dumps(doc, sort_keys=True).encode()).hexdigest()
 
-    def confirm_baseline(self, rid: str, key: str) -> dict:
+    def confirm_baseline(self, rid: str, key: str | None) -> dict:
         """Both parties confirm → capture the fee from the hold (final_capture=false) → tracking = handover record."""
         with self.lock(rid):
             r = self.get(rid)
@@ -362,7 +361,7 @@ class Service:
     # ------------------------------------------------------------------------------------------
     # 3. return walkaround → suggested taps → pointed claims (the ONE pricing path)
     # ------------------------------------------------------------------------------------------
-    def complete_return(self, rid: str, key: str) -> dict:
+    def complete_return(self, rid: str, key: str | None) -> dict:
         with self.lock(rid):
             r = self.get(rid)
             if not self.role_of(r, key):
@@ -373,7 +372,7 @@ class Service:
             self._to(r, "RETURNED", returned_at=iso())
             return self._save(r)
 
-    def suggest(self, rid: str, key: str) -> dict:
+    def suggest(self, rid: str, key: str | None) -> dict:
         r = self.get(rid)
         self.auth(r, key, "shop")
         if r["state"] not in ("RETURNED", "CLAIMED"):
@@ -405,7 +404,7 @@ class Service:
                                 "calls": [{"angle": a, **c.meta()} for a, c in results]}
             return self._save(r)
 
-    def dismiss_suggestion(self, rid: str, key: str, sid: str) -> dict:
+    def dismiss_suggestion(self, rid: str, key: str | None, sid: str) -> dict:
         with self.lock(rid):
             r = self.get(rid)
             self.auth(r, key, "shop")
@@ -415,7 +414,7 @@ class Service:
             s["status"] = "dismissed"
             return self._save(r)
 
-    def claim(self, rid: str, key: str, angle: int, bbox: list[float], part: str, damage_class: str,
+    def claim(self, rid: str, key: str | None, angle: int, bbox: list[float], part: str, damage_class: str,
               suggestion_id: str | None = None) -> dict:
         r = self.get(rid)
         self.auth(r, key, "shop")
@@ -431,8 +430,11 @@ class Service:
         bbox = [min(max(float(v), 0.0), 1.0) for v in bbox]
         self._no_duplicate(r, angle, bbox, part, damage_class)
         pick, ret = r["photos"]["pickup"][str(angle)], r["photos"]["return"][str(angle)]
-        ret_crop, ret_region = gate.crop(self.frame(ret["sha256"]), bbox, scale=2.0)
-        pick_area, pick_region = gate.crop(self.frame(pick["sha256"]), bbox, scale=4.0)
+        ret_jpg, pick_jpg = self.frame(ret["sha256"]), self.frame(pick["sha256"])
+        if ret_jpg is None or pick_jpg is None:
+            raise ServiceError(410, "FRAME_EXPIRED", "a stored photo for this angle has expired; retake it")
+        ret_crop, ret_region = gate.crop(ret_jpg, bbox, scale=2.0)
+        pick_area, pick_region = gate.crop(pick_jpg, bbox, scale=4.0)
         closeups = [c for c in r["closeups"] if c["angle"] == angle and c.get("located") and c.get("bbox")
                     and rules.bbox_overlap(c["bbox"], pick_region) > 0]
         call = self.vision.claim(ret_crop, pick_area, [self.frame(c["sha256"]) for c in closeups[:1]], part,
@@ -475,7 +477,7 @@ class Service:
                     max(rules.bbox_overlap(bbox, f["bbox_return"]), rules.bbox_overlap(f["bbox_return"], bbox)) > 0.5:
                 raise ServiceError(409, "DUPLICATE_CLAIM", f"{f['id']} already claims this spot as {part}/{damage_class}")
 
-    def propose(self, rid: str, key: str) -> dict:
+    def propose(self, rid: str, key: str | None) -> dict:
         """The shop sends its lines to the renter; nothing more can be added after this."""
         with self.lock(rid):
             r = self.get(rid)
@@ -486,7 +488,7 @@ class Service:
     # ------------------------------------------------------------------------------------------
     # 4. renter settles: accepted lines → one final capture; none → void; contested → invoice
     # ------------------------------------------------------------------------------------------
-    def decide_line(self, rid: str, key: str, line_id: str, decision: str) -> dict:
+    def decide_line(self, rid: str, key: str | None, line_id: str, decision: str) -> dict:
         if decision not in ("accepted", "contested"):
             raise ServiceError(422, "BAD_DECISION", "accepted or contested")
         with self.lock(rid):
@@ -520,7 +522,7 @@ class Service:
                                          fee_captured_cents=r.get("fee_captured_cents", 0), lines=r["findings"],
                                          tariff_price=tv.price, force=force)
             except rules.SettleBlocked as e:
-                raise ServiceError(409, "SETTLE_BLOCKED", str(e))
+                raise ServiceError(409, "SETTLE_BLOCKED", str(e)) from e
             aid = r["authorization_id"]
             t_tap = time.perf_counter()
             if plan.void:
@@ -564,7 +566,7 @@ class Service:
                                       for i in items],
                                      note=f"Itemized at the shop's published tariff ({r['tariff_version_id']}, sha256 "
                                           f"{r['tariff_sha256'][:12]}). Evidence pack: {evidence}")
-        inv = {"items": items, "create_status": res.status, "debug_id": res.debug_id,
+        inv: dict[str, Any] = {"items": items, "create_status": res.status, "debug_id": res.debug_id,
                "id": (res.body.get("id") or (res.body.get("href", "").rsplit("/", 1)[-1] if res.body.get("href") else None))}
         if res.ok and inv["id"]:
             sent = self.pp.send_invoice(inv["id"], rid)
@@ -580,7 +582,7 @@ class Service:
         if inv["id"] and r["state"] in ("SETTLED", "RELEASED"):
             self._to(r, "INVOICED")
 
-    def release(self, rid: str, key: str) -> dict:
+    def release(self, rid: str, key: str | None) -> dict:
         """Clean return: one tap on the shop phone releases the hold (void)."""
         r = self.get(rid)
         self.auth(r, key, "shop")  # the renter cannot void the deposit while the scooter is out
@@ -588,7 +590,7 @@ class Service:
             raise ServiceError(409, "HAS_LINES", "there are priced lines: the renter settles them")
         return self.settle(rid, key, force=True)
 
-    def revoke_vault(self, rid: str, key: str) -> dict:
+    def revoke_vault(self, rid: str, key: str | None) -> dict:
         with self.lock(rid):
             r = self.get(rid)
             self.auth(r, key, "renter")
@@ -655,7 +657,7 @@ class Service:
                 r["reauth_error"] = {"reauthorize": res.issue, "at": iso()}
             return self._save(r)
 
-    def create_fine(self, rid: str, key: str, image: bytes, ticket_amount_idr: int) -> dict:
+    def create_fine(self, rid: str, key: str | None, image: bytes, ticket_amount_idr: int) -> dict:
         r = self.get(rid)
         self.auth(r, key, "shop")
         if r["state"] not in ("SETTLED", "RELEASED", "INVOICED", "CLOSED"):
@@ -690,7 +692,7 @@ class Service:
             self._save(r)
         return fine
 
-    def contest_fine(self, rid: str, key: str, fid: str) -> dict:
+    def contest_fine(self, rid: str, key: str | None, fid: str) -> dict:
         r = self.get(rid)
         self.auth(r, key, "renter")
         f = self.db.get_json(f"fine:{fid}")
@@ -824,8 +826,9 @@ class Service:
             if auth:
                 break
         if not auth:
-            raise ServiceError(502, "JUDGE_POOL_FAILED", f"every pool wallet failed (last: {last.issue})",
-                               debug_id=last.debug_id)
+            raise ServiceError(502, "JUDGE_POOL_FAILED",
+                               f"every pool wallet failed (last: {last.issue if last else 'pool is empty'})",
+                               debug_id=last.debug_id if last else None)
         r = self.get(rid)
         r["order_id"] = res.body.get("id")
         self._record_auth(r, auth, replaces=None)

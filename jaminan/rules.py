@@ -173,7 +173,8 @@ def settle_plan(*, fee_cents: int, deposit_cents: int, authorized_cents: int, fe
     undecided = [l for l in chargeable if l.get("renter_decision") not in ("accepted", "contested")]
     if undecided and not force:
         raise SettleBlocked(f"{len(undecided)} chargeable line(s) still need the renter's accept or contest")
-    accepted, contested = [], []
+    accepted: list[dict] = []
+    contested: list[dict] = []
     for l in chargeable:
         if l.get("renter_decision") not in ("accepted", "contested"):
             continue  # only reachable with force=True

@@ -152,7 +152,7 @@ def test_captures_never_exceed_the_authorization():
 # --- state machine -----------------------------------------------------------------------------
 def test_happy_path_transitions():
     path = ["DRAFT", "APPROVED", "HELD", "OUT", "RETURNED", "CLAIMED", "PROPOSED", "SETTLED", "INVOICED", "CLOSED"]
-    for a, b in zip(path, path[1:]):
+    for a, b in zip(path, path[1:], strict=False):
         check_transition(a, b)
 
 
