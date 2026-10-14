@@ -104,7 +104,7 @@ The APIMatic Context Plugin was used once, to write a Transaction Search call th
 | Existing approach | What it does | What it does not do |
 |---|---|---|
 | AI fleet-inspection products (e.g. [Monk](https://monk.ai), [Ravin](https://ravin.ai), [ProovStation](https://www.proovstation.com)) | Detect damage on vehicle photos | Their sites do not describe a payment hold, capture or release, as far as we found |
-| Turo-style photo check-in | Both sides photograph the car on a marketplace | Bind a hold: photos are not tied to an authorization that only accepted lines can capture |
+| Turo-style photo check-in | Both sides photograph the car on a marketplace | Tie the photos to an authorization that only accepted lines can capture, as far as we found |
 | A phone video before you ride | The renter's own record | Carry a co-signature, or get the passport back |
 
 ## 📊 Engineering Rigor
@@ -124,7 +124,7 @@ The APIMatic Context Plugin was used once, to write a Transaction Search call th
 
 1. **Sandbox only.** Nothing here has moved live money; live vault and merchant-initiated eligibility are unverified.
 2. **One merchant.** The demo uses a single sandbox merchant; a production path needs one onboarded merchant per shop.
-3. **Wallet path only.** The sandbox app has no card processing, so cards are out of scope.
+3. **Wallet path only.** Advanced card processing was not enabled on our sandbox app (the card-path authorize answered 422 on 2026-10-14), so cards are out of scope.
 4. **Non-return is out of scope.** Jaminan covers damage and fines, not a scooter that never comes back.
 5. **No vision accuracy claim yet.** Until the benchmark runs, no finding from a non-benchmarked model is chargeable.
 6. **Reauthorize success is pending.** PayPal only allows it from Day 4; only the refusal fallback (re-authorize on the vaulted wallet, then void the old hold) is unit-tested; the sandbox run is scheduled for 2026-10-18 or later.

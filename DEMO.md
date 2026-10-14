@@ -10,7 +10,7 @@ Open <https://jaminan.edycu.dev/judge> and tap **Start a judge rental**. Each ta
 |---|---|---|
 | Rental opens | The stub shows the hold; the panel on the right lists the authorization, fee capture and handover ids | `POST /v2/checkout/orders` (`intent=AUTHORIZE`), `…/authorizations/{id}/capture` (`final_capture=false`), `…/orders/{id}/track` |
 | Tap **Release the hold (clean return)** | The green RELEASED stamp lands over the hold | `POST …/authorizations/{id}/void`, then a read-back `GET`; the screen shows the status PayPal returned (`VOIDED`) |
-| Open `/integrations/verify` | Every PayPal call for the rental: method, path, HTTP status, PayPal's status, debug id, milliseconds | The same calls, read back live |
+| Open `/integrations/verify` | Every PayPal call for the rental: action, object id, HTTP status, PayPal debug id, milliseconds; plus a live read-back line with the authorization status PayPal returns now | The same calls, read back live |
 
 The settle screen only stamps after PayPal's read-back, not after our own call returns.
 

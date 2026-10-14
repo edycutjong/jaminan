@@ -1,0 +1,7 @@
+{
+ "error": "SearchErrorException",
+ "http_status": 403,
+ "message": "SearchErrorException(base_str=status_code=403, message=The error response., name=NOT_AUTHORIZED, message=Authorization failed due to insufficient permissions., debug_id=ca4a910fb192c, information_link=None, details=[TransactionSearchErrorDetails(field=None, value=None, location='body', issue='NOT_AU"
+}
+
+# paypal-server-sdk 2.4.0 controllers: ['base_controller', 'o_auth_authorization_controller', 'orders_controller', 'payments_controller', 'subscriptions_controller', 'transaction_search_controller', 'vault_controller']

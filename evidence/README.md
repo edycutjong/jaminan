@@ -1,7 +1,7 @@
 # Evidence
 
-Every number on the landing page, the pitch deck and the README comes from a file in this folder or from the test
-files it names. Recorded 2026-10-14 (UTC times inside each file).
+Every test, PayPal and coverage number on the landing page, the pitch deck and the README comes from a file in this
+folder or from the test files it names. Recorded 2026-10-14 (UTC times inside each file).
 
 | File | What it is | Reproduce |
 |---|---|---|
@@ -37,3 +37,8 @@ Notifications: verify webhook signature, list webhooks, create webhook.
 
 Transaction search returns 403 `NOT_AUTHORIZED` on this sandbox app until the feature is enabled on the developer
 dashboard; the daily close reconciles by per-object read-back meanwhile.
+
+## Recorded note: the card path
+Advanced Card Processing (`AUTHORIZE` with a card and vault) was tried on this sandbox app on 2026-10-14 and PayPal answered
+`422 UNPROCESSABLE_ENTITY` (the app's merchant is Indonesia-region and advanced cards are not enabled). Jaminan is therefore
+wallet-only; nothing in the product depends on the card path.
