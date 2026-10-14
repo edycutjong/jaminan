@@ -283,13 +283,15 @@ def verify(rental: str | None = None, readback: bool = True):
         r = s.get(rental)
         out["rental"] = {k: r.get(k) for k in ("id", "state", "authorization_id", "settlement", "authorizations")}
         if readback and r.get("authorization_id"):
-            # re-ask PayPal (not our ledger); cached 10 s so a polling page cannot flood PayPal or the store
-            cache = s.db.get_json(f"readback:{r['authorization_id']}")
+            # re-ask PayPal (not our ledger); cached 10 s per rental state so a polling page cannot flood PayPal,
+            # and a release or capture is never answered with the status from before it
+            key = f"readback:{r['authorization_id']}:{r.get('state')}"
+            cache = s.db.get_json(key)
             if not cache:
                 rb = s.pp.get_authorization(r["authorization_id"], quiet=True)
                 cache = {"authorization_id": r["authorization_id"], "status": rb.body.get("status"),
                          "http_status": rb.status, "debug_id": rb.debug_id, "at": iso()}
-                s.db.set_json(f"readback:{r['authorization_id']}", cache, ex=10)
+                s.db.set_json(key, cache, ex=10)
             out["read_back"] = cache
     return out
 
