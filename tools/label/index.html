@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jaminan — label the staged set</title>
+<style>
+  :root { --bg:#F3EEE1; --ink:#1C2340; --muted:#5E5C6B; --before:#3346A6; --after:#1D7A4A; --charge:#B5301C; --excluded:#9C978A; --rule:#CFC5AC; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.4 system-ui, sans-serif; }
+  header { padding:10px 16px; border-bottom:2px solid var(--ink); display:flex; gap:16px; align-items:baseline; flex-wrap:wrap; }
+  header b { font-size:18px; letter-spacing:.04em; }
+  .grid { display:grid; grid-template-columns: 250px 1fr 340px; gap:0; height: calc(100vh - 48px); }
+  .files { overflow-y:auto; border-right:1px solid var(--rule); }
+  .files button { display:block; width:100%; text-align:left; border:0; border-bottom:1px solid var(--rule); background:none; padding:6px 10px; font:13px monospace; cursor:pointer; color:var(--ink); }
+  .files button:hover { background:#EAE3D1; }
+  .files button.on { background:var(--ink); color:var(--bg); }
+  .files .tag { font-size:11px; color:var(--muted); display:block; }
+  .files button.on .tag { color:#cfd3e6; }
+  .stage { overflow:auto; padding:12px; }
+  .imgwrap { position:relative; display:inline-block; max-width:100%; user-select:none; cursor:crosshair; border:1.5px solid var(--ink); }
+  .imgwrap img { display:block; max-width:100%; max-height:calc(100vh - 110px); }
+  .bx { position:absolute; border:2.5px solid var(--charge); pointer-events:none; }
+  .bx.old { border-color:var(--excluded); }
+  .bx.claim { border-style:dashed; border-color:var(--before); }
+  .bx.draft { border-style:dotted; border-color:#000; }
+  .bx span { position:absolute; top:-18px; left:-2px; background:var(--ink); color:var(--bg); font:11px monospace; padding:1px 4px; white-space:nowrap; }
+  aside { overflow-y:auto; border-left:1px solid var(--rule); padding:12px; }
+  fieldset { border:1px solid var(--rule); padding:8px 10px 10px; margin:0 0 12px; }
+  legend { font-weight:700; text-transform:uppercase; font-size:12px; letter-spacing:.08em; }
+  label { display:block; font-size:12px; color:var(--muted); margin-top:6px; }
+  input, select, textarea { width:100%; font:14px system-ui; padding:5px 6px; border:1px solid var(--rule); background:#F7F3E8; color:var(--ink); }
+  .row { display:flex; gap:6px; } .row > * { flex:1; }
+  button.act { margin-top:8px; width:100%; min-height:38px; font-weight:700; background:var(--ink); color:var(--bg); border:0; cursor:pointer; }
+  button.act:hover { background:#2B3460; }
+  button.act.ghost { background:none; color:var(--ink); border:1.5px solid var(--ink); }
+  .list div { display:flex; justify-content:space-between; gap:6px; border-bottom:1px solid var(--rule); padding:3px 0; font:12px monospace; }
+  .list button { border:0; background:none; color:var(--charge); cursor:pointer; }
+  .mode { display:flex; gap:4px; } .mode button { flex:1; min-height:34px; border:1.5px solid var(--ink); background:none; cursor:pointer; font-weight:700; }
+  .mode button.on { background:var(--ink); color:var(--bg); }
+  .hint { color:var(--muted); font-size:12px; }
+  .saved { color:var(--after); font-size:12px; }
+</style>
+</head>
+<body>
+<header><b>JAMINAN · LABEL THE STAGED SET</b><span class="hint">Label by hand BEFORE any model run. Draw a box by dragging on the photo. ←/→ moves between photos.</span><span id="status" class="saved"></span></header>
+<div class="grid">
+  <nav class="files" id="files"></nav>
+  <main class="stage"><div class="imgwrap" id="wrap"><img id="img" alt="" draggable="false"></div><p class="hint" id="fname"></p></main>
+  <aside>
+    <fieldset>
+      <legend>1 · This photo</legend>
+      <div class="row">
+        <div><label>walkaround id</label><input id="f_walkaround_id" placeholder="s1-p1"></div>
+        <div><label>scooter</label><select id="f_scooter"><option></option><option>1</option><option>2</option></select></div>
+      </div>
+      <div class="row">
+        <div><label>split</label><select id="f_split"><option></option><option>dev</option><option>heldout</option></select></div>
+        <div><label>phone</label><select id="f_phone"><option></option><option>A</option><option>B</option></select></div>
+      </div>
+      <div class="row">
+        <div><label>phase</label><select id="f_phase"><option></option><option>pickup</option><option>pickup_closeup</option><option>return</option></select></div>
+        <div><label>angle</label><select id="f_angle"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></div>
+      </div>
+      <div class="row">
+        <div><label>light</label><select id="f_light"><option></option><option>midday</option><option>shade</option><option>dusk</option></select></div>
+        <div><label>pairs with (pickup walkaround)</label><input id="f_pairs_with" placeholder="s1-p1"></div>
+      </div>
+      <label>notes</label><input id="f_notes">
+      <button class="act" id="saveFrame">Save photo info</button>
+    </fieldset>
+    <div class="mode" id="mode"><button data-m="label" class="on">Damage marks</button><button data-m="claim">Pointed claims</button></div>
+    <fieldset id="labelBox">
+      <legend>2 · Damage mark (labels.csv)</legend>
+      <div class="row">
+        <div><label>part</label><select id="l_part"></select></div>
+        <div><label>class</label><select id="l_class"></select></div>
+      </div>
+      <div class="row">
+        <div><label>new since pickup?</label><select id="l_new"><option value="0">0 · existing</option><option value="1">1 · new</option></select></div>
+      </div>
+      <label>notes</label><input id="l_notes">
+      <button class="act" id="addLabel">Add the drawn box as a mark</button>
+      <div class="list" id="labelList"></div>
+    </fieldset>
+    <fieldset id="claimBox" style="display:none">
+      <legend>3 · Pointed claim (claims.csv)</legend>
+      <p class="hint">On a RETURN photo: draw the shop's tap, pick the tariff line it would charge, and what the right answer is. For visible_at_pickup, then draw the same mark on the pickup photo (button below).</p>
+      <div class="row">
+        <div><label>part</label><select id="c_part"></select></div>
+        <div><label>declared class</label><select id="c_class"></select></div>
+      </div>
+      <label>expected answer</label>
+      <select id="c_expected"><option>new</option><option>visible_at_pickup</option><option>no_mark</option><option>class_mismatch</option><option>not_comparable</option></select>
+      <label>notes</label><input id="c_notes">
+      <button class="act" id="addClaim">Add the drawn box as a claim</button>
+      <button class="act ghost" id="pickupBox">Draw its pickup mark on the matching pickup photo</button>
+      <div class="list" id="claimList"></div>
+    </fieldset>
+    <p class="hint">Counts: <span id="counts"></span></p>
+  </aside>
+</div>
+<script>
+const PARTS = ["mirror","mirror_housing","indicator_lens","front_fairing","side_panel","rear_panel","seat","headlight","tail_light","front_fender","rear_fender","footboard","handlebar","wheel","exhaust","other"];
+const CLASSES = ["missing_part","broken_part","crack","dent","scuff"];
+const $ = (id) => document.getElementById(id);
+let files = [], frames = [], labels = [], claims = [], idx = 0, mode = "label", draft = null, pendingPickupFor = null;
+for (const id of ["l_part","c_part"]) $(id).innerHTML = PARTS.map(p => `<option>${p}</option>`).join("");
+for (const id of ["l_class","c_class"]) $(id).innerHTML = CLASSES.map(c => `<option>${c}</option>`).join("");
+const F = ["walkaround_id","scooter","split","phone","phase","angle","light","pairs_with","notes"];
+
+async function load() {
+  files = await (await fetch("/api/files")).json();
+  frames = await (await fetch("/api/csv/frames")).json();
+  labels = await (await fetch("/api/csv/labels")).json();
+  claims = await (await fetch("/api/csv/claims")).json();
+  renderFiles(); show(0);
+}
+async function save(name, rows) {
+  await fetch(`/api/csv/${name}`, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(rows) });
+  $("status").textContent = `saved ${name}.csv (${rows.length}) ${new Date().toLocaleTimeString()}`;
+  renderCounts();
+}
+const frameOf = (file) => frames.find(f => f.file === file);
+function renderFiles() {
+  $("files").innerHTML = files.map((f, i) => { const fr = frameOf(f);
+    return `<button data-i="${i}" class="${i===idx?"on":""}">${f.split("/").pop()}<span class="tag">${fr ? `${fr.walkaround_id} · ${fr.phase} · a${fr.angle}` : "— not described yet"}</span></button>`; }).join("");
+  $("files").querySelectorAll("button").forEach(b => b.onclick = () => show(+b.dataset.i));
+}
+function renderCounts() {
+  const by = (rows, k) => rows.reduce((m, r) => (m[r[k]] = (m[r[k]]||0)+1, m), {});
+  $("counts").textContent = `${frames.length} photos described · ${labels.length} marks (${labels.filter(l=>l.new==="1").length} new) · ${claims.length} claims ${JSON.stringify(by(claims,"expected"))}`;
+}
+function show(i) {
+  idx = Math.max(0, Math.min(files.length - 1, i)); draft = null;
+  const f = files[idx]; if (!f) { $("fname").textContent = "No photos in this folder yet."; return; }
+  $("img").src = "/img/" + encodeURIComponent(f).replace(/%2F/g, "/"); $("fname").textContent = f;
+  const fr = frameOf(f) || {};
+  for (const k of F) $("f_" + k).value = fr[k] || (k === "split" && fr.scooter ? (fr.scooter === "1" ? "dev" : "heldout") : "");
+  renderFiles(); renderBoxes();
+}
+function current() { return frameOf(files[idx]); }
+function boxEl(b, cls, text) { return `<div class="bx ${cls}" style="left:${b[0]*100}%;top:${b[1]*100}%;width:${b[2]*100}%;height:${b[3]*100}%"><span>${text}</span></div>`; }
+function renderBoxes() {
+  const fr = current(); let html = `<img id="img" alt="" draggable="false" src="${$("img").src}">`;
+  const same = (r) => fr && r.walkaround_id === fr.walkaround_id && String(r.angle) === String(fr.angle) && (r.phase ? r.phase === fr.phase : true);
+  const mine = fr ? labels.filter(same) : [];
+  mine.forEach(l => html += boxEl([+l.bbox_x,+l.bbox_y,+l.bbox_w,+l.bbox_h], l.new === "1" ? "" : "old", `${l.part}/${l.damage_class}${l.new==="1"?" NEW":""}`));
+  if (fr && fr.phase === "return") claims.filter(c => c.walkaround_id === fr.walkaround_id && String(c.angle) === String(fr.angle))
+    .forEach(c => html += boxEl([+c.bbox_x,+c.bbox_y,+c.bbox_w,+c.bbox_h], "claim", `${c.claim_id} ${c.expected}`));
+  if (fr && fr.phase === "pickup") claims.filter(c => c.pickup_bbox_w && frames.some(x => x.walkaround_id === c.walkaround_id && x.pairs_with === fr.walkaround_id) && String(c.angle) === String(fr.angle))
+    .forEach(c => html += boxEl([+c.pickup_bbox_x,+c.pickup_bbox_y,+c.pickup_bbox_w,+c.pickup_bbox_h], "claim", `${c.claim_id} at pickup`));
+  if (draft) html += boxEl(draft, "draft", pendingPickupFor ? `pickup mark for ${pendingPickupFor}` : "draft");
+  $("wrap").innerHTML = html;
+  $("labelList").innerHTML = mine.map(l => `<div>${l.part}/${l.damage_class} new=${l.new}<button data-k="${labels.indexOf(l)}">✕</button></div>`).join("");
+  $("labelList").querySelectorAll("button").forEach(b => b.onclick = () => { labels.splice(+b.dataset.k, 1); save("labels", labels); renderBoxes(); });
+  const cl = fr ? claims.filter(c => c.walkaround_id === fr.walkaround_id && String(c.angle) === String(fr.angle)) : [];
+  $("claimList").innerHTML = cl.map(c => `<div>${c.claim_id} ${c.part}/${c.damage_class} → ${c.expected}${c.pickup_bbox_w ? " ✓pickup" : ""}<button data-k="${claims.indexOf(c)}">✕</button></div>`).join("");
+  $("claimList").querySelectorAll("button").forEach(b => b.onclick = () => { claims.splice(+b.dataset.k, 1); save("claims", claims); renderBoxes(); });
+  renderCounts();
+}
+// drawing
+let start = null;
+$("wrap").addEventListener("pointerdown", e => { const r = $("wrap").getBoundingClientRect(); start = [(e.clientX-r.left)/r.width, (e.clientY-r.top)/r.height]; });
+window.addEventListener("pointerup", e => {
+  if (!start) return; const r = $("wrap").getBoundingClientRect();
+  const p = [Math.min(Math.max((e.clientX-r.left)/r.width,0),1), Math.min(Math.max((e.clientY-r.top)/r.height,0),1)];
+  const b = [Math.min(start[0],p[0]), Math.min(start[1],p[1]), Math.abs(p[0]-start[0]), Math.abs(p[1]-start[1])].map(v => Math.round(v*10000)/10000);
+  start = null; if (b[2] < 0.01 || b[3] < 0.01) return;
+  draft = b;
+  if (pendingPickupFor) {
+    const c = claims.find(x => x.claim_id === pendingPickupFor);
+    if (c) { [c.pickup_bbox_x, c.pickup_bbox_y, c.pickup_bbox_w, c.pickup_bbox_h] = b; save("claims", claims); }
+    pendingPickupFor = null; draft = null;
+  }
+  renderBoxes();
+});
+$("saveFrame").onclick = () => {
+  const row = { file: files[idx] }; for (const k of F) row[k] = $("f_" + k).value.trim();
+  if (!row.split && row.scooter) row.split = row.scooter === "1" ? "dev" : "heldout";
+  frames = frames.filter(f => f.file !== row.file).concat([row]); save("frames", frames); renderFiles(); renderBoxes();
+};
+$("addLabel").onclick = () => {
+  const fr = current(); if (!fr) return alert("Describe this photo first (box 1).");
+  if (!draft) return alert("Drag a box on the photo first.");
+  labels.push({ walkaround_id: fr.walkaround_id, scooter: fr.scooter, split: fr.split, phone: fr.phone, phase: fr.phase, angle: fr.angle,
+    part: $("l_part").value, damage_class: $("l_class").value, new: $("l_new").value,
+    bbox_x: draft[0], bbox_y: draft[1], bbox_w: draft[2], bbox_h: draft[3], notes: $("l_notes").value });
+  draft = null; save("labels", labels); renderBoxes();
+};
+$("addClaim").onclick = () => {
+  const fr = current(); if (!fr || fr.phase !== "return") return alert("Claims are tapped on RETURN photos.");
+  if (!draft) return alert("Drag the shop's tap box first.");
+  const n = claims.length + 1;
+  claims.push({ claim_id: `C${String(n).padStart(2,"0")}`, walkaround_id: fr.walkaround_id, split: fr.split, angle: fr.angle,
+    bbox_x: draft[0], bbox_y: draft[1], bbox_w: draft[2], bbox_h: draft[3], part: $("c_part").value, damage_class: $("c_class").value,
+    expected: $("c_expected").value, pickup_bbox_x: "", pickup_bbox_y: "", pickup_bbox_w: "", pickup_bbox_h: "", notes: $("c_notes").value });
+  draft = null; save("claims", claims); renderBoxes();
+};
+$("pickupBox").onclick = () => {
+  const fr = current(); const c = claims.filter(x => fr && x.walkaround_id === fr.walkaround_id && String(x.angle) === String(fr.angle)).pop();
+  if (!c) return alert("Add the claim on the return photo first.");
+  const pick = frames.find(f => f.walkaround_id === fr.pairs_with && f.phase === "pickup" && String(f.angle) === String(fr.angle));
+  if (!pick) return alert(`No pickup photo found for walkaround ${fr.pairs_with || "(set 'pairs with')"} angle ${fr.angle}.`);
+  pendingPickupFor = c.claim_id; show(files.indexOf(pick.file)); $("status").textContent = `draw the pickup mark for ${c.claim_id}`;
+};
+$("mode").querySelectorAll("button").forEach(b => b.onclick = () => {
+  mode = b.dataset.m; $("mode").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  $("labelBox").style.display = mode === "label" ? "" : "none"; $("claimBox").style.display = mode === "claim" ? "" : "none";
+});
+window.addEventListener("keydown", e => { if (["INPUT","SELECT","TEXTAREA"].includes(document.activeElement.tagName)) return;
+  if (e.key === "ArrowRight") show(idx + 1); if (e.key === "ArrowLeft") show(idx - 1); });
+load();
+</script>
+</body>
+</html>
