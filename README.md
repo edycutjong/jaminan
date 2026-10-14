@@ -8,6 +8,8 @@
 
   [![Live Demo](https://img.shields.io/badge/🚀_Live-Demo-06b6d4?style=for-the-badge)](https://jaminan.edycu.dev)
   [![Judge Path](https://img.shields.io/badge/⚖️_Judge-Path-f59e0b?style=for-the-badge)](https://jaminan.edycu.dev/judge)
+  [![Landing Page](https://img.shields.io/badge/🧾_Landing-Page-1D7A4A?style=for-the-badge)](https://jaminan-landing.vercel.app)
+  [![Pitch Deck](https://img.shields.io/badge/🗂️_Pitch-Deck-3346A6?style=for-the-badge)](https://jaminan-landing.vercel.app/pitch/)
   [![Built for PayPal AI Hackathon](https://img.shields.io/badge/Devpost-PayPal_AI_Hackathon-8b5cf6?style=for-the-badge)](https://paypalaihackathon.devpost.com/)
 
   <br/>
@@ -115,6 +117,7 @@ The settle screen shows the status read back from PayPal after the call. Real-sa
 | Offline coverage | 86% of `jaminan/` (`pytest --cov`, 1,415 statements) |
 | CI | GitHub Actions: ruff, mypy, offline tests with coverage, pip-audit and an API boot smoke; eslint, `tsc`, production build and `npm audit`; gitleaks over full history; CodeQL (Python and TypeScript) once the repo is public; Dependabot monthly, grouped, no major bumps |
 | Live acceptance script | `scripts/e2e_live.py` (375 px viewport) |
+| Evidence pack | [`evidence/`](evidence): three recorded PayPal sandbox settlements call by call (`scripts/record_paypal_evidence.py`), the full test run, offline coverage and the live e2e log |
 | Vision accuracy | **Not yet measured.** Benchmark on the staged scooter set is pending |
 
 ### Honest limits (6)
@@ -179,6 +182,8 @@ tests/      unit, contract, invariant and real-sandbox tests
 - Live app: https://jaminan.edycu.dev
 - Judge path: https://jaminan.edycu.dev/judge
 - Read-back stream: https://jaminan.edycu.dev/integrations/verify
+- Landing page: https://jaminan-landing.vercel.app
+- Pitch deck: https://jaminan-landing.vercel.app/pitch/ ([PDF](docs/pitch/jaminan-pitch-deck.pdf))
 
 ## 📄 License
 

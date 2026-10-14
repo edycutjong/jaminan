@@ -13,6 +13,10 @@ export default function Home() {
         <Link className="btn ghost" href="/shop">Shop counter (Bahasa Indonesia)</Link>
         <Link className="btn ghost" href="/integrations/verify">Every PayPal call, live</Link>
       </div>
+      <p className="small" style={{ marginTop: 14 }}>
+        The story and the evidence: <a href="https://jaminan-landing.vercel.app">landing page</a> ·{" "}
+        <a href="https://jaminan-landing.vercel.app/pitch/">pitch deck</a>
+      </p>
       <h2>The PayPal lifecycle</h2>
       <ol className="small" style={{ paddingLeft: 20 }}>
         <li>One approval: Orders v2 <span className="data">AUTHORIZE</span> fee + deposit, PayPal saved for later fines.</li>
