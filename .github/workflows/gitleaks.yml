@@ -13,7 +13,7 @@ permissions:
 jobs:
   scan:
     name: Secret scan (full history)
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event.repository.private && fromJSON('["self-hosted","macOS","jaminan"]') || 'ubuntu-latest' }}
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4

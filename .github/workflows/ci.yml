@@ -16,7 +16,7 @@ permissions:
 jobs:
   api:
     name: API · lint, types, tests, audit
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event.repository.private && fromJSON('["self-hosted","macOS","jaminan"]') || 'ubuntu-latest' }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -45,14 +45,14 @@ jobs:
         run: pip-audit --progress-spinner off
       - name: API smoke (uvicorn boots, health + tariff answer)
         run: |
-          uvicorn api.index:app --port 8011 &
+          uvicorn api.index:app --port 8011 & trap 'kill $!' EXIT
           for i in $(seq 1 20); do curl -sf localhost:8011/api/health && break || sleep 1; done
           health=$(curl -sf localhost:8011/api/health); echo "$health" | grep -q '"ok":true'
           shop=$(curl -sf localhost:8011/api/shops/shop-demo); echo "$shop" | grep -q tariff
 
   web:
     name: Web · lint, types, build, audit
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event.repository.private && fromJSON('["self-hosted","macOS","jaminan"]') || 'ubuntu-latest' }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
