@@ -73,6 +73,18 @@ def test_low_comparability_boundary_is_half_the_tap_box():
     assert decide(bbox=box, low=[[0.5, 0.5, 0.1171875, 0.25]]).disposition == "chargeable"   # 46.9%
 
 
+def test_a_baseline_mark_of_another_part_or_class_does_not_exclude_the_tap():
+    mark = {"confirmed": True, "angle": 2, "part": "mirror_housing", "damage_class": "crack", "bbox": [0.40, 0.40, 0.10, 0.10]}
+    assert decide(part="front_fairing", cls="dent", marks=[mark]).disposition == "chargeable"
+    assert decide(part="mirror_housing", cls="dent", marks=[{**mark, "damage_class": "crack"}]).disposition != "excluded_baseline"
+    assert decide(part="mirror_housing", cls="crack", marks=[mark]).disposition == "excluded_baseline"
+
+
+def test_confidence_exactly_at_the_floor_is_enough_and_just_under_is_not():
+    assert decide(answer={**NEW, "confidence": 0.7}, floor=0.7).disposition == "chargeable"
+    assert decide(answer={**NEW, "confidence": 0.69}, floor=0.7).disposition == "evidence_only"
+
+
 def test_confirmed_baseline_mark_is_excluded_even_if_the_model_says_new():
     mark = {"angle": 2, "part": "side_panel", "damage_class": "dent", "bbox": [0.38, 0.38, 0.12, 0.12], "confirmed": True}
     assert decide(part="side_panel", cls="dent", marks=[mark]).disposition == "excluded_baseline"  # I3

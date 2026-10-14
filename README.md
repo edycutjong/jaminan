@@ -108,7 +108,7 @@ The settle screen shows the status read back from PayPal after the call. Real-sa
 
 | Metric | Value |
 |---|---|
-| Tests collected | 99 (`pytest`): 90 offline unit, contract and invariant tests, 8 against the real PayPal sandbox (including `CAPTURED` and second-capture `422` read-backs), 1 live Qwen schema check |
+| Tests collected | 101 (`pytest`): 92 offline unit, contract and invariant tests, 8 against the real PayPal sandbox (including `CAPTURED` and second-capture `422` read-backs), 1 live Qwen schema check |
 | Claim-decision sweep | `decide_claim` run over 23,040 combinations of the five yes/no answers, serving model (pinned, other, none), confidence, a confirmed baseline mark, a low-comparability tile, three parts and five damage classes: every chargeable result satisfies every "new since pickup" condition and carries a tariff price ([`tests/test_invariants.py`](tests/test_invariants.py)) |
 | Settle property test | up to 3,000 generated settlements (Hypothesis): the hold pays exactly the accepted chargeable lines at their tariff price, blocks exactly when a line is unanswered or mispriced, invoices only contested lines, and never exceeds the authorization |
 | Offline coverage | 86% of `jaminan/` (`pytest --cov`, 1,415 statements) |
