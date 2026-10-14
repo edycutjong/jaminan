@@ -1,0 +1,39 @@
+# Evidence
+
+Every number on the landing page, the pitch deck and the README comes from a file in this folder or from the test
+files it names. Recorded 2026-10-14 (UTC times inside each file).
+
+| File | What it is | Reproduce |
+|---|---|---|
+| [`paypal-sandbox-run.json`](paypal-sandbox-run.json) | Three settlements on the real PayPal sandbox, call by call: method, path, HTTP status, the status PayPal returned, amount, `final_capture`, PayPal debug id, milliseconds | `.venv/bin/python scripts/record_paypal_evidence.py` |
+| [`test-run.txt`](test-run.txt) | The full suite, one line per test: **101 passed** (92 offline, 8 against the real PayPal sandbox, 1 against the live Qwen API) | `.venv/bin/python -m pytest -v` (needs sandbox + Qwen credentials) |
+| [`coverage.txt`](coverage.txt) | Offline suite with coverage: **86%** of `jaminan/` (1,415 statements) | `.venv/bin/python -m pytest -m "not sandbox and not live_model and not slow" --cov=jaminan` |
+| [`e2e-live.txt`](e2e-live.txt) | The live app driven as two phones at 375 px on https://jaminan.edycu.dev: **18/18** acceptance checks | `python scripts/e2e_live.py https://jaminan.edycu.dev --shots /tmp/shots` |
+
+## The three recorded settlements (`paypal-sandbox-run.json`)
+
+Each rental is a merchant-initiated `AUTHORIZE` of **$115.00** (fee $15.00 + deposit $100.00) on a saved sandbox
+wallet, then the fee captured from the hold with `final_capture=false` (PayPal reads back `PARTIALLY_CAPTURED`).
+
+| Run | Rental | What happens | PayPal's read-back |
+|---|---|---|---|
+| `accepted` | R-JUDGE-9001 | the renter accepts the new mirror crack: ONE capture of **$18.00** with `final_capture=true`; then a second capture is attempted | `CAPTURED`, **$82.00** released; second capture refused **422 `AUTHORIZATION_ALREADY_CAPTURED`** |
+| `clean` | R-JUDGE-9002 | no new damage: the shop's one tap voids the hold | `VOIDED`, $100.00 released |
+| `contested` | R-JUDGE-9003 | the renter contests the same crack: an itemized invoice at the tariff price ($18.00) is created, sent and QR-coded | `VOIDED`, invoice sent |
+
+**What is scripted:** the claim answers. The vision benchmark on the staged scooter photo set has not run, so the
+recording uses `tests/fakes.ScriptedVision` (model id `scripted-test-model`) to answer "is this mark new since
+pickup?". Everything PayPal did is real. The R-JUDGE-90xx ids belong to the recording's in-memory store, not to the
+live app.
+
+## PayPal REST endpoints in `jaminan/paypal.py` (19)
+
+Orders v2: create (buyer approval and merchant-initiated on `vault_id`), get, authorize, track ·
+Payments v2: authorization capture, void, reauthorize, get authorization, get capture ·
+Vault v3: get payment token, delete payment token ·
+Invoicing v2: create, send, generate QR code, get ·
+Reporting: transaction search ·
+Notifications: verify webhook signature, list webhooks, create webhook.
+
+Transaction search returns 403 `NOT_AUTHORIZED` on this sandbox app until the feature is enabled on the developer
+dashboard; the daily close reconciles by per-object read-back meanwhile.
