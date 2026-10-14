@@ -23,7 +23,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: pip
+          # self-hosted (private repo) keeps its own local caches; uploading them to GitHub hangs
+          cache: ${{ !github.event.repository.private && 'pip' || '' }}
           cache-dependency-path: requirements-dev.txt
       - name: Install
         run: python -m pip install --upgrade pip && pip install -r requirements-dev.txt
@@ -59,7 +60,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: ${{ !github.event.repository.private && 'npm' || '' }}
       - run: npm ci
       - name: Lint
         run: npm run lint
