@@ -59,7 +59,7 @@
   @media (prefers-reduced-motion: reduce) {
     * { animation: none !important; }
     .rmh { display: none !important; }
-    .rmf { opacity: 1 !important; stroke-dashoffset: 0 !important; }
+    .rmf { opacity: 1 !important; stroke-dashoffset: 0 !important; clip-path: none !important; }
   }
 </style>
 <defs>
