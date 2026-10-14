@@ -21,11 +21,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+        if: ${{ !github.event.repository.private }}
         with:
           python-version: "3.12"
-          # self-hosted (private repo) keeps its own local caches; uploading them to GitHub hangs
-          cache: ${{ !github.event.repository.private && 'pip' || '' }}
+          cache: pip
           cache-dependency-path: requirements-dev.txt
+      # setup-python's macOS installer writes to /Users/runner, which only exists on hosted runners
+      - name: Python 3.12 (self-hosted)
+        if: ${{ github.event.repository.private }}
+        run: |
+          uv venv --seed --python 3.12 .venv
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
       - name: Install
         run: python -m pip install --upgrade pip && pip install -r requirements-dev.txt
       - name: Lint (ruff)
@@ -60,6 +66,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          # self-hosted (private repo) keeps its own ~/.npm; uploading it to GitHub hangs
           cache: ${{ !github.event.repository.private && 'npm' || '' }}
       - run: npm ci
       - name: Lint
