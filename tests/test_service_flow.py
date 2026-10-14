@@ -325,3 +325,19 @@ def test_a_lock_is_only_released_by_its_owner():
     with svc.lock(r["id"]):
         svc.db.set_json(f"lock:{r['id']}", "someone-else", ex=30)   # our lock expired; another request took it
     assert svc.db.get_json(f"lock:{r['id']}") == "someone-else"
+
+
+def test_capability_keys_are_role_scoped_and_other_rentals_keys_are_refused():
+    svc = make()
+    rid, k = to_returned(svc)
+    other_rid, other_k = to_returned(svc)
+    shop_only = [lambda key: svc.release(rid, key), lambda key: svc.claim(rid, key, 1, [0.1, 0.1, 0.1, 0.1], "mirror_housing", "crack")]
+    for act in shop_only:
+        for bad in (None, "", k["renter"], other_k["shop"], "x" * 24):
+            with pytest.raises(ServiceError) as e:
+                act(bad)
+            assert e.value.status == 403, "the shop's actions need the shop's key for this rental"
+    with pytest.raises(ServiceError) as e:
+        svc.decide_line(rid, k["shop"], "L1", "accepted")   # the shop can never accept a line on the renter's behalf
+    assert e.value.status == 403
+    assert svc.get(other_rid)["state"] == "RETURNED" and svc.get(rid)["state"] == "RETURNED"
