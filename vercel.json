@@ -1,12 +1,22 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "rewrites": [{ "source": "/api/(.*)", "destination": "/api/index" }],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index"
+    }
+  ],
   "functions": {
     "api/index.py": {
       "maxDuration": 120,
-      "excludeFiles": "{.next,node_modules,app,components,lib,public,tests,tools,scripts,.venv}/**"
+      "excludeFiles": "{.next,node_modules,app,components,lib,public,tests,tools,scripts,.venv,.mypy_cache,.ruff_cache,.hypothesis,.github}/**"
     }
   },
-  "crons": [{ "path": "/api/cron/daily", "schedule": "0 1 * * *" }]
+  "crons": [
+    {
+      "path": "/api/cron/daily",
+      "schedule": "0 1 * * *"
+    }
+  ]
 }

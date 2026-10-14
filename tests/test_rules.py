@@ -67,6 +67,12 @@ def test_class_with_no_tariff_line_is_never_priced():
     assert decide(part="seat", cls="crack").disposition == "evidence_only"
 
 
+def test_low_comparability_boundary_is_half_the_tap_box():
+    box = (0.5, 0.5, 0.25, 0.25)   # binary fractions: the overlap is exactly representable
+    assert decide(bbox=box, low=[[0.5, 0.5, 0.125, 0.25]]).disposition == "not_comparable"   # exactly 50% of the box
+    assert decide(bbox=box, low=[[0.5, 0.5, 0.1171875, 0.25]]).disposition == "chargeable"   # 46.9%
+
+
 def test_confirmed_baseline_mark_is_excluded_even_if_the_model_says_new():
     mark = {"angle": 2, "part": "side_panel", "damage_class": "dent", "bbox": [0.38, 0.38, 0.12, 0.12], "confirmed": True}
     assert decide(part="side_panel", cls="dent", marks=[mark]).disposition == "excluded_baseline"  # I3

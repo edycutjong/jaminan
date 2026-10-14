@@ -204,6 +204,12 @@ class Service:
             data = (STAGED / "frames" / f"{sha}.jpg").read_bytes()
         return data
 
+    def frame_required(self, sha: str) -> bytes:
+        data = self.frame(sha)
+        if data is None:
+            raise ServiceError(410, "FRAME_EXPIRED", "a stored photo for this rental has expired; retake it")
+        return data
+
     def add_photo(self, rid: str, key: str | None, phase: str, angle: int, data: bytes, closeup_angle: int | None = None) -> dict:
         r = self.get(rid)
         self.auth(r, key, "renter" if phase != "return" else self.role_of(r, key) or "shop")
@@ -243,12 +249,12 @@ class Service:
             raise ServiceError(409, "ANGLES_MISSING", f"pickup angles missing: {missing}")
 
         def mark_angle(a: int):
-            return a, self.vision.premark(self.frame(r["photos"]["pickup"][str(a)]["sha256"]), a)
+            return a, self.vision.premark(self.frame_required(r["photos"]["pickup"][str(a)]["sha256"]), a)
 
         def locate(c: dict):
             angle = c["angle"]
-            return c["id"], self.vision.locate_closeup(self.frame(r["photos"]["pickup"][str(angle)]["sha256"]),
-                                                       self.frame(c["sha256"]), angle)
+            return c["id"], self.vision.locate_closeup(self.frame_required(r["photos"]["pickup"][str(angle)]["sha256"]),
+                                                       self.frame_required(c["sha256"]), angle)
 
         with ThreadPoolExecutor(max_workers=8) as ex:
             marks = list(ex.map(mark_angle, ANGLES))
@@ -380,8 +386,8 @@ class Service:
         marks = [m for m in r["baseline_marks"] if m.get("confirmed")]
 
         def one(a: int):
-            return a, self.vision.suggest(self.frame(r["photos"]["pickup"][str(a)]["sha256"]),
-                                          self.frame(r["photos"]["return"][str(a)]["sha256"]), a,
+            return a, self.vision.suggest(self.frame_required(r["photos"]["pickup"][str(a)]["sha256"]),
+                                          self.frame_required(r["photos"]["return"][str(a)]["sha256"]), a,
                                           [m for m in marks if m["angle"] == a])
 
         t0 = time.perf_counter()
@@ -430,14 +436,12 @@ class Service:
         bbox = [min(max(float(v), 0.0), 1.0) for v in bbox]
         self._no_duplicate(r, angle, bbox, part, damage_class)
         pick, ret = r["photos"]["pickup"][str(angle)], r["photos"]["return"][str(angle)]
-        ret_jpg, pick_jpg = self.frame(ret["sha256"]), self.frame(pick["sha256"])
-        if ret_jpg is None or pick_jpg is None:
-            raise ServiceError(410, "FRAME_EXPIRED", "a stored photo for this angle has expired; retake it")
+        ret_jpg, pick_jpg = self.frame_required(ret["sha256"]), self.frame_required(pick["sha256"])
         ret_crop, ret_region = gate.crop(ret_jpg, bbox, scale=2.0)
         pick_area, pick_region = gate.crop(pick_jpg, bbox, scale=4.0)
         closeups = [c for c in r["closeups"] if c["angle"] == angle and c.get("located") and c.get("bbox")
                     and rules.bbox_overlap(c["bbox"], pick_region) > 0]
-        call = self.vision.claim(ret_crop, pick_area, [self.frame(c["sha256"]) for c in closeups[:1]], part,
+        call = self.vision.claim(ret_crop, pick_area, [self.frame_required(c["sha256"]) for c in closeups[:1]], part,
                                  damage_class, angle)
         ans = call.parsed.model_dump() if call.ok else None
         d = rules.decide_claim(answer=ans, serving_model=call.model, benchmarked_model=self.s.benchmarked_model,

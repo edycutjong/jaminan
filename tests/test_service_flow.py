@@ -341,3 +341,13 @@ def test_capability_keys_are_role_scoped_and_other_rentals_keys_are_refused():
         svc.decide_line(rid, k["shop"], "L1", "accepted")   # the shop can never accept a line on the renter's behalf
     assert e.value.status == 403
     assert svc.get(other_rid)["state"] == "RETURNED" and svc.get(rid)["state"] == "RETURNED"
+
+
+def test_a_claim_on_an_expired_stored_photo_is_a_410_not_a_crash():
+    svc = make()
+    rid, k = to_returned(svc)
+    r = svc.get(rid)
+    svc.db.delete(f"frame:{r['photos']['pickup']['1']['sha256']}")
+    with pytest.raises(ServiceError) as e:
+        svc.claim(rid, k["shop"], 1, [0.4, 0.4, 0.1, 0.1], "mirror_housing", "crack")
+    assert e.value.status == 410 and e.value.code == "FRAME_EXPIRED"

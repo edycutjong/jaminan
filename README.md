@@ -108,10 +108,10 @@ The settle screen shows the status read back from PayPal after the call. Real-sa
 
 | Metric | Value |
 |---|---|
-| Tests collected | 96 (`pytest`): 87 offline unit, contract and invariant tests, 8 against the real PayPal sandbox (including `CAPTURED` and second-capture `422` read-backs), 1 live Qwen schema check |
-| Claim-decision sweep | `decide_claim` checked over all 15,360 combinations of answer flags, serving model, confidence, baseline mark, low-comparability tile, part and damage class: nothing is chargeable unless every "new since pickup" condition holds ([`tests/test_invariants.py`](tests/test_invariants.py)) |
-| Settle property test | up to 3,000 generated settlements (Hypothesis): the hold never pays a line the renter did not accept and never exceeds the authorization |
-| Offline coverage | 85% of `jaminan/` (`pytest --cov`, 1,412 statements) |
+| Tests collected | 99 (`pytest`): 90 offline unit, contract and invariant tests, 8 against the real PayPal sandbox (including `CAPTURED` and second-capture `422` read-backs), 1 live Qwen schema check |
+| Claim-decision sweep | `decide_claim` run over 23,040 combinations of the five yes/no answers, serving model (pinned, other, none), confidence, a confirmed baseline mark, a low-comparability tile, three parts and five damage classes: every chargeable result satisfies every "new since pickup" condition and carries a tariff price ([`tests/test_invariants.py`](tests/test_invariants.py)) |
+| Settle property test | up to 3,000 generated settlements (Hypothesis): the hold pays exactly the accepted chargeable lines at their tariff price, blocks exactly when a line is unanswered or mispriced, invoices only contested lines, and never exceeds the authorization |
+| Offline coverage | 86% of `jaminan/` (`pytest --cov`, 1,415 statements) |
 | CI | GitHub Actions: ruff, mypy, offline tests with coverage, pip-audit and an API boot smoke; eslint, `tsc`, production build and `npm audit`; gitleaks over full history; CodeQL (Python and TypeScript) once the repo is public; Dependabot monthly, grouped, no major bumps |
 | Live acceptance script | `scripts/e2e_live.py` (375 px viewport) |
 | Vision accuracy | **Not yet measured.** Benchmark on the staged scooter set is pending |
@@ -150,7 +150,7 @@ make ci                                                                       # 
 python scripts/e2e_live.py https://jaminan.vercel.app --shots /tmp/jaminan-e2e   # live acceptance as two phones at 375 px
 ```
 
-The sandbox, live-model and browser tests need credentials, so CI runs the offline suite only; their results are the ones recorded above. Tests that pin a fixed defect are named for it. [`.env.example`](.env.example) lists every variable.
+The sandbox, live-model and browser tests need credentials, so CI runs the offline suite only; run them yourself with the third command. Tests that pin a fixed defect are named for it. [`.env.example`](.env.example) lists every variable.
 
 ## 📁 Project Structure
 

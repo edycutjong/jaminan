@@ -3,3 +3,9 @@ tests
 tools
 .pytest_cache
 **/__pycache__
+.mypy_cache
+.ruff_cache
+.hypothesis
+.coverage
+coverage.xml
+.github

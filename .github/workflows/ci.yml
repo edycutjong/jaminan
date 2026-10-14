@@ -32,9 +32,9 @@ jobs:
       - name: Types (mypy)
         run: mypy
       # The real-sandbox, live-Qwen and headless-browser tests need credentials and are run by hand
-      # (see README); this is the offline suite: unit, contract, state-machine and the 15,360-case claim-decision sweep.
+      # (see README); this is the offline suite: unit, contract, state-machine and the 23,040-case claim-decision sweep.
       - name: Tests + coverage (offline)
-        run: pytest -m "not sandbox and not live_model and not slow" --cov=jaminan --cov-report=term-missing --cov-report=xml
+        run: pytest -m "not sandbox and not live_model and not slow" --cov=jaminan --cov-report=term-missing --cov-report=xml --cov-fail-under=80
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:
@@ -67,5 +67,5 @@ jobs:
         run: npm run typecheck
       - name: Production build
         run: npm run build
-      - name: Dependency audit (npm audit, high+)
-        run: npm audit --audit-level=high
+      - name: Dependency audit (npm audit, production deps, high+)
+        run: npm run audit

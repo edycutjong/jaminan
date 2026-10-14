@@ -19,11 +19,13 @@ ENABLED = ("crack", "dent", "missing_part", "broken_part")  # scuff stays eviden
 BASE_MARK = {"confirmed": True, "angle": 2, "part": "mirror_housing", "damage_class": "crack", "bbox": [0.38, 0.38, 0.2, 0.2]}
 LOW_TILE = [0.35, 0.35, 0.3, 0.3]
 TAP = [0.40, 0.40, 0.10, 0.10]
+# rear_panel/scuff is priced in the tariff but not enabled; mirror_housing/dent is enabled but has no tariff line
+PARTS = ("mirror_housing", "front_fairing", "rear_panel")
 
 
 def _cases():
     bools = (True, False)
-    for part, cls in itertools.product(("mirror_housing", "front_fairing"), CLASSES):
+    for part, cls in itertools.product(PARTS, CLASSES):
         for flags in itertools.product(bools, repeat=5):
             for model, conf, marked, low in itertools.product((BENCH, "other-model", None), (None, 0.3, 0.7, 0.95), bools, bools):
                 answer = dict(zip(rules.CLAIM_FIELDS, flags, strict=True), confidence=conf, pickup_bbox=None)
@@ -54,8 +56,8 @@ def test_no_input_ever_charges_a_mark_that_the_baseline_or_the_gate_can_explain(
         assert not (marked and part == BASE_MARK["part"] and cls == BASE_MARK["damage_class"]), "I3: confirmed baseline mark"
         assert answer["confidence"] is not None and answer["confidence"] >= FLOOR
         assert cls in ENABLED
-        assert d.price_cents == T.price(part, cls), "I1: priced from the tariff, never from the model"
-    assert n == 2 * len(CLASSES) * 32 * 3 * 4 * 2 * 2 == 15360
+        assert d.price_cents is not None and d.price_cents == T.price(part, cls), "I1: priced from the tariff, never from the model"
+    assert n == len(PARTS) * len(CLASSES) * 32 * 3 * 4 * 2 * 2 == 23040
     assert chargeable > 0
 
 
@@ -64,7 +66,7 @@ _line = st.fixed_dictionaries({
     "damage_class": st.sampled_from(("crack", "dent", "scuff")),
     "disposition": st.sampled_from(("chargeable", "excluded_baseline", "evidence_only", "not_comparable", "no_mark")),
     "renter_decision": st.sampled_from((None, "accepted", "contested")),
-    "tampered": st.booleans(),
+    "tampered": st.sampled_from((False,) * 9 + (True,)),
 })
 
 
@@ -77,20 +79,37 @@ def _materialise(i, spec):
 
 @settings(max_examples=3000, deadline=None)
 @given(specs=st.lists(_line, max_size=6), deposit=st.integers(0, 30000), fee=st.integers(0, 5000), force=st.booleans())
-def test_the_hold_never_pays_an_unaccepted_line_or_exceeds_the_authorization(specs, deposit, fee, force):
+def test_the_hold_pays_exactly_the_accepted_chargeable_lines_and_blocks_exactly_when_it_should(specs, deposit, fee, force):
     lines = [_materialise(i, s) for i, s in enumerate(specs)]
+    chargeable = [ln for ln in lines if ln["disposition"] == "chargeable"]
+    decided = [ln for ln in chargeable if ln["renter_decision"] in ("accepted", "contested")]
+    undecided = [ln for ln in chargeable if ln not in decided]
+    bad_price = [ln for ln in decided if T.price(ln["part"], ln["damage_class"]) != ln["price_cents"]
+                 or ln["price_cents"] is None]
+    should_block = bool(bad_price) or (bool(undecided) and not force)
     try:
         p = settle_plan(fee_cents=fee, deposit_cents=deposit, authorized_cents=fee + deposit, fee_captured_cents=fee,
                         lines=lines, tariff_price=T.price, force=force)
     except SettleBlocked:
+        assert should_block, "settle blocked although every chargeable line was answered at its tariff price"
         return
-    paid = {ln["id"] for ln in p.accepted}
-    for ln in lines:
-        if ln["id"] in paid:
-            assert ln["disposition"] == "chargeable" and ln["renter_decision"] == "accepted"
-            assert ln["price_cents"] == T.price(ln["part"], ln["damage_class"])
-    assert p.capture_cents == min(sum(ln["price_cents"] for ln in p.accepted), deposit)
-    assert fee + p.capture_cents <= fee + deposit, "I2: captures never exceed the authorization"
+    assert not should_block, "settle went through with an unanswered line or a price that is not the tariff's (I1)"
+    accepted_ids = {ln["id"] for ln in decided if ln["renter_decision"] == "accepted"}
+    assert {ln["id"] for ln in p.accepted} == accepted_ids, "exactly the accepted chargeable lines are paid"
+    paid = sum(T.price(ln["part"], ln["damage_class"]) for ln in p.accepted)
+    assert p.capture_cents == min(paid, deposit)
     assert p.void == (p.capture_cents == 0)
-    for item in p.invoice_items:
-        assert item["kind"] in ("overage", "contested")
+    contested_ids = {ln["id"] for ln in decided if ln["renter_decision"] == "contested"}
+    invoiced = {i["line_id"] for i in p.invoice_items if i["kind"] == "contested"}
+    assert invoiced == contested_ids, "only contested lines are invoiced; unanswered lines never are"
+    assert p.invoice_cents == max(paid - deposit, 0) + sum(T.price(ln["part"], ln["damage_class"]) for ln in decided
+                                                           if ln["id"] in contested_ids)
+
+
+def test_settle_property_inputs_include_clean_returns_and_real_captures():
+    """The property test above must not be vacuous: a plain accepted line goes through and captures."""
+    line = {"id": "L0", "part": "front_fairing", "damage_class": "dent", "disposition": "chargeable",
+            "price_cents": 4500, "renter_decision": "accepted"}
+    p = settle_plan(fee_cents=1500, deposit_cents=10000, authorized_cents=11500, fee_captured_cents=1500,
+                    lines=[line], tariff_price=T.price)
+    assert p.capture_cents == 4500 and not p.void
