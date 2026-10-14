@@ -140,7 +140,10 @@ class Service:
              "keys": {"shop": secrets.token_urlsafe(18), "renter": secrets.token_urlsafe(18)},
              "photos": {"pickup": {}, "return": {}}, "closeups": [], "baseline_marks": [], "retake_requests": [],
              "confirmations": {}, "suggestions": [], "findings": [], "authorizations": [], "fines": [],
-             "invoice": None, "settlement": None}
+             "invoice": None, "settlement": None,
+             # rental ids can repeat across re-seeds (R-JUDGE-<n>); the nonce keeps PayPal request ids and
+             # invoice numbers unique so an old idempotent response is never replayed into a new rental
+             "nonce": secrets.token_hex(4)}
         self.db.set_json(f"rental:{rid}", r)
         self.db.zadd(f"shop:{shop_id}:rentals", time.time(), rid)
         return r
@@ -153,7 +156,8 @@ class Service:
             back = f"{self.s.app_url}/r/{rid}/approved?k={r['keys']['renter']}"
             res = self.pp.create_authorize_order(rid, r["authorized_cents"],
                                                  f"Scooter rental {rid}: fee + refundable damage deposit hold",
-                                                 return_url=back, cancel_url=f"{self.s.app_url}/r/{rid}?k={r['keys']['renter']}")
+                                                 return_url=back, cancel_url=f"{self.s.app_url}/r/{rid}?k={r['keys']['renter']}",
+                                                 nonce=r["nonce"])
             if not res.ok:
                 raise ServiceError(502, "PAYPAL_ORDER_FAILED", str(PayPalError(res)), debug_id=res.debug_id)
             r["order_id"], r["approve_url"] = res.body["id"], approve_link(res.body)
@@ -339,7 +343,7 @@ class Service:
         sha = self.baseline_hash(r)
         for m in r["baseline_marks"]:
             m["confirmed"] = not m.get("removed")
-        cap = self.pp.capture(r["authorization_id"], r["fee_cents"], False, f"{rid}-fee",
+        cap = self.pp.capture(r["authorization_id"], r["fee_cents"], False, f"{rid}-{r['nonce']}-fee",
                               f"Rental fee {rid}. Damage deposit stays on hold.", rental_id=rid, action="auth.capture.fee")
         if not cap.ok:
             raise ServiceError(502, "PAYPAL_CAPTURE_FAILED", str(PayPalError(cap)), debug_id=cap.debug_id)
@@ -513,7 +517,7 @@ class Service:
                 capture_id = None
             else:
                 names = ", ".join(f"{l['part'].replace('_', ' ')} {l['damage_class'].replace('_', ' ')}" for l in plan.accepted)
-                res = self.pp.capture(aid, plan.capture_cents, True, f"{rid}-settle",
+                res = self.pp.capture(aid, plan.capture_cents, True, f"{rid}-{r['nonce']}-settle",
                                       f"Accepted damage ({names}). The rest of the hold is released.", rental_id=rid,
                                       action="auth.capture.final")
                 if not res.ok:
@@ -539,7 +543,7 @@ class Service:
 
     def _invoice(self, r: dict, items: list[dict]) -> None:
         rid = r["id"]
-        number = f"JMN-{rid}"[-25:]
+        number = f"JMN-{rid}-{r['nonce'][:4]}"[-25:]
         evidence = f"{self.s.app_url}/r/{rid}/evidence"
         res = self.pp.create_invoice(rid, number, r.get("payer_email"),
                                      [{"name": i["name"][:200], "quantity": "1",
@@ -622,7 +626,8 @@ class Service:
                 r.update(authorization_id=res.body["id"], reauthorized_at=iso(), reauth_method="reauthorize")
             elif r.get("vault_id"):
                 mit = self.pp.create_vault_order(f"{rid}-resecure", r["vault_id"], r["deposit_cents"], "AUTHORIZE",
-                                                 f"Deposit hold renewed for rental {rid} (past 3 days)", rental_id=rid)
+                                                 f"Deposit hold renewed for rental {rid} (past 3 days)", rental_id=rid,
+                                                 nonce=r["nonce"])
                 auth = first_authorization(mit.body) if mit.ok else None
                 if not auth:
                     r["reauth_error"] = {"reauthorize": res.issue, "mit": mit.issue, "at": iso()}
@@ -675,7 +680,7 @@ class Service:
             raise ServiceError(404, "NO_FINE", fid)
         if f["status"] != "notified" or iso() > f["contest_until"]:
             raise ServiceError(409, "NOT_CONTESTABLE", f"fine is {f['status']}")
-        res = self.pp.create_invoice(rid, f"JMN-{fid}", r.get("payer_email"),
+        res = self.pp.create_invoice(rid, f"JMN-{fid}-{r['nonce'][:4]}", r.get("payer_email"),
                                      [{"name": "Traffic fine (e-TLE) during the rental, contested", "quantity": "1",
                                        "unit_amount": {"currency_code": "USD",
                                                        "value": f"{f['quote']['amount_cents'] / 100:.2f}"}}],
@@ -782,7 +787,8 @@ class Service:
         auth, vid, last = None, None, None
         for vid in self.s.judge_vault_ids:
             res = self.pp.create_vault_order(rid, vid, r["authorized_cents"], "AUTHORIZE",
-                                             f"Judge rental {rid}: fee + damage deposit hold", rental_id=rid)
+                                             f"Judge rental {rid}: fee + damage deposit hold", rental_id=rid,
+                                             nonce=r["nonce"])
             auth = first_authorization(res.body) if res.ok else None
             last = res
             if auth:
@@ -794,9 +800,15 @@ class Service:
         r["order_id"] = res.body.get("id")
         self._record_auth(r, auth, replaces=None)
         self._to(r, "APPROVED", authorization_id=auth["id"], auth_created_at=iso(), vault_id=vid,
-                 vault_revocable=False, payer_email=None, auth_expires_at=auth.get("expiration_time"))
+                 vault_revocable=False, payer_email=payer_email(res.body), auth_expires_at=auth.get("expiration_time"))
         self._save(r)
         self.db.zadd("judge:open", time.time(), rid)
+        return self.clone_staged(rid)
+
+    def clone_staged(self, rid: str) -> dict:
+        """Clone the staged walkaround (real photos of a real scooter, labelled by hand) into a judge rental,
+        confirm it as the shared baseline (fee capture + tracking), and stop at RETURNED for the judge's taps.
+        Until the staged set exists the rental stops at OUT and the judge can only release the hold."""
         man = self.staged_manifest()
         with self.lock(rid):
             r = self.get(rid)
@@ -807,7 +819,7 @@ class Service:
                 r["staged"] = {"source": man.get("source"), "walkaround": man.get("walkaround")}
             else:
                 r["staged"] = None
-                for a in ANGLES:  # no staged set yet: the pickup frames are a labelled placeholder, never judged
+                for a in ANGLES:
                     r["photos"]["pickup"][str(a)] = {"sha256": None, "angle": a, "phase": "pickup", "placeholder": True}
             r["confirmations"] = {"renter": {"at": iso(), "baseline_sha256": "staged"},
                                   "shop": {"at": iso(), "baseline_sha256": "staged"}}
@@ -815,5 +827,4 @@ class Service:
             if man:
                 r["photos"]["return"] = man["return"]
                 self._to(r, "RETURNED", returned_at=iso())
-            self._save(r)
-        return r
+            return self._save(r)

@@ -13,6 +13,7 @@ from jaminan.config import load_local_env  # noqa: E402
 def pytest_configure(config):
     config.addinivalue_line("markers", "sandbox: hits the real PayPal sandbox (needs credentials)")
     config.addinivalue_line("markers", "live_model: calls the real Qwen vision API (needs a key)")
+    config.addinivalue_line("markers", "slow: drives a headless browser through the PayPal sandbox approval")
 
 
 @pytest.fixture(scope="session")

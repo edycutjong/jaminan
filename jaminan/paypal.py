@@ -133,7 +133,7 @@ class PayPal:
 
     # -- Orders v2 -----------------------------------------------------------------------------
     def create_authorize_order(self, rental_id: str, amount_cents: int, description: str, return_url: str,
-                               cancel_url: str, brand: str = "Jaminan") -> Resp:
+                               cancel_url: str, brand: str = "Jaminan", nonce: str = "") -> Resp:
         """S1: ONE renter approval → AUTHORIZE fee + deposit, with vault consent for later MIT charges."""
         body = {
             "intent": "AUTHORIZE",
@@ -147,7 +147,7 @@ class PayPal:
                                          "customer_type": "CONSUMER"}}}},
         }
         return self.call("POST", "/v2/checkout/orders", "order.create", body,
-                         rid=request_id(rental_id, "order.create", amount_cents), rental_id=rental_id)
+                         rid=request_id(rental_id, nonce, "order.create", amount_cents), rental_id=rental_id)
 
     def get_order(self, order_id: str, rental_id: str | None = None) -> Resp:
         return self.call("GET", f"/v2/checkout/orders/{order_id}", "order.get", rental_id=rental_id, object_id=order_id)
@@ -157,14 +157,14 @@ class PayPal:
                          rid=request_id(order_id, "order.authorize", 0), rental_id=rental_id, object_id=order_id)
 
     def create_vault_order(self, ref: str, vault_id: str, amount_cents: int, intent: str, description: str,
-                           rental_id: str | None = None) -> Resp:
+                           rental_id: str | None = None, nonce: str = "") -> Resp:
         """S4/S5: merchant-initiated order on a saved PayPal wallet (no buyer approval)."""
         body = {"intent": intent,
                 "purchase_units": [{"reference_id": ref, "custom_id": ref, "description": description[:127],
                                     "amount": money(amount_cents)}],
                 "payment_source": {"paypal": {"vault_id": vault_id}}}
         return self.call("POST", "/v2/checkout/orders", f"order.create.mit.{intent.lower()}", body,
-                         rid=request_id(ref, f"mit.{intent}", amount_cents, vault_id), rental_id=rental_id)
+                         rid=request_id(ref, nonce, f"mit.{intent}", amount_cents, vault_id), rental_id=rental_id)
 
     def add_tracking(self, order_id: str, capture_id: str, tracking_number: str, rental_id: str | None = None,
                      notify_payer: bool = False) -> Resp:
