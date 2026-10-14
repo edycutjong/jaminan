@@ -1,0 +1,15 @@
+.env
+.env.*
+node_modules/
+__pycache__/
+.next/
+dist/
+coverage/
+.DS_Store
+.venv/
+.vercel/
+*.pyc
+.pytest_cache/
+fixtures/raw/
+next-env.d.ts
+*.tsbuildinfo
