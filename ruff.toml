@@ -1,0 +1,10 @@
+line-length = 140
+target-version = "py312"
+extend-exclude = ["node_modules", ".next", ".venv", ".vercel"]
+
+[lint]
+select = ["E", "F", "W", "B"]
+ignore = ["E501", "E741", "E701", "E702", "B008"]
+
+[lint.per-file-ignores]
+"tests/*" = ["B017", "B011"]
