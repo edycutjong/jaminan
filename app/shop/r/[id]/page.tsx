@@ -35,7 +35,7 @@ function FineForm({ rid, skey }: { rid: string; skey: string }) {
 
 export default function ShopRental() {
   const { id } = useParams<{ id: string }>();
-  const [skey, setSkey] = useState<string | null>(null);
+  const [skey, setSkey] = useState<string | null | undefined>(undefined);
   useEffect(() => setSkey(keyFor(id, "shop")), [id]);
   const { r, setR, err } = useRental(id, skey, ["DRAFT", "APPROVED", "PROPOSED"]);
   if (err) return <main className="wrap"><Bar who="Toko" /><div className="toast">{err}</div></main>;

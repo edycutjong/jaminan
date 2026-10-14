@@ -12,7 +12,7 @@ import { useRental } from "@/lib/useRental";
 
 export default function RenterRental() {
   const { id } = useParams<{ id: string }>();
-  const [rkey, setRkey] = useState<string | null>(null);
+  const [rkey, setRkey] = useState<string | null | undefined>(undefined);
   useEffect(() => { adoptUrlKey(id); setRkey(keyFor(id, "renter")); }, [id]);
   const { r, setR, err } = useRental(id, rkey, ["APPROVED", "OUT", "HELD", "RETURNED", "CLAIMED"]);
   const [busy, setBusy] = useState(false);
@@ -69,7 +69,7 @@ export default function RenterRental() {
       ) : r.state === "PROPOSED" ? (
         <RenterSettle r={r} rkey={rkey!} onChange={setR} />
       ) : (
-        <Receipt r={r} rkey={rkey} onChange={setR} />
+        <Receipt r={r} rkey={rkey ?? null} onChange={setR} />
       )}
       {["DRAFT", "SETTLED", "RELEASED", "INVOICED", "CLOSED"].includes(r.state) ? null : <p className="small" style={{ marginTop: 24 }}><Link href={`/r/${r.id}/evidence`}>Evidence pack</Link></p>}
     </main>
