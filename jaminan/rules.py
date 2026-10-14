@@ -18,8 +18,8 @@ from typing import Any, Iterable
 # State machine
 # ---------------------------------------------------------------------------------------------
 TRANSITIONS: dict[str, set[str]] = {
-    "DRAFT": {"APPROVED", "CANCELLED"},
-    "APPROVED": {"HELD", "CANCELLED"},          # authorization exists, fee not captured yet
+    "DRAFT": {"APPROVED"},
+    "APPROVED": {"HELD", "RELEASED"},          # authorization exists, fee not captured yet
     "HELD": {"OUT", "RELEASED"},               # fee captured (final_capture=false)
     "OUT": {"RETURNED", "RELEASED"},           # baseline confirmed, tracking written; reauthorize keeps OUT
     "RETURNED": {"CLAIMED", "PROPOSED", "RELEASED"},
@@ -29,7 +29,6 @@ TRANSITIONS: dict[str, set[str]] = {
     "RELEASED": {"INVOICED", "CLOSED"},
     "INVOICED": {"CLOSED"},
     "CLOSED": set(),
-    "CANCELLED": set(),
 }
 OPEN_HOLD_STATES = {"APPROVED", "HELD", "OUT", "RETURNED", "CLAIMED", "PROPOSED"}
 

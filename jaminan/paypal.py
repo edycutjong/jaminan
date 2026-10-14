@@ -103,15 +103,7 @@ class PayPal:
         attempt = 0
         while True:
             t0 = time.perf_counter()
-            try:
-                r = self.http.request(method, path, content=content, headers=headers, params=params)
-                status, debug = r.status_code, r.headers.get("Paypal-Debug-Id")
-                try:
-                    data = r.json() if r.content else {}
-                except ValueError:
-                    data = {"raw": r.text[:500]}
-            except httpx.TransportError as e:  # upstream down: retry with the SAME request id (I4)
-                status, debug, data = 599, None, {"name": "TRANSPORT_ERROR", "message": str(e)}
+            status, data, debug = self._send(method, path, content, headers, params)
             ms = int((time.perf_counter() - t0) * 1000)
             # 5xx / transport → retry with the same PayPal-Request-Id; writes stay idempotent
             if status >= 500 and attempt < retries and (rid or method == "GET"):
@@ -127,6 +119,17 @@ class PayPal:
                           "issue": None if resp.ok else resp.issue, "ms": ms,
                           "at": datetime.now(timezone.utc).isoformat(timespec="seconds")})
         return resp
+
+    def _send(self, method: str, path: str, content: str | None, headers: dict, params: dict | None):
+        try:
+            r = self.http.request(method, path, content=content, headers=headers, params=params)
+        except httpx.TransportError as e:  # upstream down: the caller retries with the SAME request id (I4)
+            return 599, {"name": "TRANSPORT_ERROR", "message": str(e)}, None
+        try:
+            data = r.json() if r.content else {}
+        except ValueError:
+            data = {"raw": r.text[:500]}
+        return r.status_code, data, r.headers.get("Paypal-Debug-Id")
 
     # -- Orders v2 -----------------------------------------------------------------------------
     def create_authorize_order(self, rental_id: str, amount_cents: int, description: str, return_url: str,

@@ -79,6 +79,9 @@ class Store:
     def lrange_json(self, key: str, start: int = 0, stop: int = -1) -> list[Any]:
         return [json.loads(x) for x in (self._cmd("LRANGE", self.k(key), start, stop) or [])]
 
+    def ltrim(self, key: str, start: int, stop: int) -> None:
+        self._cmd("LTRIM", self.k(key), start, stop)
+
     def incr(self, key: str, ex: int | None = None) -> int:
         n = int(self._cmd("INCR", self.k(key)))
         if ex and n == 1:
@@ -180,6 +183,14 @@ class MemoryStore(Store):
             lst = self.data.get(rest[0], [])
             start, stop = int(rest[1]), int(rest[2])
             return lst[start:] if stop == -1 else lst[start:stop + 1]
+        if op == "LTRIM":
+            lst = self.data.get(rest[0], [])
+            start, stop = int(rest[1]), int(rest[2])
+            n = len(lst)
+            start = start + n if start < 0 else start
+            stop = stop + n if stop < 0 else stop
+            self.data[rest[0]] = lst[max(start, 0):stop + 1]
+            return "OK"
         if op == "KEYS":
             return [x for x in self.data if fnmatch.fnmatch(x, rest[0])]
         raise NotImplementedError(op)
