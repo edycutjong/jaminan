@@ -90,7 +90,7 @@ class PayPal:
 
     def call(self, method: str, path: str, action: str, body: dict | None = None, *, rid: str | None = None,
              rental_id: str | None = None, object_id: str | None = None, prefer: str = "return=representation",
-             params: dict | None = None, retries: int = 2) -> Resp:
+             params: dict | None = None, retries: int = 2, quiet: bool = False) -> Resp:
         headers = {"Authorization": f"Bearer {self.token()}", "Content-Type": "application/json", "Prefer": prefer}
         if rid:
             headers["PayPal-Request-Id"] = rid
@@ -112,7 +112,7 @@ class PayPal:
                 continue
             break
         resp = Resp(status, data if isinstance(data, dict) else {"items": data}, debug, action, rid, ms)
-        if self.on_call:
+        if self.on_call and not quiet:
             oid = object_id or (resp.body.get("id") if isinstance(resp.body, dict) else None)
             self.on_call({"rental_id": rental_id, "action": action, "method": method, "path": path,
                           "request_id": rid, "http_status": status, "debug_id": debug, "object_id": oid,
@@ -193,9 +193,9 @@ class PayPal:
                          {"amount": money(amount_cents)},
                          rid=request_id(authorization_id, "auth.reauthorize", amount_cents), rental_id=rental_id)
 
-    def get_authorization(self, authorization_id: str, rental_id: str | None = None) -> Resp:
+    def get_authorization(self, authorization_id: str, rental_id: str | None = None, quiet: bool = False) -> Resp:
         return self.call("GET", f"/v2/payments/authorizations/{authorization_id}", "auth.get",
-                         rental_id=rental_id, object_id=authorization_id)
+                         rental_id=rental_id, object_id=authorization_id, quiet=quiet)
 
     def get_capture(self, capture_id: str, rental_id: str | None = None) -> Resp:
         return self.call("GET", f"/v2/payments/captures/{capture_id}", "capture.get", rental_id=rental_id,

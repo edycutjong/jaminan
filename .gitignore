@@ -13,3 +13,4 @@ coverage/
 fixtures/raw/
 next-env.d.ts
 *.tsbuildinfo
+.vercel
