@@ -272,3 +272,16 @@ def test_a_full_path_approval_that_returns_a_pool_wallet_is_never_deleted():
     assert a["vault_id"] == "vault-1" and a["vault_revocable"] is False
     out = svc.revoke_vault(r["id"], r["keys"]["renter"])
     assert out["vault_revoke"]["shown_only"]
+
+
+def test_daily_close_falls_back_to_read_back_when_transaction_search_is_refused():
+    svc = make()
+    rid, k = to_returned(svc)
+    svc.release(rid, k["shop"])
+    svc.pp.fail_next = []
+    orig = svc.pp._route
+    svc.pp._route = lambda m, p, b: (403, {"name": "NOT_AUTHORIZED"}) if p == "/v1/reporting/transactions" else orig(m, p, b)
+    out = svc.daily_close()
+    assert out["transaction_search_status"] == 403
+    kinds = {(x["kind"], x["via"], x["match"]) for x in out["rows"]}
+    assert ("void", "read_back", "match") in kinds and ("fee", "read_back", "match") in kinds

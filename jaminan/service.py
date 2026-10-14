@@ -726,13 +726,20 @@ class Service:
         rows = []
         for r in rentals:
             for kind, cid in (("fee", r.get("fee_capture_id")), ("damage", r.get("settle_capture_id"))):
-                if cid:
-                    rows.append({"rental": r["id"], "kind": kind, "id": cid,
-                                 "match": "match" if cid in listed else "pending"})
+                if not cid:
+                    continue
+                if cid in listed:
+                    rows.append({"rental": r["id"], "kind": kind, "id": cid, "match": "match", "via": "transaction_search"})
+                elif ts.ok:
+                    rows.append({"rental": r["id"], "kind": kind, "id": cid, "match": "pending", "via": "transaction_search"})
+                else:  # Transaction Search unavailable on this app: read the capture back instead
+                    c = self.pp.get_capture(cid, r["id"])
+                    rows.append({"rental": r["id"], "kind": kind, "id": cid, "via": "read_back",
+                                 "match": "match" if c.body.get("status") == "COMPLETED" else "mismatch"})
             st = r.get("settlement") or {}
             if st.get("void"):
                 rb = self.pp.get_authorization(r["authorization_id"], r["id"])
-                rows.append({"rental": r["id"], "kind": "void", "id": r["authorization_id"],
+                rows.append({"rental": r["id"], "kind": "void", "id": r["authorization_id"], "via": "read_back",
                              "match": "match" if rb.body.get("status") == "VOIDED" else "mismatch"})
         return {"date": day, "transaction_search_status": ts.status, "transaction_search_issue": ts.issue,
                 "listed": len(listed), "rows": rows,

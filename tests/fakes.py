@@ -99,6 +99,9 @@ class FakePayPal(PayPal):
             return 200, {"links": [{"rel": "payer-view", "href": "https://www.sandbox.paypal.com/invoice/p/#x"}]}
         if path.endswith("/generate-qr-code"):
             return 200, {"raw": "iVBORw0KGgo="}
+        m = re.match(r"/v2/payments/captures/(\w+)$", path)
+        if m:
+            return 200, {"id": m.group(1), "status": "COMPLETED"}
         if path.startswith("/v3/vault/payment-tokens/"):
             return 204, {}
         if path == "/v1/reporting/transactions":

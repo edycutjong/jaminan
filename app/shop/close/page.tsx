@@ -24,7 +24,7 @@ export default function Close() {
             <thead><tr><th>Sewa</th><th>Jenis</th><th>PayPal id</th><th>Status</th></tr></thead>
             <tbody>{d.rows.map((x: any, i: number) => (
               <tr key={i}><td className="data">{x.rental}</td><td>{x.kind}</td><td className="data">{x.id}</td>
-                <td className={x.match === "match" ? "st-ok" : x.match === "pending" ? "st-held" : "st-bad"}>{x.match}</td></tr>
+                <td className={x.match === "match" ? "st-ok" : x.match === "pending" ? "st-held" : "st-bad"}>{x.match}<br /><span className="small muted">{x.via === "read_back" ? "baca ulang" : "pencarian"}</span></td></tr>
             ))}</tbody>
           </table></div>
           <p className="small muted">Transaction Search HTTP {d.transaction_search_status}{d.transaction_search_issue ? ` · ${d.transaction_search_issue}` : ""} · {d.listed} transaksi tercatat</p>
