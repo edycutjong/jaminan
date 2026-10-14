@@ -5,8 +5,8 @@
 
   <br/>
 
-  [![Live Demo](https://img.shields.io/badge/🚀_Live-Demo-06b6d4?style=for-the-badge)](https://jaminan.vercel.app)
-  [![Judge Path](https://img.shields.io/badge/⚖️_Judge-Path-f59e0b?style=for-the-badge)](https://jaminan.vercel.app/judge)
+  [![Live Demo](https://img.shields.io/badge/🚀_Live-Demo-06b6d4?style=for-the-badge)](https://jaminan.edycu.dev)
+  [![Judge Path](https://img.shields.io/badge/⚖️_Judge-Path-f59e0b?style=for-the-badge)](https://jaminan.edycu.dev/judge)
   [![Built for PayPal AI Hackathon](https://img.shields.io/badge/Devpost-PayPal_AI_Hackathon-8b5cf6?style=for-the-badge)](https://paypalaihackathon.devpost.com/)
 
   <br/>
@@ -139,7 +139,7 @@ npm install && python3 -m venv .venv && .venv/bin/pip install -r requirements-de
 npm run dev:api & npm run dev
 ```
 
-Or skip setup: open the live [`/judge`](https://jaminan.vercel.app/judge) route, which runs a fresh sandbox rental end to end.
+Or skip setup: open the live [`/judge`](https://jaminan.edycu.dev/judge) route, which runs a fresh sandbox rental end to end.
 
 ## 🧪 Testing & CI
 
@@ -147,7 +147,7 @@ Or skip setup: open the live [`/judge`](https://jaminan.vercel.app/judge) route,
 make ci                                                                       # ruff, mypy, offline tests + coverage, pip-audit, eslint, tsc, build, npm audit
 .venv/bin/python -m pytest -m "not sandbox and not live_model and not slow"   # offline suite only
 .venv/bin/python -m pytest                                                    # + real sandbox, live Qwen, headless browser (needs credentials)
-python scripts/e2e_live.py https://jaminan.vercel.app --shots /tmp/jaminan-e2e   # live acceptance as two phones at 375 px
+python scripts/e2e_live.py https://jaminan.edycu.dev --shots /tmp/jaminan-e2e   # live acceptance as two phones at 375 px
 ```
 
 The sandbox, live-model and browser tests need credentials, so CI runs the offline suite only; run them yourself with the third command. Tests that pin a fixed defect are named for it. [`.env.example`](.env.example) lists every variable.
@@ -175,9 +175,9 @@ tests/      unit, contract, invariant and real-sandbox tests
 
 ## 📽️ Demo Materials
 
-- Live app: https://jaminan.vercel.app
-- Judge path: https://jaminan.vercel.app/judge
-- Read-back stream: https://jaminan.vercel.app/integrations/verify
+- Live app: https://jaminan.edycu.dev
+- Judge path: https://jaminan.edycu.dev/judge
+- Read-back stream: https://jaminan.edycu.dev/integrations/verify
 
 ## 📄 License
 

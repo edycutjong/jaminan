@@ -1,6 +1,6 @@
 """Live end-to-end run of the one flow on a deployed URL, as two phones (shop + renter), 375 px wide.
 
-    python scripts/e2e_live.py https://jaminan.vercel.app --shots /tmp/jaminan-e2e
+    python scripts/e2e_live.py https://jaminan.edycu.dev --shots /tmp/jaminan-e2e
 
 The renter approves on the real PayPal sandbox page (sandbox buyer). The cameras are Chromium's fake
 capture device fed a synthetic sharp test pattern (NOT a scooter): this exercises capture → frame gate →
@@ -178,5 +178,5 @@ def main(base: str, shots: Path) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1].rstrip("/") if len(sys.argv) > 1 else "https://jaminan.vercel.app",
+    sys.exit(main(sys.argv[1].rstrip("/") if len(sys.argv) > 1 else "https://jaminan.edycu.dev",
                   Path(sys.argv[3] if len(sys.argv) > 3 and sys.argv[2] == "--shots" else "/tmp/jaminan-e2e")))
