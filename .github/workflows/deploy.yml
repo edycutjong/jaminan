@@ -1,0 +1,50 @@
+name: Deploy
+
+# Production deploy to Vercel, only after CI passes on main.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  VERCEL_ORG_ID: team_RJcQx4a22v5LqjetHv8HhhLY
+  VERCEL_PROJECT_ID: prj_3heleUsctwNMuJNet41GqTyJE78A
+  APP_URL: https://jaminan.edycu.dev
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Deploy to production
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npm i -g vercel@latest
+          vercel deploy --prod --yes --token "$VERCEL_TOKEN" | tee deploy-url.txt
+
+      - name: Smoke test the live domain
+        run: |
+          for path in / /judge /integrations/verify; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --retry 5 --retry-delay 5 --retry-all-errors "$APP_URL$path")
+            echo "$path -> $code"
+            test "$code" = 200
+          done
