@@ -182,7 +182,10 @@ class Service:
             self._to(r, "APPROVED", authorization_id=auth["id"], auth_created_at=iso(),
                      auth_expires_at=auth.get("expiration_time"), vault_id=v.get("id"),
                      vault_status=v.get("status"), customer_id=(v.get("customer") or {}).get("id"),
-                     payer_email=payer_email(res.body), vault_revocable=True)
+                     payer_email=payer_email(res.body),
+                     # PayPal returns the SAME vault token for the same buyer + merchant, so a judge's full-path
+                     # approval with the shared sandbox buyer yields a pool token: never delete one of those
+                     vault_revocable=v.get("id") not in self.s.judge_vault_ids)
             return self._save(r)
 
     def _record_auth(self, r: dict, auth: dict, replaces: str | None) -> None:

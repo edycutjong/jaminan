@@ -262,3 +262,13 @@ def test_paypal_5xx_is_retried_with_the_same_request_id():
     voids = [c for c in svc.calls(rid) if c["action"] == "auth.void"]
     assert r["settlement"]["auth_read_back"] == "VOIDED"
     assert len(voids) >= 1 and len({c["request_id"] for c in voids}) == 1
+
+
+def test_a_full_path_approval_that_returns_a_pool_wallet_is_never_deleted():
+    svc = make(JUDGE_VAULT_IDS="vault-1")          # FakePayPal vaults every approval as vault-1
+    r = svc.create_rental("shop-demo", "veh-01", 1)
+    svc.approve(r["id"])
+    a = svc.authorize(r["id"])
+    assert a["vault_id"] == "vault-1" and a["vault_revocable"] is False
+    out = svc.revoke_vault(r["id"], r["keys"]["renter"])
+    assert out["vault_revoke"]["shown_only"]
