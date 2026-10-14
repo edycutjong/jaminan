@@ -526,7 +526,7 @@ class Service:
                 if not res.ok:
                     raise ServiceError(502, "PAYPAL_CAPTURE_FAILED", str(PayPalError(res)), debug_id=res.debug_id)
                 capture_id = res.body.get("id")
-            rb = self.pp.get_authorization(aid, rid)   # R11: the stamp fires on PayPal's read-back, not ours
+            rb = self.pp.get_authorization(aid, rid)   # the stamp fires on PayPal's read-back, not ours
             read_back = rb.body.get("status")
             self._to(r, "RELEASED" if plan.void else "SETTLED")
             r["settlement"] = {"at": iso(), "void": plan.void, "capture_cents": plan.capture_cents,

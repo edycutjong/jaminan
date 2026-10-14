@@ -2,7 +2,7 @@
 
 The model answers narrow yes/no questions in a scooter's part vocabulary; it never sees a price and
 never returns an amount (I1). Every answer records the model id PayPal-style: the `model` field of
-the response is the serving model, and only the benchmarked id can make a line chargeable (W15).
+the response is the serving model, and only the benchmarked id can make a line chargeable.
 Boxes travel as Qwen's native 0–1000 integer grid and are normalized to 0–1 here.
 """
 from __future__ import annotations

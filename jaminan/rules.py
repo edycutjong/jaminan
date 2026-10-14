@@ -108,7 +108,7 @@ def decide_claim(*, answer: dict[str, Any] | None, serving_model: str | None, be
                 m.get("damage_class") == damage_class and \
                 (not m.get("bbox") or bbox_overlap(tap_bbox, m["bbox"]) > 0 or bbox_overlap(m["bbox"], tap_bbox) > 0):
             return Decision("excluded_baseline", None, "matches a mark confirmed in the shared baseline (I3)")
-    # W15: refusal, timeout, schema failure, or any model other than the benchmarked one
+    # refusal, timeout, schema failure, or any model other than the benchmarked one
     if answer is None:
         return Decision("comparison_unavailable", None, "no valid model answer (refusal, timeout or schema failure)")
     if not benchmarked_model or serving_model != benchmarked_model:
@@ -162,7 +162,7 @@ class SettleBlocked(ValueError):
 
 def settle_plan(*, fee_cents: int, deposit_cents: int, authorized_cents: int, fee_captured_cents: int,
                 lines: list[dict], tariff_price, force: bool = False) -> SettlePlan:
-    """The hold only pays lines the renter accepted (D2).
+    """The hold only pays lines the renter accepted.
 
     `lines` are findings; only `chargeable` ones can be accepted. `tariff_price(part, cls)` re-prices each
     accepted line from the published tariff (I1: the stored price is never trusted). `force` (expiry guard,

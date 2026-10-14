@@ -44,7 +44,7 @@ class Settings:
     qwen_key: str = field(default_factory=lambda: os.environ.get("QWEN_API_KEY", ""))
     qwen_base: str = field(default_factory=lambda: os.environ.get(
         "QWEN_BASE_URL", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1").rstrip("/"))
-    # The model the service asks for. Only BENCHMARKED_MODEL can produce a chargeable line (W15);
+    # The model the service asks for. Only BENCHMARKED_MODEL can produce a chargeable line;
     # it stays empty until the vision bench on the staged set pins one.
     vision_model: str = field(default_factory=lambda: os.environ.get("JAMINAN_VISION_MODEL", "qwen3-vl-plus"))
     benchmarked_model: str = field(default_factory=lambda: os.environ.get("JAMINAN_BENCHMARKED_MODEL", ""))

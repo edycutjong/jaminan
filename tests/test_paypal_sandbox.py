@@ -1,5 +1,5 @@
 """Integration tests against the REAL PayPal sandbox. Each asserts the side effect by reading the
-object back from PayPal (R11), not by trusting our own return value."""
+object back from PayPal, not by trusting our own return value."""
 import uuid
 
 import pytest

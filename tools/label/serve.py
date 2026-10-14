@@ -6,7 +6,7 @@ Writes three CSVs next to the photos (labels BEFORE any model run, so the bench 
 model's own output):
   frames.csv  file, walkaround_id, scooter, split, phone, phase, angle, light, pairs_with, notes
   labels.csv  walkaround_id, scooter, split, phone, phase, angle, part, damage_class, new,
-              bbox_x, bbox_y, bbox_w, bbox_h, notes                      (schema of specs/seed-data.md)
+              bbox_x, bbox_y, bbox_w, bbox_h, notes                    
   claims.csv  claim_id, walkaround_id, split, angle, bbox_x, bbox_y, bbox_w, bbox_h, part, damage_class,
               expected, pickup_bbox_x, pickup_bbox_y, pickup_bbox_w, pickup_bbox_h, notes
 Boxes are normalized 0–1 on the photo as displayed (EXIF orientation applied).
@@ -86,7 +86,7 @@ def make_handler(root: Path):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--dir", required=True, help="folder with the staged photos (kitchen: assets/staged)")
+    ap.add_argument("--dir", required=True, help="folder with the staged photos (kept out of this repo until plates and badges are blurred)")
     ap.add_argument("--port", type=int, default=8765)
     a = ap.parse_args()
     root = Path(a.dir).expanduser().resolve()

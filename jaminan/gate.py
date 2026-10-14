@@ -1,4 +1,4 @@
-"""Deterministic frame gate — numpy + Pillow, no model call (W4).
+"""Deterministic frame gate — numpy + Pillow, no model call to reject a bad frame.
 
 Every frame is resized to a fixed 1280 px width first, so thresholds mean the same thing on every phone.
 Blur = variance of the Laplacian; glare = fraction of clipped highlights. The same 4×4 tiles give a
