@@ -1,0 +1,10 @@
+part,damage_class,price_cents
+mirror_housing,crack,1800
+mirror,missing_part,2250
+indicator_lens,missing_part,1200
+front_fairing,crack,6500
+front_fairing,dent,4500
+side_panel,dent,4000
+side_panel,scuff,1500
+rear_panel,scuff,1500
+admin_fee,etle_passthrough,300

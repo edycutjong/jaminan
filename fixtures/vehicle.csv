@@ -1,0 +1,3 @@
+id,shop_id,kind,plate,label,daily_fee_cents,deposit_cents
+veh-01,shop-demo,scooter,B 0000 JMN,Demo scooter 1,1500,10000
+veh-02,shop-demo,scooter,B 0001 JMN,Demo scooter 2,1500,10000

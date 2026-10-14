@@ -1,0 +1,9 @@
+{
+  "id": "tv1",
+  "shop_id": "shop-demo",
+  "published_at": "2026-10-14",
+  "currency": "USD",
+  "status": "DRAFT — values replaced 1:1 by the partner shop's price list; fine ceilings to be checked against the published e-TLE schedule",
+  "fx_source": "DRAFT — one named published IDR/USD reference rate on the publish date (to pin)",
+  "idr_per_usd": 16500
+}

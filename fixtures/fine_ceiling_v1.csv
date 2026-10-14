@@ -1,0 +1,7 @@
+violation,label,max_idr
+pasal_287_1,"Pasal 287 (1) — traffic sign or road marking (incl. red light)",500000
+pasal_287_5,"Pasal 287 (5) — speed limit",500000
+pasal_291_1,"Pasal 291 (1) — rider without helmet",250000
+pasal_291_2,"Pasal 291 (2) — passenger without helmet",250000
+pasal_283,"Pasal 283 — riding while distracted (incl. phone use)",750000
+pasal_293_2,"Pasal 293 (2) — motorcycle headlight off in daytime",100000
