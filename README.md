@@ -1,7 +1,8 @@
 <div align="center">
-  <img src="docs/icon.svg" alt="Jaminan Icon" width="144">
+  <img src="docs/assets/icon.svg" alt="Jaminan icon — a red stamp on the one accepted line, a green stamp releasing the rest of the hold" width="144">
   <h1>Jaminan 🛵</h1>
   <p><em>A PayPal hold that replaces the passport at the scooter-rental counter. The shop points, the shared baseline answers, and PayPal moves only the money the renter accepted.</em></p>
+  <img src="docs/assets/readme-hero-animated.svg" alt="Jaminan — a PayPal hold instead of your passport. One red stamp for the cracked mirror; one green stamp releases the rest of the hold." width="100%">
 
   <br/>
 
