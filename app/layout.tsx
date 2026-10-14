@@ -6,11 +6,18 @@ const display = Alfa_Slab_One({ weight: "400", subsets: ["latin"], variable: "--
 const body = Atkinson_Hyperlegible_Next({ subsets: ["latin"], variable: "--f-body", display: "swap" });
 const data = Courier_Prime({ weight: ["400", "700"], subsets: ["latin"], variable: "--f-data", display: "swap" });
 
+const title = "Jaminan — a PayPal hold instead of your passport";
+const description = "Scooter-rental damage deposits as a PayPal authorization. The owner points; the shared baseline answers. What the shared baseline can't show, nobody can charge.";
+const card = { url: "/og-image.png", width: 2400, height: 1260, alt: "Jaminan — the settle stub: one red stamp for the cracked mirror, one green stamp releases the rest of the hold" };
+
 export const metadata: Metadata = {
-  title: "Jaminan — a PayPal hold instead of your passport",
-  description: "Scooter-rental damage deposits as a PayPal authorization. The owner points; the shared baseline answers. What the shared baseline can't show, nobody can charge.",
+  metadataBase: new URL("https://jaminan.edycu.dev"),
+  title,
+  description,
   manifest: "/manifest.webmanifest",
   icons: { icon: "/icon.svg" },
+  openGraph: { type: "website", url: "/", siteName: "Jaminan", title, description, images: [card] },
+  twitter: { card: "summary_large_image", title, description, images: [card] },
 };
 export const viewport: Viewport = { themeColor: "#F3EEE1", width: "device-width", initialScale: 1 };
 
