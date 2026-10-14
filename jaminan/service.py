@@ -83,16 +83,16 @@ class Service:
 
     @contextmanager
     def lock(self, rid: str, wait_s: float = 12.0):
-        key = f"lock:{rid}"
+        key, token = f"lock:{rid}", secrets.token_hex(12)
         deadline = time.time() + wait_s
-        while not self.db.set_json(key, 1, ex=30, nx=True):
+        while not self.db.set_json(key, token, ex=30, nx=True):
             if time.time() > deadline:
                 raise ServiceError(409, "BUSY", "another request is changing this rental; retry")
             time.sleep(0.15)
         try:
             yield
         finally:
-            self.db.delete(key)
+            self.db.delete_if(key, token)  # never release a lock another request now holds
 
     def auth(self, r: dict, key: str | None, role: str) -> None:
         """Capability keys: the renter's key travels in the QR link, the shop's stays on the shop phone."""
@@ -429,10 +429,7 @@ class Service:
         if angle not in ANGLES or len(bbox) != 4:
             raise ServiceError(422, "BAD_TAP", "a tap needs angle 1–8 and a box [x, y, w, h]")
         bbox = [min(max(float(v), 0.0), 1.0) for v in bbox]
-        for f in r["findings"]:
-            if f["angle"] == angle and f["part"] == part and f["damage_class"] == damage_class and \
-                    max(rules.bbox_overlap(bbox, f["bbox_return"]), rules.bbox_overlap(f["bbox_return"], bbox)) > 0.5:
-                raise ServiceError(409, "DUPLICATE_CLAIM", f"{f['id']} already claims this spot as {part}/{damage_class}")
+        self._no_duplicate(r, angle, bbox, part, damage_class)
         pick, ret = r["photos"]["pickup"][str(angle)], r["photos"]["return"][str(angle)]
         ret_crop, ret_region = gate.crop(self.frame(ret["sha256"]), bbox, scale=2.0)
         pick_area, pick_region = gate.crop(self.frame(pick["sha256"]), bbox, scale=4.0)
@@ -450,6 +447,7 @@ class Service:
             r = self.get(rid)
             if r["state"] not in ("RETURNED", "CLAIMED"):
                 raise ServiceError(409, "NOT_RETURNED", f"rental is {r['state']}")
+            self._no_duplicate(r, angle, bbox, part, damage_class)  # again under the lock: two fast taps
             f = {"id": f"L{len(r['findings']) + 1}", "angle": angle, "part": part, "damage_class": damage_class,
                  "source": "confirmed_suggestion" if suggestion_id else "shop_claim", "suggestion_id": suggestion_id,
                  "bbox_return": bbox, "bbox_pickup": pickup_bbox, "pickup_region": pick_region,
@@ -469,6 +467,13 @@ class Service:
                 self._to(r, "CLAIMED")
             self._save(r)
             return {"finding": f, "answer": d.text(damage_class), "answer_id": d.text(damage_class, "id")}
+
+    @staticmethod
+    def _no_duplicate(r: dict, angle: int, bbox: list[float], part: str, damage_class: str) -> None:
+        for f in r["findings"]:
+            if f["angle"] == angle and f["part"] == part and f["damage_class"] == damage_class and \
+                    max(rules.bbox_overlap(bbox, f["bbox_return"]), rules.bbox_overlap(f["bbox_return"], bbox)) > 0.5:
+                raise ServiceError(409, "DUPLICATE_CLAIM", f"{f['id']} already claims this spot as {part}/{damage_class}")
 
     def propose(self, rid: str, key: str) -> dict:
         """The shop sends its lines to the renter; nothing more can be added after this."""

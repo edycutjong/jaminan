@@ -317,3 +317,11 @@ def test_evidence_pack_needs_a_key_or_its_link_token():
         svc.evidence(rid)
     assert svc.evidence(rid, token=svc.get(rid)["evidence_token"])["rental"] == rid
     assert svc.evidence(rid, key=k["renter"])["rental"] == rid
+
+
+def test_a_lock_is_only_released_by_its_owner():
+    svc = make()
+    r = svc.create_rental("shop-demo", "veh-01", 1)
+    with svc.lock(r["id"]):
+        svc.db.set_json(f"lock:{r['id']}", "someone-else", ex=30)   # our lock expired; another request took it
+    assert svc.db.get_json(f"lock:{r['id']}") == "someone-else"

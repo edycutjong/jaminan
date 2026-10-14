@@ -79,6 +79,13 @@ class Store:
     def lrange_json(self, key: str, start: int = 0, stop: int = -1) -> list[Any]:
         return [json.loads(x) for x in (self._cmd("LRANGE", self.k(key), start, stop) or [])]
 
+    def delete_if(self, key: str, value: Any) -> bool:
+        """Delete key only if it still holds `value` (atomic on Redis via EVAL) — a lock owner never
+        releases a lock that expired and was taken by another request."""
+        raw = json.dumps(value, separators=(",", ":"))
+        script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end"
+        return int(self._cmd("EVAL", script, 1, self.k(key), raw) or 0) == 1
+
     def ltrim(self, key: str, start: int, stop: int) -> None:
         self._cmd("LTRIM", self.k(key), start, stop)
 
@@ -183,6 +190,12 @@ class MemoryStore(Store):
             lst = self.data.get(rest[0], [])
             start, stop = int(rest[1]), int(rest[2])
             return lst[start:] if stop == -1 else lst[start:stop + 1]
+        if op == "EVAL":  # only the compare-and-delete script used by delete_if
+            key, val = rest[2], rest[3]
+            if self._alive(key) and self.data[key] == val:
+                del self.data[key]
+                return 1
+            return 0
         if op == "LTRIM":
             lst = self.data.get(rest[0], [])
             start, stop = int(rest[1]), int(rest[2])
