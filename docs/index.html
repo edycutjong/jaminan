@@ -1,0 +1,733 @@
+<!doctype html>
+<!-- Jaminan landing page. Every figure comes from evidence/ and tests/ in this repository. -->
+<html lang="en" class="anim">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jaminan — the deposit that remembers the dent was already there</title>
+<meta name="description" content="A PayPal hold replaces the passport at the scooter counter. The shop points, the shared pickup photos answer, and PayPal captures only what the renter accepts.">
+<meta name="author" content="edycutjong">
+<meta name="theme-color" content="#F3EEE1">
+<link rel="canonical" href="https://jaminan-landing.vercel.app/">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-512.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Jaminan">
+<meta property="og:title" content="Jaminan — the deposit that remembers the dent was already there">
+<meta property="og:description" content="A PayPal hold instead of your passport at the scooter counter: PayPal captures only the damage the renter accepts.">
+<meta property="og:url" content="https://jaminan-landing.vercel.app/">
+<meta property="og:image" content="https://jaminan-landing.vercel.app/site/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Jaminan — a PayPal hold instead of your passport. One red stamp for the cracked mirror; one green stamp releases the rest of the hold.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Jaminan — the deposit that remembers the dent was already there">
+<meta name="twitter:description" content="A PayPal hold instead of your passport at the scooter counter: PayPal captures only the damage the renter accepts.">
+<meta name="twitter:image" content="https://jaminan-landing.vercel.app/site/og.png">
+<link rel="preload" href="site/fonts/alfa-slab-one-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="site/fonts/atkinson-hyperlegible-next-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="site/fonts/atkinson-hyperlegible-next-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="site/fonts/courier-prime-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:"Alfa Slab One";src:url("site/fonts/alfa-slab-one-latin-400-normal.woff2") format("woff2");font-weight:400;font-style:normal;font-display:block}
+@font-face{font-family:"Atkinson Hyperlegible Next";src:url("site/fonts/atkinson-hyperlegible-next-latin-400-normal.woff2") format("woff2");font-weight:400;font-style:normal;font-display:block}
+@font-face{font-family:"Atkinson Hyperlegible Next";src:url("site/fonts/atkinson-hyperlegible-next-latin-700-normal.woff2") format("woff2");font-weight:700;font-style:normal;font-display:block}
+@font-face{font-family:"Courier Prime";src:url("site/fonts/courier-prime-latin-400-normal.woff2") format("woff2");font-weight:400;font-style:normal;font-display:block}
+@font-face{font-family:"Courier Prime";src:url("site/fonts/courier-prime-latin-700-normal.woff2") format("woff2");font-weight:700;font-style:normal;font-display:block}
+:root {
+  --bg:      #F3EEE1;  /* kwitansi receipt paper; warm off-white cuts midday glare vs pure white */
+  --ink:     #1C2340;  /* carbon blue-black of a ballpoint on a duplicate copy */
+  --muted:   #5E5C6B;  /* faded printed form labels on the receipt (AA on --bg) */
+  --before:  #3346A6;  /* state: held — carbon-copy blue, the deposit still on the stub */
+  --after:   #1D7A4A;  /* state: released — green rubber stamp, fires only when the hold is voided or the remainder released */
+  --charge:  #B5301C;  /* state: charged — red stamp, only on a renter-accepted, provably-new damage line */
+  --excluded:#9C978A;  /* hatched grey for damage visible at pickup — cannot be charged */
+  --rule:    #CFC5AC;  /* ruled lines and perforation dots of the receipt book */
+  --font-display: "Alfa Slab One", "Rockwell", "Roboto Slab", serif;  /* sign-painter slab caps of roadside SEWA MOTOR boards — headings and stamp text only */
+  --font-body:    "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, sans-serif;  /* built for low-vision legibility — the sunlit counter */
+  --font-data:    "Courier Prime", "Courier New", monospace;  /* ONLY amounts, rental numbers, PayPal IDs, debug IDs, SHA-256 prefixes, timestamps */
+  /* derived (color-mix of the above only — /generate-assets _tokens.css) */
+  --paper-stub:  color-mix(in srgb, var(--bg) 62%, #FFFFFF);
+  --paper-shade: color-mix(in srgb, var(--bg) 72%, var(--rule));
+  --hatch-excluded: repeating-linear-gradient(-45deg, transparent 0 7px, color-mix(in srgb, var(--excluded) 24%, transparent) 7px 9px);
+  --shadow-lg: 0 1px 0 var(--rule), 0 18px 44px color-mix(in srgb, var(--ink) 18%, transparent);
+  --stamp-angle: -6deg;
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-stamp: cubic-bezier(.34, 1.3, .64, 1);
+}
+
+* { box-sizing: border-box; }
+html { overflow-x: clip; scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; color: var(--ink); font-family: var(--font-body); font-size: 18px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+  background: repeating-linear-gradient(to bottom, transparent 0 35px, color-mix(in srgb, var(--rule) 34%, transparent) 35px 36px), var(--bg); }
+a { color: var(--before); text-underline-offset: 3px; text-decoration-thickness: 1.5px; transition: color 140ms var(--ease-out); }
+a:hover { color: var(--ink); }
+::selection { background: color-mix(in srgb, var(--before) 22%, transparent); color: var(--ink); }
+:focus-visible { outline: 3px solid var(--before); outline-offset: 3px; border-radius: 2px; }
+html { scrollbar-color: color-mix(in srgb, var(--ink) 45%, transparent) var(--paper-shade); }
+img { max-width: 100%; height: auto; display: block; }
+code, .data { font-family: var(--font-data); }
+p code, .proof, figcaption code { overflow-wrap: anywhere; }
+.skip { position: absolute; left: 12px; top: -60px; z-index: 10; background: var(--ink); color: var(--paper-stub); padding: 10px 14px;
+  border-radius: 4px; font-weight: 700; transition: top 140ms var(--ease-out); }
+.skip:focus { top: 12px; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 0 28px; }
+.margin { position: fixed; top: 0; bottom: 0; left: 36px; width: 6px; pointer-events: none; z-index: 0;
+  border-left: 1.5px solid color-mix(in srgb, var(--rule) 90%, transparent); border-right: 1.5px solid color-mix(in srgb, var(--rule) 90%, transparent); }
+main { position: relative; }
+
+/* --- nav --------------------------------------------------------------------------------------------- */
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 18px; padding-bottom: 18px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; min-height: 44px; }
+.brand .mark { font-family: var(--font-display); font-size: 20px; line-height: 1; border: 2.5px solid var(--ink); padding: 4px 7px 3px;
+  transform: rotate(-4deg); transition: background-color 140ms var(--ease-out), color 140ms var(--ease-out); }
+.brand:hover .mark { background: var(--ink); color: var(--paper-stub); }
+.brand:hover { color: var(--ink); }
+.brand .name { font-family: var(--font-display); font-size: 21px; letter-spacing: .04em; text-transform: uppercase;
+  text-shadow: .034em .036em 0 color-mix(in srgb, var(--before) 85%, transparent); }
+.nav nav { display: flex; align-items: center; gap: 6px; font-size: 15.5px; font-weight: 700; }
+.nav nav a { color: var(--ink); text-decoration: none; padding: 10px 10px; border-radius: 4px; }
+.nav nav a:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); }
+.nav .pill { border: 1.5px solid var(--ink); padding: 9px 14px; margin-left: 6px; white-space: nowrap;
+  transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out), background-color 140ms var(--ease-out); }
+.nav .pill:hover { transform: translateY(-1px); box-shadow: 0 3px 0 var(--ink); background: transparent; }
+.nav .pill.solid { background: var(--ink); color: var(--paper-stub); }
+.nav .pill.solid:hover { background: var(--ink); }
+
+/* --- type ------------------------------------------------------------------------------------------- */
+h1, h2, h3 { font-family: var(--font-display); font-weight: 400; text-transform: uppercase; margin: 0; }
+h1 em, h2 em { font-style: normal; color: var(--before); text-shadow: .035em .04em 0 color-mix(in srgb, var(--before) 20%, transparent); }
+.sec { display: flex; align-items: baseline; gap: 12px; margin: 0 0 14px; font-size: 13px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted); }
+.sec b { font-family: var(--font-data); font-size: 14px; color: var(--ink); letter-spacing: 0; }
+.sec::after { content: ""; flex: 1; border-bottom: 1.5px dotted color-mix(in srgb, var(--ink) 35%, transparent); transform: translateY(-4px); }
+h2 { font-size: clamp(32px, 3.9vw, 54px); line-height: .98; max-width: 17em; text-wrap: balance; }
+.lead { max-width: 40em; font-size: 19px; margin: 18px 0 0; }
+section.block { padding-top: 88px; }
+.amt { font-family: var(--font-data); font-weight: 700; }
+
+/* --- hero ------------------------------------------------------------------------------------------- */
+.hero { display: grid; grid-template-columns: minmax(0, 1.18fr) minmax(0, .82fr); grid-template-areas: "lede ticket" "pitch ticket";
+  grid-template-rows: auto 1fr;
+  column-gap: 60px; align-items: start; padding-top: 22px; padding-bottom: 8px; }
+.lede { grid-area: lede; } .pitch { grid-area: pitch; } .book { grid-area: ticket; }
+.eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 6px 0 16px; }
+.plate { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 0 0 20px; padding: 8px 14px 9px;
+  border: 1.5px solid var(--ink); border-radius: 4px; background: var(--paper-stub); font-size: 17px; }
+.plate .k { font-family: var(--font-display); text-transform: uppercase; font-size: 16px; letter-spacing: .04em; }
+.plate s { position: relative; text-decoration: none; color: var(--muted); font-weight: 700; }
+.plate s::after { content: ""; position: absolute; left: -6%; right: -6%; top: 52%; height: .13em; background: var(--ink);
+  border-radius: .06em; transform: rotate(-5deg); transform-origin: left center; }
+.plate .to { font-weight: 700; }
+.lede { container-type: inline-size; }
+.hero h1 { font-size: min(64px, 9.05cqi); line-height: .98; letter-spacing: -.004em; }
+.hero h1 .ch { display: inline-block; white-space: nowrap; }
+.hero h1 .wd { display: inline-block; }
+.pitch .sub { font-size: 19px; margin: 22px 0 0; max-width: 34em; }
+.ctas { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0 14px; }
+.cta { display: inline-flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 22px; border: 2px solid var(--ink); border-radius: 4px;
+  font-weight: 700; font-size: 17px; color: var(--ink); text-decoration: none; background: transparent;
+  transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out); }
+.cta:hover { color: var(--ink); transform: translateY(-2px); box-shadow: 0 4px 0 var(--ink); }
+.cta:active { transform: translateY(1px); box-shadow: none; }
+.cta.solid { background: var(--ink); color: var(--paper-stub); }
+.cta.solid:hover { color: var(--paper-stub); box-shadow: 0 4px 0 color-mix(in srgb, var(--ink) 45%, transparent); }
+.cta svg { width: 18px; height: 18px; flex: none; }
+.proof { font-family: var(--font-data); font-size: 13.5px; color: var(--muted); margin: 0; max-width: 44em; }
+.book { position: relative; margin-top: 4px; }
+.book .ticket { --under: var(--paper-shade); }
+.book::before, .book::after { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 420px; border-radius: 6px; z-index: -1;
+  border: 1.5px solid color-mix(in srgb, var(--ink) 16%, transparent); background: var(--paper-shade); }
+.book::before { transform: rotate(2.4deg) translate(9px, 8px); }
+.book::after { transform: rotate(-1.3deg) translate(-7px, 12px); background: var(--paper-stub); }
+.replay-note { font-size: 13px; color: var(--muted); margin: 10px 2px 0; }
+
+/* --- receipts --------------------------------------------------------------------------------------- */
+.receipts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 64px; border: 1.5px solid var(--ink);
+  border-radius: 6px; background: var(--paper-stub); box-shadow: var(--shadow-lg); }
+.receipts > div { padding: 22px 22px 20px; border-right: 1px dashed color-mix(in srgb, var(--ink) 30%, transparent);
+  display: grid; align-content: start; gap: 8px; }
+.receipts > div:last-child { border-right: 0; }
+.receipts .n { font-family: var(--font-data); font-weight: 700; font-size: clamp(34px, 3.3vw, 46px); line-height: 1; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums; }
+.receipts .l { font-size: 15.5px; }
+.receipts a { font-family: var(--font-data); font-size: 13px; overflow-wrap: anywhere; }
+
+/* --- the rule ----------------------------------------------------------------------------------------- */
+.steps { list-style: none; padding: 0; margin: 34px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 2px solid var(--ink); }
+.steps li { padding: 20px 26px 24px 0; display: grid; gap: 8px; align-content: start; }
+.steps li + li { padding-left: 26px; border-left: 1px solid var(--rule); }
+.steps .n { font-family: var(--font-display); font-size: 40px; line-height: 1; color: var(--before); }
+.steps .k { font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.steps .t { font-size: 20px; font-weight: 700; line-height: 1.35; }
+.steps code { font-size: 13.5px; color: var(--muted); overflow-wrap: anywhere; }
+.answers { margin-top: 40px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 46px; align-items: start; }
+.sheet { background: var(--paper-stub); border: 1.5px solid var(--ink); border-radius: 6px; box-shadow: var(--shadow-lg); overflow: hidden; }
+.sheet .head { display: flex; justify-content: space-between; gap: 12px; padding: 12px 20px; border-bottom: 1.5px dashed var(--ink);
+  font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.ans-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 14px; padding: 13px 20px 12px; border-bottom: 1px solid var(--rule); }
+.ans-row:last-child { border-bottom: 0; }
+.ans-row .q { font-weight: 700; }
+.ans-row .a { grid-column: 1 / -1; font-size: 15px; color: var(--muted); }
+.ans-row .p { font-family: var(--font-data); font-weight: 700; }
+.ans-row.x { background: var(--hatch-excluded); }
+.ans-row.x .q, .ans-row.x .p { color: var(--muted); }
+.ans-row.ok .a { color: var(--ink); }
+.closer { font-family: var(--font-display); text-transform: uppercase; font-size: clamp(26px, 2.6vw, 36px); line-height: 1.05; margin: 0; }
+.closer + p { margin: 14px 0 0; color: var(--muted); font-size: 16px; max-width: 30em; }
+.who { margin: 26px 0 0; padding: 16px 18px; border-left: 4px solid var(--before); background: color-mix(in srgb, var(--paper-stub) 70%, transparent); font-size: 16px; }
+
+/* --- the money -------------------------------------------------------------------------------------- */
+.life { margin: 38px 0 0; display: grid; grid-template-columns: minmax(0, 1fr); row-gap: 14px; }
+.life .trunk, .life .branch { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.life > .arrow { display: none; }
+.life .forks { display: grid; gap: 12px; margin-left: clamp(8px, 22vw, 330px); padding-left: 26px; border-left: 2px solid var(--ink); }
+.life .branch::before { content: ""; width: 14px; border-top: 2px solid var(--ink); margin-left: -26px; margin-right: 2px; }
+.life .st { font-family: var(--font-display); font-size: 14px; letter-spacing: .05em; text-transform: uppercase; padding: 6px 10px 5px;
+  border: 2px solid currentColor; border-radius: 4px; transform: rotate(-2deg); white-space: nowrap; }
+.life .st.h { color: var(--before); } .life .st.r { color: var(--after); } .life .st.c { color: var(--ink); }
+.life .arrow { color: var(--muted); font-family: var(--font-data); }
+.life .act { font-family: var(--font-data); font-size: 13.5px; color: var(--muted); }
+.life .act b { color: var(--ink); }
+.ledger { margin-top: 30px; border: 1.5px solid var(--ink); border-radius: 6px; background: var(--paper-stub); box-shadow: var(--shadow-lg); }
+.tabs { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 1.5px solid var(--ink); }
+.tabs button { flex: 1 1 auto; min-height: 50px; padding: 0 18px; border: 0; border-right: 1px solid var(--rule); background: transparent;
+  font: 700 15px/1.2 var(--font-body); color: var(--muted); cursor: pointer; text-align: left;
+  transition: background-color 140ms var(--ease-out), color 140ms var(--ease-out); }
+.tabs button:last-child { border-right: 0; }
+.tabs button:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink); }
+.tabs button[aria-selected="true"] { color: var(--ink); background: var(--bg); box-shadow: inset 0 -3px 0 var(--ink); }
+.tabs button .data { display: block; font-size: 12.5px; font-weight: 400; color: var(--muted); }
+.rows { margin: 0; padding: 8px 0; list-style: none; font-family: var(--font-data); font-size: 14px; }
+.rows li { display: grid; grid-template-columns: 74px 64px minmax(0, 1fr) 132px 168px 70px; gap: 12px; padding: 7px 20px; align-items: baseline; }
+.rows li + li { border-top: 1px dashed var(--rule); }
+.rows .h { color: var(--muted); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; font-family: var(--font-body); font-weight: 700; }
+.rows .path { overflow-wrap: anywhere; }
+.rows .path small { display: block; color: var(--muted); font-size: 12.5px; }
+.rows .http.ok { color: var(--ink); font-weight: 700; } .rows .http.no { color: var(--charge); font-weight: 700; }
+.rows .st { font-weight: 700; overflow-wrap: anywhere; }
+.rows li > span { min-width: 0; } .rows .st.CAPTURED, .rows .st.VOIDED { color: var(--after); } .rows .st.PARTIALLY_CAPTURED, .rows .st.CREATED { color: var(--before); }
+.rows .ms { text-align: right; color: var(--muted); }
+.rows .dbg { color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+.rows li.typed { animation: type-in 260ms var(--ease-out) both; }
+@keyframes type-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.ledger .foot { padding: 12px 20px 14px; border-top: 1.5px dashed var(--ink); font-size: 14px; color: var(--muted); }
+.ledger .foot a { font-family: var(--font-data); }
+
+/* --- live app --------------------------------------------------------------------------------------- */
+.shot { margin: 0; }
+.shot .frame { border: 1.5px solid var(--ink); border-radius: 8px; overflow: hidden; background: var(--paper-stub); box-shadow: var(--shadow-lg); }
+.shot figcaption { margin-top: 10px; font-size: 14.5px; color: var(--muted); }
+.shot figcaption b { color: var(--ink); }
+.swap { margin-top: 36px; }
+.swap .frame { position: relative; aspect-ratio: 1600 / 887; background: var(--bg); }
+.swap .frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: top left;
+  transition: opacity 420ms var(--ease-out); }
+.swap .frame .b { opacity: 0; }
+.swap[data-show="released"] .frame .b { opacity: 1; }
+.swap[data-show="released"] .frame .a { opacity: 0; }
+.swap-ctl { display: inline-flex; margin-top: 14px; border: 2px solid var(--ink); border-radius: 4px; overflow: hidden; }
+.swap-ctl button { min-height: 44px; padding: 0 18px; border: 0; background: transparent; color: var(--ink); font: 700 15px/1 var(--font-body);
+  cursor: pointer; transition: background-color 140ms var(--ease-out), color 140ms var(--ease-out); }
+.swap-ctl button + button { border-left: 2px solid var(--ink); }
+.swap-ctl button:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.swap-ctl button[aria-pressed="true"] { background: var(--ink); color: var(--paper-stub); }
+.swap-ctl button[data-v="released"][aria-pressed="true"] { background: var(--after); }
+.swap-ctl button:focus-visible { outline-offset: -5px; outline-color: var(--paper-stub); }
+.swap .row { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; }
+.swap figcaption { margin: 0; flex: 1 1 22em; }
+.phones { display: grid; grid-template-columns: minmax(0, 270px) minmax(0, 270px) minmax(0, 1fr); gap: 26px; margin-top: 34px; align-items: start; }
+.phones .phone .frame { border-radius: 22px; border-width: 2px; }
+@media print { .swap .frame { aspect-ratio: auto; } .swap .frame img { position: static; opacity: 1 !important; } .swap-ctl { display: none; } }
+/* --- bento ------------------------------------------------------------------------------------------ */
+.bento { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 18px; margin-top: 36px; }
+.card { grid-column: span 2; background: var(--paper-stub); border: 1.5px solid var(--ink); border-radius: 6px; padding: 22px 22px 20px;
+  display: grid; gap: 10px; align-content: start; transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out); }
+.card:hover { transform: translateY(-3px); box-shadow: 0 6px 0 color-mix(in srgb, var(--ink) 85%, transparent); }
+.card.w3 { grid-column: span 3; } .card.w4 { grid-column: span 4; }
+.card svg { width: 40px; height: 40px; }
+.card h3 { font-size: 21px; line-height: 1.05; }
+.card p { margin: 0; font-size: 16px; }
+.chip { justify-self: start; font-family: var(--font-data); font-size: 12.5px; font-weight: 700; padding: 4px 9px; border-radius: 3px;
+  border: 1px solid color-mix(in srgb, var(--ink) 35%, transparent); color: var(--ink); overflow-wrap: anywhere; }
+
+/* --- limits ----------------------------------------------------------------------------------------- */
+.limits { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 34px; }
+.limits blockquote { margin: 0; padding: 20px 22px; background: var(--hatch-excluded), var(--paper-stub); border: 1.5px solid color-mix(in srgb, var(--ink) 40%, transparent);
+  border-radius: 6px; font-size: 17px; }
+.limits blockquote b { display: block; font-family: var(--font-display); font-weight: 400; text-transform: uppercase; font-size: 19px; margin-bottom: 6px; }
+.limits cite { display: block; margin-top: 12px; font-style: normal; font-size: 13px; color: var(--muted); letter-spacing: .04em; }
+
+/* --- faq -------------------------------------------------------------------------------------------- */
+.faq { margin-top: 30px; max-width: 920px; border-top: 2px solid var(--ink); }
+.faq details { border-bottom: 1px solid var(--rule); }
+.faq summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; gap: 18px; align-items: center;
+  padding: 20px 4px; font-size: 19px; font-weight: 700; border-radius: 4px; transition: background-color 140ms var(--ease-out); }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.faq summary::after { content: "+"; font-family: var(--font-display); font-size: 26px; line-height: 1; color: var(--before);
+  transition: transform 200ms var(--ease-out); flex: none; }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq .ans { padding: 0 4px 22px; max-width: 46em; }
+.faq .ans p { margin: 0 0 10px; }
+
+/* --- counterfoil footer ----------------------------------------------------------------------------- */
+.counterfoil { margin-top: 110px; position: relative; padding-top: 50px; padding-bottom: 46px; }
+.counterfoil::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 18px;
+  background: radial-gradient(circle at 9px 9px, var(--paper-shade) 0 4.6px, transparent 5px) 0 0 / 18px 18px repeat-x; }
+.counterfoil::after { content: ""; position: absolute; left: 0; right: 0; top: 8.5px; border-top: 1.5px dashed color-mix(in srgb, var(--before) 55%, transparent); }
+.counterfoil .keep { font-size: 12.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 18px; }
+.counterfoil .end { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr); gap: 40px; align-items: end; }
+.counterfoil .big { font-family: var(--font-display); text-transform: uppercase; font-size: clamp(30px, 3.6vw, 52px); line-height: .98; margin: 0; text-wrap: balance; }
+.links { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font-size: 16px; }
+.links a { font-weight: 700; }
+.small { font-size: 13.5px; color: var(--muted); margin: 28px 0 0; }
+
+/* --- load (one orchestrated entrance; content is visible without it) ----------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .anim .eyebrow, .anim .plate, .anim .pitch, .anim .book { animation: rise 520ms var(--ease-out) both; }
+  .anim .plate { animation-delay: 60ms; } .anim .pitch { animation-delay: 520ms; } .anim .book { animation-delay: 260ms; }
+  .anim .plate s::after { animation: strike 420ms var(--ease-out) 640ms both; }
+  .anim .hero h1 .wd { animation: rise 460ms var(--ease-out) both; animation-delay: calc(120ms + var(--i) * 40ms); }
+}
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes strike { from { transform: rotate(-5deg) scaleX(0); } to { transform: rotate(-5deg) scaleX(1); } }
+
+/* --- responsive -------------------------------------------------------------------------------------- */
+@media (max-width: 1339px) { .margin { display: none; } }
+@media (max-width: 1080px) {
+  .rows li { grid-template-columns: 64px 54px minmax(0, 1fr) 118px; }
+  .rows .dbg, .rows .h .dbg, .rows .ms { display: none; }
+}
+@media (max-width: 760px) { .life .forks { margin-left: 8px; } }
+@media (max-width: 960px) {
+  .wrap { padding: 0 18px; } .margin { display: none; }
+  .hero { grid-template-columns: minmax(0, 1fr); grid-template-areas: "lede" "ticket" "pitch"; row-gap: 26px; }
+  .book::before, .book::after { display: none; }
+  .book .ticket { --under: var(--bg); }
+  .receipts { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 48px; }
+  .receipts > div:nth-child(2) { border-right: 0; }
+  .receipts > div:nth-child(-n+2) { border-bottom: 1px dashed color-mix(in srgb, var(--ink) 30%, transparent); }
+  .steps, .answers, .limits { grid-template-columns: minmax(0, 1fr); }
+  .steps li + li { padding-left: 0; border-left: 0; border-top: 1px solid var(--rule); }
+  .phones { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .phones .wide { grid-column: 1 / -1; }
+  .swap .frame { aspect-ratio: auto; } .swap .frame img { position: static; } .swap .frame .b { display: none; }
+  .swap[data-show="released"] .frame .a { display: none; } .swap[data-show="released"] .frame .b { display: block; }
+  .bento { grid-template-columns: minmax(0, 1fr); } .card, .card.w3, .card.w4 { grid-column: auto; }
+  .counterfoil .end { grid-template-columns: minmax(0, 1fr); }
+  section.block { padding-top: 72px; }
+}
+@media (max-width: 760px) {
+  .nav nav a:not(.pill) { display: none; } .nav .pill { padding: 8px 11px; font-size: 14.5px; margin-left: 2px; }
+  body { font-size: 17px; } .lead, .pitch .sub { font-size: 17.5px; }
+  .rows li { grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding: 8px 14px; }
+  .rows .t { display: none; } .rows .m { display: none; } .rows .path { grid-column: 1 / -1; }
+  .rows .h { display: none; }
+  .tabs button { flex-basis: 100%; border-right: 0; border-bottom: 1px solid var(--rule); }
+  .receipts .n { font-size: 32px; } .receipts > div { padding: 18px 16px 16px; }
+}
+@media (max-width: 420px) { .phones { grid-template-columns: minmax(0, 1fr); } .plate { font-size: 16px; } h2 { font-size: 8.3vw; } }
+@media (max-width: 360px) { .nav .pill:not(.solid) { display: none; } .brand .name { font-size: 19px; } }
+@media print {
+  body { background: var(--bg); } .nav nav, .skip, .tabs, .ctas { display: none !important; }
+  .faq details .ans { display: block; } section.block { break-inside: avoid-page; }
+}
+
+
+.ticket { --under: var(--bg); position: relative; }
+.stub { position: relative; background: var(--paper-stub); border: 1.5px solid var(--ink); border-radius: 6px;
+  box-shadow: var(--shadow-lg); color: var(--ink); text-align: left; overflow: clip; }  /* the ink filter's region must not widen the page */
+.stub .lbl { font-size: 11.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.stub-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; padding: 14px 20px 12px;
+  border-bottom: 1.5px dashed var(--ink); }
+.stub-head .no { font-family: var(--font-data); font-weight: 700; font-size: 18px; margin-top: 3px; }
+.stub-head .veh { text-align: right; font-family: var(--font-data); font-size: 14px; margin-top: 3px; }
+.stub .line { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 14px; row-gap: 3px;
+  padding: 13px 20px 12px; border-bottom: 1px solid var(--rule); }
+.stub .what { font-weight: 700; font-size: 17.5px; }
+.stub .price { font-family: var(--font-data); font-weight: 700; font-size: 19px; text-align: right; }
+.stub .why { grid-column: 1 / -1; font-size: 14.5px; color: var(--muted); }
+.stub .why code { font-family: var(--font-data); font-size: 13.5px; color: var(--ink); }
+.stub .line.excluded { background: var(--hatch-excluded); }
+.stub .line.excluded .what, .stub .line.excluded .price { color: var(--muted); }
+.stub .decide { grid-column: 1 / -1; display: none; gap: 8px; margin-top: 9px; }
+.ticket[data-state="held"] .decide, .ticket[data-state="calling"] .decide { display: flex; }
+.stub .decide button { font: 700 15px/1 var(--font-body); min-height: 44px; padding: 0 18px; border-radius: 4px;
+  border: 2px solid var(--ink); background: var(--ink); color: var(--paper-stub); cursor: pointer;
+  transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out), background-color 140ms var(--ease-out); }
+.stub .decide button:hover { transform: translateY(-1px); box-shadow: 0 3px 0 color-mix(in srgb, var(--ink) 30%, transparent); }
+.stub .decide button:active, .stub .decide button.pressed { transform: translateY(1px) scale(.98); box-shadow: none; }
+.stub .decide button.ghost { background: transparent; color: var(--ink); }
+.stub .decide button.ghost:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.stub .decide button:disabled { cursor: progress; opacity: .7; }
+.stub .decide button:focus-visible { outline: 3px solid var(--before); outline-offset: 2px; }
+.ticket[data-state="held"] .accept { animation: nudge 2.4s var(--ease-out) 1.2s infinite; }
+@keyframes nudge { 0%, 70%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ink) 0%, transparent); }
+  35% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--ink) 16%, transparent); } }
+.stub .perf { position: relative; height: 18px;
+  background: radial-gradient(circle at 9px 9px, var(--under) 0 4.6px, transparent 5px) 0 0 / 18px 18px repeat-x; }
+.stub .perf::after { content: ""; position: absolute; left: 0; right: 0; top: 8.5px;
+  border-top: 1.5px dashed color-mix(in srgb, var(--before) 55%, transparent); }
+.stub-foot { position: relative; padding: 12px 20px 18px; min-height: 136px; }
+.stub .amount { font-family: var(--font-data); font-weight: 700; font-size: 34px; letter-spacing: -.01em; color: var(--ink);
+  transition: color 300ms var(--ease-out); }
+.ticket[data-state="held"] .amount, .ticket[data-state="calling"] .amount { color: var(--before); }
+.stub .split { font-size: 14.5px; color: var(--muted); margin-top: 2px; }
+.stub .split b { font-family: var(--font-data); }
+.stub .split .c { color: var(--charge); } .stub .split .r { color: var(--after); }
+.stub .split [data-when] { display: none; }
+.ticket:not([data-state]) .split [data-when="accepted"],
+.ticket[data-state="held"] .split [data-when="held"], .ticket[data-state="calling"] .split [data-when="held"],
+.ticket[data-state="accepted"] .split [data-when="accepted"], .ticket[data-state="refused"] .split [data-when="accepted"],
+.ticket[data-state="contested"] .split [data-when="contested"] { display: inline; }
+/* rubber stamps: thick outer rule, gap, thin inner rule; multiply ink; −6° */
+.stamp { position: absolute; display: inline-flex; flex-direction: column; align-items: center; z-index: 2;
+  font-family: var(--font-display); font-weight: 400; text-transform: uppercase; letter-spacing: .04em; line-height: .95;
+  white-space: nowrap; border: .13em solid currentColor; border-radius: .28em; padding: .36em .62em .3em;
+  transform: rotate(var(--stamp-angle)); mix-blend-mode: multiply; filter: url(#ink); pointer-events: none; }
+.stamp::before { content: ""; position: absolute; inset: .12em; border: .045em solid currentColor; border-radius: .16em; }
+.stamp small { display: block; margin-top: .42em; font-family: var(--font-data); font-weight: 700; font-size: .44em;
+  letter-spacing: 0; text-transform: none; }
+.stamp.held, .stamp.released { right: 18px; top: 20px; }
+.stamp.held { color: var(--before); font-size: 22px; opacity: .85; }
+.stamp.released { color: var(--after); font-size: 24px; }
+.stamp.charged, .stamp.invoiced { right: 16px; top: 40px; font-size: 15px; }
+.stamp.charged { color: var(--charge); }
+.stamp.invoiced { color: var(--ink); }
+.stamp .w { display: block; }
+/* text never runs under a stamp: the stamped line and the deposit keep a clear lane on the right */
+.stub .line.claim .why { padding-right: 112px; }
+.stub .split { max-width: calc(100% - 196px); }
+/* which stamps exist in which state; the markup default (no data-state) is the settled accept */
+.stamp.held, .stamp.invoiced { display: none; }
+.ticket[data-state="held"] .stamp.held, .ticket[data-state="calling"] .stamp.held { display: inline-flex; }
+.ticket[data-state="held"] .stamp.released, .ticket[data-state="calling"] .stamp.released,
+.ticket[data-state="held"] .stamp.charged, .ticket[data-state="calling"] .stamp.charged,
+.ticket[data-state="contested"] .stamp.charged { display: none; }
+.ticket[data-state="contested"] .stamp.invoiced { display: inline-flex; }
+.ticket.play .stamp.charged, .ticket.play .stamp.invoiced { animation: land 300ms var(--ease-stamp) both; }
+.ticket.play .stamp.released { animation: land 340ms var(--ease-stamp) 520ms both; }
+@keyframes land { 0% { opacity: 0; transform: rotate(var(--stamp-angle)) scale(1.55); }
+  70% { opacity: 1; transform: rotate(var(--stamp-angle)) scale(.96); }
+  100% { opacity: 1; transform: rotate(var(--stamp-angle)) scale(1); } }
+/* the tape: PayPal's answers typed under the stub, replayed at recorded speed */
+.tape { list-style: none; margin: 14px 0 0; padding: 12px 16px; min-height: 92px; background: var(--paper-stub);
+  border: 1px solid var(--rule); border-radius: 4px; font-family: var(--font-data); font-size: 13.5px; line-height: 1.45; }
+.tape li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 10px; padding: 3px 0; }
+.tape li + li { border-top: 1px dashed var(--rule); }
+.tape .t { color: var(--muted); }
+.tape .call { overflow-wrap: anywhere; }
+.tape .ans { font-weight: 700; text-align: right; white-space: nowrap; }
+.tape .ans.ok { color: var(--ink); } .tape .ans.no { color: var(--charge); }
+.tape .ans.pending { color: var(--muted); font-weight: 400; }
+.tape .meta { grid-column: 2 / -1; color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+.tape .hint { display: block; font-family: var(--font-body); font-size: 14.5px; color: var(--muted); }
+.tape .hint b { color: var(--ink); }
+.tape .more { display: none; gap: 8px; flex-wrap: wrap; padding-top: 8px; font-family: var(--font-body); }
+.ticket[data-state="accepted"] .tape .more, .ticket[data-state="refused"] .tape .more,
+.ticket[data-state="contested"] .tape .more { display: flex; }
+.tape .more button { font: 700 14px/1 var(--font-body); min-height: 40px; padding: 0 14px; border-radius: 4px; cursor: pointer;
+  border: 1.5px solid var(--ink); background: transparent; color: var(--ink);
+  transition: background-color 140ms var(--ease-out), transform 140ms var(--ease-out); }
+.tape .more button:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); transform: translateY(-1px); }
+.tape .more button:active { transform: translateY(1px); }
+.tape .more button:focus-visible { outline: 3px solid var(--before); outline-offset: 2px; }
+.tape .more button[hidden] { display: none; }
+@media (max-width: 520px) {
+  .stub .line, .stub-head, .stub-foot { padding-left: 14px; padding-right: 14px; }
+  .stub .what { font-size: 16.5px; }
+  .stub .amount { font-size: 30px; }
+  .stamp.held, .stamp.released { right: 10px; top: 24px; font-size: 20px; }
+  .stamp.charged, .stamp.invoiced { right: 10px; top: 42px; font-size: 13.5px; }
+  .stub .line.claim .why { padding-right: 96px; }
+  .stub .split { max-width: calc(100% - 160px); }
+  .tape li { grid-template-columns: minmax(0, 1fr) auto; } .tape .t { display: none; } .tape .meta { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticket .stamp, .ticket.play .stamp { animation: none !important; }
+  .ticket[data-state="held"] .accept { animation: none; }
+  .stub .decide button, .tape .more button { transition: none; }
+}
+@media print { .stub .decide, .tape .more { display: none !important; } }
+
+
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><filter id="ink" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">
+<feTurbulence type="fractalNoise" baseFrequency="0.2" numOctaves="3" seed="7" result="m"/>
+<feColorMatrix in="m" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -7 5.75" result="mv"/>
+<feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="1" seed="2" result="f"/>
+<feColorMatrix in="f" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -14 10.9" result="fv"/>
+<feComposite in="mv" in2="fv" operator="arithmetic" k1="1" result="voids"/>
+<feTurbulence type="fractalNoise" baseFrequency="0.07" numOctaves="2" seed="4" result="warp"/>
+<feDisplacementMap in="SourceGraphic" in2="warp" scale="2.2" xChannelSelector="R" yChannelSelector="G" result="rough"/>
+<feComposite in="rough" in2="voids" operator="in"/></filter></svg>
+<a class="skip" href="#rule">Skip to the rule</a>
+<div class="margin" aria-hidden="true"></div>
+<header class="nav wrap">
+  <a class="brand" href="#h1" aria-label="Jaminan — top of the page"><span class="mark" aria-hidden="true">J</span><span class="name">Jaminan</span></a>
+  <nav aria-label="Sections"><a href="#rule">The rule</a><a href="#money">The money</a><a href="#live">Live app</a><a href="#faq">FAQ</a>
+    <a class="pill" href="pitch/">Deck</a><a class="pill solid" href="https://github.com/edycutjong/jaminan">GitHub</a></nav>
+</header>
+<main>
+<section class="hero wrap" aria-labelledby="h1">
+  <div class="lede">
+    <p class="eyebrow">Kwitansi · <span lang="id">tanda terima jaminan</span> — a receipt for a deposit</p>
+    <p class="plate"><span class="k" lang="id">Jaminan</span><s lang="id">Paspor</s><span class="to">PayPal hold <span class="amt">$100.00</span></span></p>
+    <h1 id="h1"><span class="ch"><span class="wd" style="--i:0">The</span> <span class="wd" style="--i:1">deposit</span></span> <span class="ch"><span class="wd" style="--i:2">that</span> <span class="wd" style="--i:3">remembers</span></span> <span class="ch"><span class="wd" style="--i:4">the</span> <span class="wd" style="--i:5">dent</span> <span class="wd" style="--i:6">was</span></span> <em class="ch"><span class="wd" style="--i:7">already</span> <span class="wd" style="--i:8">there.</span></em></h1>
+  </div>
+  <div class="pitch">
+    <p class="sub">At a Bali scooter counter the deposit is often your passport, and at return whoever holds it wins the argument. Jaminan holds <b class="amt">$100.00</b> on PayPal instead. The shop points at a mark, the shared pickup photos answer, and PayPal captures only the line the renter accepts.</p>
+    <div class="ctas">
+      <a class="cta solid" href="https://github.com/edycutjong/jaminan"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+      <a class="cta" href="pitch/">Pitch deck</a>
+      <a class="cta" href="https://jaminan.edycu.dev/judge">Open the judge path →</a>
+    </div>
+    <p class="proof">PayPal sandbox · every id read back from PayPal · claim answers scripted until the vision bench</p>
+  </div>
+  <div class="book">
+    <div class="ticket" id="ticket" data-run="R-JUDGE-9001">
+  <section class="stub" aria-label="Rental stub R-JUDGE-9001, replayed from a recorded PayPal sandbox run">
+    <header class="stub-head">
+      <div><div class="lbl">Sewa · Rental</div><div class="no" data-rid>R-JUDGE-9001</div></div>
+      <div><div class="lbl" style="text-align:right">Demo scooter 1</div><div class="veh">B 0000 JMN · 1 day</div></div>
+    </header>
+    <div class="line"><span class="what">Rental fee</span><span class="price">$15.00</span>
+      <span class="why">captured from the hold · <code>final_capture=false</code> · PayPal: PARTIALLY_CAPTURED</span></div>
+    <div class="line claim"><span class="what">Mirror housing — crack</span><span class="price">$18.00</span>
+      <span class="why">new since pickup — priced from the tariff</span>
+      <div class="decide"><button type="button" class="accept">Accept $18.00</button><button type="button" class="ghost contest">Contest</button></div>
+      <span class="stamp charged" aria-hidden="true"><span class="w">Ditagih</span><span class="w">Charged</span></span>
+      <span class="stamp invoiced" aria-hidden="true"><span class="w">Tagihan</span><span class="w">Invoice</span></span>
+    </div>
+    <div class="line excluded"><span class="what">Side panel — dent</span><span class="price">—</span>
+      <span class="why">visible at pickup — cannot be charged</span></div>
+    <div class="perf" aria-hidden="true"></div>
+    <footer class="stub-foot">
+      <div class="lbl">Jaminan kerusakan · Damage deposit</div>
+      <div class="amount">$100.00</div>
+      <div class="split" aria-live="polite"><span data-when="held">held on PayPal — not charged</span><span data-when="accepted"><b class="c">$18.00</b> captured<br><b class="r">$82.00</b> released</span><span data-when="contested"><b class="r">$100.00</b> released<br><b>$18.00</b> invoiced</span></div>
+      <span class="stamp held" aria-hidden="true"><span class="w">Ditahan</span><span class="w">Held</span></span>
+      <span class="stamp released" role="img" aria-label="Released — PayPal read back CAPTURED"><span><span class="w">Dilepas</span><span class="w">Released</span></span><small data-readback>PayPal: CAPTURED</small></span>
+    </footer>
+  </section>
+  <ol class="tape" aria-live="polite" aria-label="PayPal calls, replayed from the recorded run">
+    <li class="seed"><span class="hint">Recorded run <b>R-JUDGE-9001</b>, PayPal sandbox: <b>one capture of $18.00 with <code>final_capture=true</code></b> → read-back <b>CAPTURED</b>; the other $82.00 released by the same call. <a href="evidence/paypal-sandbox-run.json">Evidence</a></span></li>
+    <li class="more"><button type="button" class="again">Capture again?</button><button type="button" class="contest2">What if the renter contests?</button><button type="button" class="replay">Replay</button></li>
+  </ol>
+</div>
+    <p class="replay-note">Replays the recorded calls at their recorded speed. <a href="#money">All three runs ↓</a></p>
+  </div>
+</section>
+<div class="wrap"><div class="receipts" aria-label="Measured, with the file that proves each number"><div><span class="n" data-count="23040">23,040</span><span class="l">claim cases swept: every chargeable answer is new since pickup and priced from the tariff</span><a href="https://github.com/edycutjong/jaminan/blob/main/tests/test_invariants.py">tests/<wbr>test_invariants.py</a></div><div><span class="n" data-count="3000">3,000</span><span class="l">generated settlements per run, at most (Hypothesis): the hold pays exactly the lines the renter accepted</span><a href="https://github.com/edycutjong/jaminan/blob/main/tests/test_invariants.py">tests/<wbr>test_invariants.py</a></div><div><span class="n" data-count="101">101</span><span class="l">tests passing, 8 of them against the real PayPal sandbox</span><a href="evidence/test-run.txt">evidence/<wbr>test-run.txt</a></div><div><span class="n" data-count="19">19</span><span class="l">PayPal REST endpoints in a hand-written client: orders, payments, vault, invoicing, webhooks</span><a href="evidence/README.md">evidence/<wbr>README.md</a></div></div></div>
+<section class="block wrap" id="rule" aria-labelledby="rule-h">
+  <p class="sec"><b>No. 1</b> <span lang="id">Aturan</span> · the rule</p>
+  <h2 id="rule-h">The owner points. <em>The shared baseline answers.</em></h2>
+  <p class="lead">At pickup, renter and shop walk eight angles round the scooter and confirm the photos together. At return the shop taps each mark it wants to charge and names it from the published tariff. A vision model answers narrow questions about the photos both sides confirmed. It never sets a price.</p>
+  <ol class="steps">
+    <li><span class="n">1</span><span class="k" lang="id">Toko menunjuk</span><span class="t">The shop taps a mark and picks its part and kind from the tariff list.</span><code>mirror_housing · crack · $18.00</code></li>
+    <li><span class="n">2</span><span class="k" lang="id">Foto awal menjawab</span><span class="t">The model only answers what the shared pickup photos can show.</span><code>visible_at_pickup · pickup_comparable · mark_at_return</code></li>
+    <li><span class="n">3</span><span class="k" lang="id">Penyewa memutuskan</span><span class="t">The renter accepts or contests each line. The hold pays only what they accept.</span><code>capture · final_capture=true</code></li>
+  </ol>
+  <div class="answers">
+    <div>
+      <p class="closer">What the shared baseline can't show, nobody can charge.</p>
+      <p>Code turns the model's answers into one of these lines, in this order. Only the last kind of line has a price, and only from the shop's published tariff.</p>
+      <p class="who"><b>Who it is for:</b> family-run scooter counters in Jakarta and Bali, and the tourists and locals who rent from them and today leave a passport or KTP as the deposit.</p>
+    </div>
+    <div class="sheet" role="table" aria-label="What the shared baseline shows, and the line code writes">
+      <div class="head" role="row"><span role="columnheader">The shared baseline shows…</span><span role="columnheader">Price</span></div>
+      <div class="ans-row x"><span class="q">The mark was already visible at pickup</span><span class="p">—</span><span class="a">visible at pickup — cannot be charged</span></div><div class="ans-row x"><span class="q">The pickup photo can&#x27;t show that spot (glare, blur)</span><span class="p">—</span><span class="a">the shared baseline can&#x27;t show this — cannot be charged</span></div><div class="ans-row x"><span class="q">There is no mark there at return</span><span class="p">—</span><span class="a">no mark found at return — cannot be charged</span></div><div class="ans-row x"><span class="q">It is not the kind of damage the shop named</span><span class="p">—</span><span class="a">doesn&#x27;t look like that — can&#x27;t be paid from the hold</span></div><div class="ans-row ok"><span class="q">It is clearly new since pickup</span><span class="p">tariff</span><span class="a">new — priced from tariff (mirror housing crack: $18.00)</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="block wrap" id="money" aria-labelledby="money-h">
+  <p class="sec"><b>No. 2</b> <span lang="id">Uang</span> · the money</p>
+  <h2 id="money-h">One authorization carries <em>the whole rental.</em></h2>
+  <p class="lead">One renter approval authorizes the fee and the deposit together (<span class="amt">$115.00</span>) and saves the wallet for later fines. Everything after happens on that one authorization, and every stamp waits for PayPal's own read-back.</p>
+  <div class="life" role="img" aria-label="The authorization's life: authorize, CREATED; capture the fee with final_capture false, PARTIALLY_CAPTURED; then an accepted line is captured with final_capture true, CAPTURED, and a second capture is refused 422; or no damage is voided, VOIDED; or a contested line is invoiced and the hold voided, VOIDED.">
+    <div class="trunk"><span class="act">authorize <b>$115.00</b></span><span class="arrow">→</span><span class="st h">Created</span><span class="arrow">→</span>
+      <span class="act">capture fee <b>$15.00</b> · final_capture=false</span><span class="arrow">→</span><span class="st h">Partially captured</span></div>
+    <span class="arrow" aria-hidden="true"></span>
+    <div class="forks">
+      <div class="branch"><span class="act">accepted line <b>$18.00</b> · final_capture=true</span><span class="arrow">→</span><span class="st r">Captured</span><span class="arrow">→</span><span class="act">capture again</span><span class="arrow">→</span><span class="st c">422 refused</span></div>
+      <div class="branch"><span class="act">no new damage · void</span><span class="arrow">→</span><span class="st r">Voided</span></div>
+      <div class="branch"><span class="act">contested · invoice <b>$18.00</b> sent · void</span><span class="arrow">→</span><span class="st r">Voided</span></div>
+    </div>
+  </div>
+  <div class="ledger" id="calls">
+    <div class="tabs" role="tablist" aria-label="Recorded runs"><button type="button" role="tab" id="tab-accepted" aria-controls="run-accepted" aria-selected="true" tabindex="0">Renter accepts the crack<span class="data">R-JUDGE-9001 · auth 59Y22025SE889191E</span></button><button type="button" role="tab" id="tab-clean" aria-controls="run-clean" aria-selected="false" tabindex="-1">No new damage<span class="data">R-JUDGE-9002 · auth 6PV888804V785821A</span></button><button type="button" role="tab" id="tab-contested" aria-controls="run-contested" aria-selected="false" tabindex="-1">Renter contests the crack<span class="data">R-JUDGE-9003 · auth 3EP89225J0560011A</span></button></div>
+    <ol class="rows" role="tabpanel" id="run-accepted" aria-labelledby="tab-accepted"><li class="h" aria-hidden="true"><span class="t">UTC</span><span class="m">Call</span><span class="path">What</span><span>PayPal says</span><span class="dbg">Debug id</span><span class="ms">ms</span></li><li><span class="t">16:29:30</span><span class="m">POST</span><span class="path">authorize fee + deposit · $115.00<small>/v2/checkout/orders</small></span><span><span class="http ok">201</span> <span class="st COMPLETED">COMPLETED</span></span><span class="dbg">f129062b61ea4</span><span class="ms">2,487</span></li><li><span class="t">16:29:32</span><span class="m">POST</span><span class="path">capture the fee · $15.00 · final_capture=false<small>/v2/payments/authorizations/{id}/capture</small></span><span><span class="http ok">201</span> <span class="st COMPLETED">COMPLETED</span></span><span class="dbg">f666818a6fc15</span><span class="ms">2,079</span></li><li><span class="t">16:29:33</span><span class="m">POST</span><span class="path">write the handover<small>/v2/checkout/orders/{id}/track</small></span><span><span class="http ok">201</span> <span class="st COMPLETED">COMPLETED</span></span><span class="dbg">f5985964041c7</span><span class="ms">1,470</span></li><li><span class="t">16:29:34</span><span class="m">GET</span><span class="path">read back<small>/v2/payments/authorizations/{id}</small></span><span><span class="http ok">200</span> <span class="st PARTIALLY_CAPTURED">PARTIALLY_<wbr>CAPTURED</span></span><span class="dbg">f851387639df7</span><span class="ms">860</span></li><li><span class="t">16:29:37</span><span class="m">POST</span><span class="path">capture accepted line · $18.00 · final_capture=true<small>/v2/payments/authorizations/{id}/capture</small></span><span><span class="http ok">201</span> <span class="st COMPLETED">COMPLETED</span></span><span class="dbg">f92235735fe35</span><span class="ms">2,283</span></li><li><span class="t">16:29:37</span><span class="m">GET</span><span class="path">read back<small>/v2/payments/authorizations/{id}</small></span><span><span class="http ok">200</span> <span class="st CAPTURED">CAPTURED</span></span><span class="dbg">f2917404f2365</span><span class="ms">484</span></li><li><span class="t">16:29:38</span><span class="m">POST</span><span class="path">capture again · $1.00 · final_capture=false<small>/v2/payments/authorizations/{id}/capture</small></span><span><span class="http no">422</span> <span class="st AUTHORIZATION_ALREADY_CAPTURED">AUTHORIZATION_<wbr>ALREADY_<wbr>CAPTURED</span></span><span class="dbg">f5799404eea63</span><span class="ms">671</span></li><li><span class="t">16:29:38</span><span class="m">GET</span><span class="path">read back<small>/v2/payments/authorizations/{id}</small></span><span><span class="http ok">200</span> <span class="st CAPTURED">CAPTURED</span></span><span class="dbg">f937455696d61</span><span class="ms">489</span></li></ol><ol class="rows" role="tabpanel" id="run-clean" aria-labelledby="tab-clean" hidden><li class="h" aria-hidden="true"><span class="t">UTC</span><span class="m">Call</span><span class="path">What</span><span>PayPal says</span><span class="dbg">Debug id</span><span class="ms">ms</span></li><li><span class="t">16:29:41</span><span class="m">POST</span><span class="path">authorize fee + deposit · $115.00<small>/v2/checkout/orders</small></span><span><span class="http ok">201</span> <span class="st COMPLETED">COMPLETED</span></span><span class="dbg">f93745590a204</span><span class="ms">3,075</span></li><li><span class="t">16:29:43</span><span class="m">POST</span><span class="path">capture the fee · $15.00 · final_capture=false<small>/v2/payments/authorizations/{id}/capture</small></span><span><span class="http ok">201</span> <span class="st COMPLETED">COMPLETED</span></span><span class="dbg">f96667641bc03</span><span class="ms">1,873</span></li><li><span class="t">16:29:44</span><span class="m">POST</span><span class="path">write the handover<small>/v2/checkout/orders/{id}/track</small></span><span><span class="http ok">201</span> <span class="st COMPLETED">COMPLETED</span></span><span class="dbg">f8967364fa272</span><span class="ms">976</span></li><li><span class="t">16:29:45</span><span class="m">GET</span><span class="path">read back<small>/v2/payments/authorizations/{id}</small></span><span><span class="http ok">200</span> <span class="st PARTIALLY_CAPTURED">PARTIALLY_<wbr>CAPTURED</span></span><span class="dbg">f28136428b58b</span><span class="ms">1,073</span></li><li><span class="t">16:29:47</span><span class="m">POST</span><span class="path">void the hold<small>/v2/payments/authorizations/{id}/void</small></span><span><span class="http ok">200</span> <span class="st VOIDED">VOIDED</span></span><span class="dbg">f445083c87ddf</span><span class="ms">1,077</span></li><li><span class="t">16:29:47</span><span class="m">GET</span><span class="path">read back<small>/v2/payments/authorizations/{id}</small></span><span><span class="http ok">200</span> <span class="st VOIDED">VOIDED</span></span><span class="dbg">f523165753622</span><span class="ms">458</span></li><li><span class="t">16:29:48</span><span class="m">GET</span><span class="path">read back<small>/v2/payments/authorizations/{id}</small></span><span><span class="http ok">200</span> <span class="st VOIDED">VOIDED</span></span><span class="dbg">f7999438bd6d9</span><span class="ms">474</span></li></ol><ol class="rows" role="tabpanel" id="run-contested" aria-labelledby="tab-contested" hidden><li class="h" aria-hidden="true"><span class="t">UTC</span><span class="m">Call</span><span class="path">What</span><span>PayPal says</span><span class="dbg">Debug id</span><span class="ms">ms</span></li><li><span class="t">16:29:50</span><span class="m">POST</span><span class="path">authorize fee + deposit · $115.00<small>/v2/checkout/orders</small></span><span><span class="http ok">201</span> <span class="st COMPLETED">COMPLETED</span></span><span class="dbg">f79994391de88</span><span class="ms">2,073</span></li><li><span class="t">16:29:51</span><span class="m">POST</span><span class="path">capture the fee · $15.00 · final_capture=false<small>/v2/payments/authorizations/{id}/capture</small></span><span><span class="http ok">201</span> <span class="st COMPLETED">COMPLETED</span></span><span class="dbg">f953867c79f73</span><span class="ms">1,680</span></li><li><span class="t">16:29:52</span><span class="m">POST</span><span class="path">write the handover<small>/v2/checkout/orders/{id}/track</small></span><span><span class="http ok">201</span> <span class="st COMPLETED">COMPLETED</span></span><span class="dbg">f8008401e5c5d</span><span class="ms">885</span></li><li><span class="t">16:29:53</span><span class="m">GET</span><span class="path">read back<small>/v2/payments/authorizations/{id}</small></span><span><span class="http ok">200</span> <span class="st PARTIALLY_CAPTURED">PARTIALLY_<wbr>CAPTURED</span></span><span class="dbg">f5310656f00f4</span><span class="ms">1,277</span></li><li><span class="t">16:29:55</span><span class="m">POST</span><span class="path">void the hold<small>/v2/payments/authorizations/{id}/void</small></span><span><span class="http ok">200</span> <span class="st VOIDED">VOIDED</span></span><span class="dbg">f36444694a742</span><span class="ms">1,475</span></li><li><span class="t">16:29:55</span><span class="m">GET</span><span class="path">read back<small>/v2/payments/authorizations/{id}</small></span><span><span class="http ok">200</span> <span class="st VOIDED">VOIDED</span></span><span class="dbg">f919047ff3ba4</span><span class="ms">458</span></li><li><span class="t">16:29:56</span><span class="m">POST</span><span class="path">invoice the line<small>/v2/invoicing/invoices</small></span><span><span class="http ok">201</span> <span class="st DRAFT">DRAFT</span></span><span class="dbg">f919047966708</span><span class="ms">574</span></li><li><span class="t">16:29:57</span><span class="m">POST</span><span class="path">send invoice<small>/v2/invoicing/invoices/{id}/send</small></span><span><span class="http ok">200</span> <span class="st "></span></span><span class="dbg">f5470326ae735</span><span class="ms">1,025</span></li><li><span class="t">16:29:58</span><span class="m">POST</span><span class="path">invoice QR<small>/v2/invoicing/invoices/{id}/generate-qr-code</small></span><span><span class="http ok">200</span> <span class="st "></span></span><span class="dbg">f94609796710e</span><span class="ms">969</span></li><li><span class="t">16:29:59</span><span class="m">GET</span><span class="path">read back<small>/v2/payments/authorizations/{id}</small></span><span><span class="http ok">200</span> <span class="st VOIDED">VOIDED</span></span><span class="dbg">f3433060e1d16</span><span class="ms">486</span></li></ol>
+    <p class="foot">Recorded 2026-10-14 16:29 UTC on the PayPal sandbox by <code>scripts/record_paypal_evidence.py</code>: three rentals, each a merchant-initiated authorization on a saved sandbox wallet. The accepted line was captured once for <span class="amt">$18.00</span> and <span class="amt">$82.00</span> went back in the same call. The claim answers in these runs are scripted; the PayPal side is real. <a href="evidence/paypal-sandbox-run.json">evidence/paypal-sandbox-run.json</a></p>
+  </div>
+</section>
+<section class="block wrap" id="live" aria-labelledby="live-h">
+  <p class="sec"><b>No. 3</b> <span lang="id">Aplikasi</span> · the live app</p>
+  <h2 id="live-h">Two phones. <em>One rental.</em></h2>
+  <p class="lead">The same flow runs at <a href="https://jaminan.edycu.dev">jaminan.edycu.dev</a>. <a href="https://jaminan.edycu.dev/judge">/judge</a> mints a fresh sandbox rental on a saved sandbox wallet, with no login, and one tap releases it. Real captures of the live app; each names its rental.</p>
+  <figure class="shot swap" id="swap" data-show="held">
+    <div class="frame">
+      <img class="a" src="site/screens/judge-held.webp" width="1600" height="887" loading="lazy" decoding="async" alt="Jaminan — the judge page with the hold live: $100.00 held under DITAHAN · HELD, and PayPal's read-back PARTIALLY_CAPTURED with the authorization id">
+      <img class="b" src="site/screens/judge-released.webp" width="1600" height="866" loading="lazy" decoding="async" alt="Jaminan — the same rental one tap later: DILEPAS · RELEASED, and PayPal's read-back VOIDED">
+    </div>
+    <div class="row">
+      <div class="swap-ctl" role="group" aria-label="Show the rental before or after the release">
+        <button type="button" data-v="held" aria-pressed="true">Hold is live</button><button type="button" data-v="released" aria-pressed="false">One tap later</button>
+      </div>
+      <figcaption><b>/judge, rental R-JUDGE-13</b> (2026-10-14 17:11 UTC). The fee is captured from the hold and PayPal reads back <code>PARTIALLY_CAPTURED</code>; one tap voids the hold and the green stamp fires on PayPal's read-back, <code>VOIDED</code>.</figcaption>
+    </div>
+  </figure>
+  <div class="phones">
+    <figure class="shot phone"><div class="frame"><img src="site/screens/counter.webp" width="750" height="730" loading="lazy" decoding="async" alt="Jaminan — the shop phone in Bahasa: a new rental stub with $100.00 to be held on PayPal, not charged"></div>
+      <figcaption><b>Shop phone, Bahasa.</b> A new stub before the renter approves (live e2e run, rental <span class="amt">R-1014-2E81996C</span>; the renter's QR is cropped out: it carries their key).</figcaption></figure>
+    <figure class="shot phone"><div class="frame"><img src="site/screens/receipt.webp" width="780" height="1180" loading="lazy" decoding="async" alt="Jaminan — the renter's receipt in English: the released stamp, PayPal says VOIDED, with the authorization, fee capture and handover ids"></div>
+      <figcaption><b>Renter phone, English.</b> The receipt with PayPal's ids (R-JUDGE-13).</figcaption></figure>
+    <figure class="shot wide"><div class="frame"><img src="site/screens/verify.webp" width="1225" height="925" loading="lazy" decoding="async" alt="Jaminan — every PayPal call for the rental with HTTP status and PayPal debug ids, the live read-back VOIDED, and the rental's webhooks marked verified"></div>
+      <figcaption><b>Every PayPal call, live.</b> <a href="https://jaminan.edycu.dev/integrations/verify">/integrations/verify</a> lists each call with its debug id, re-asks PayPal for the authorization, and shows the rental's webhooks with PayPal's signature check.</figcaption></figure>
+  </div>
+</section>
+<section class="block wrap" id="built" aria-labelledby="built-h">
+  <p class="sec"><b>No. 4</b> <span lang="id">Cara kerja</span> · how it is built</p>
+  <h2 id="built-h">Arithmetic says no first. <em>PayPal says yes last.</em></h2>
+  <div class="bento"><article class="card w4"><svg viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="4" width="22" height="32" rx="4"/><path d="M15 21l4 4 7-9"/><path d="M17 31h6"/></svg><h3>One approval holds it all</h3><p>The renter approves once in PayPal: the fee and the deposit are authorized together and the wallet is saved for later fines, with that consent shown before PayPal opens.</p><span class="chip">Orders v2 · intent AUTHORIZE · store_in_vault ON_SUCCESS</span></article><article class="card "><svg viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13V7h6M29 7h6v6M35 27v6h-6M11 33H5v-6"/><circle cx="20" cy="20" r="6"/><path d="M10 30l20-20"/></svg><h3>Bad frames never reach the model</h3><p>Blur and glare are rejected by arithmetic on a fixed 1280 px frame, before any model call.</p><span class="chip">numpy + Pillow · Laplacian variance · clipped highlights</span></article><article class="card "><svg viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="20" height="16" rx="2"/><rect x="16" y="18" width="20" height="16" rx="2"/><circle cx="26" cy="26" r="3.2"/><path d="M10 14h8"/></svg><h3>The model answers, never prices</h3><p>Per tap: is there a mark now, is it the kind named, was it visible at pickup, can the pickup photo show that spot.</p><span class="chip">Qwen VL · JSON schema · 0–1000 boxes</span></article><article class="card "><svg viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 8h24M8 16h24M8 24h14M8 32h10"/><path d="M26 28l4 4 6-8"/></svg><h3>Code decides</h3><p>The answers become a line in a fixed order. A model the benchmark has not pinned can never produce a chargeable line.</p><span class="chip">rules.py · decide_claim</span></article><article class="card "><svg viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h20v16H6z"/><path d="M26 17h5l4 5v6h-9"/><circle cx="12" cy="30" r="3"/><circle cx="29" cy="30" r="3"/><path d="M10 18h8"/></svg><h3>The handover is written to PayPal</h3><p>Tracking on the fee capture carries the first 8 hex characters of the baseline&#x27;s SHA-256.</p><span class="chip">orders/{id}/track</span></article><article class="card w3"><svg viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-6 20 20)"><rect x="5" y="11" width="30" height="18" rx="3"/><rect x="8.5" y="14.5" width="23" height="11" rx="1"/><path d="M13 20h14"/></g></svg><h3>The hold pays only accepted lines</h3><p>Accepted lines are one capture with final_capture=true; no damage is a void; a contested line leaves as an itemized PayPal invoice with a QR code.</p><span class="chip">Payments v2 capture · void · Invoicing v2</span></article><article class="card w3"><svg viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="9" width="28" height="20" rx="2"/><circle cx="15" cy="19" r="4.5"/><path d="M23 15h7M23 20h7M23 25h4"/><path d="M14 33h12"/></svg><h3>Fines weeks later, without a second login</h3><p>A traffic-camera ticket whose plate and time match the rental is charged to the saved wallet, capped by the ceiling for that violation; the renter has 72 hours to contest.</p><span class="chip">merchant-initiated · vault_id</span></article></div>
+</section>
+<section class="block wrap" id="limits" aria-labelledby="limits-h">
+  <p class="sec"><b>No. 5</b> <span lang="id">Batas</span> · honest by design</p>
+  <h2 id="limits-h">What it does not do <em>yet.</em></h2>
+  <div class="limits"><blockquote><b>Sandbox only.</b> Nothing here has moved live money; live vault and merchant-initiated eligibility are unverified.<cite>— README · Honest limits 1</cite></blockquote><blockquote><b>No vision accuracy claim yet.</b> Until the benchmark runs, no finding from a non-benchmarked model is chargeable.<cite>— README · Honest limits 5</cite></blockquote><blockquote><b>Non-return is out of scope.</b> Jaminan covers damage and fines, not a scooter that never comes back.<cite>— README · Honest limits 4</cite></blockquote></div>
+</section>
+<section class="block wrap" id="faq" aria-labelledby="faq-h">
+  <p class="sec"><b>No. 6</b> <span lang="id">Tanya</span> · questions a judge would ask</p>
+  <h2 id="faq-h">Fair <em>questions.</em></h2>
+  <div class="faq"><details><summary>Is any of this real money?</summary><div class="ans"><p>No. Everything runs on the PayPal sandbox. Every id on this page was read back from PayPal by <code>scripts/record_paypal_evidence.py</code>; run it with sandbox credentials and you get new ids with the same statuses.</p></div></details><details><summary>What does the AI decide?</summary><div class="ans"><p>Nothing about money. For each mark the shop taps, the vision model answers narrow questions about the shared pickup photos: is there a mark now, is it the kind named, was it visible at pickup, can the pickup photo show that spot. Code turns the answers into “cannot be charged” or a line priced from the tariff.</p></div></details><details><summary>Has the vision model been benchmarked?</summary><div class="ans"><p>Not yet. The staged scooter photo set is being shot. Until a model is pinned by the benchmark, every live claim ends “comparison unavailable — nothing charged from the hold”, which is why the recorded runs on this page use scripted answers. No accuracy number appears anywhere.</p></div></details><details><summary>What stops the shop from charging an old dent?</summary><div class="ans"><p>Two locks. The pickup baseline both sides confirmed: a mark it shows, or a spot it cannot show, cannot be charged. And the renter: the hold pays only the lines they accept.</p></div></details><details><summary>And if the renter says no?</summary><div class="ans"><p>The contested line leaves as an itemized PayPal invoice at the published tariff price, with a link to the evidence pack, and the hold is released.</p></div></details><details><summary>What happens when I open /judge?</summary><div class="ans"><p>It mints a fresh sandbox rental on a saved sandbox wallet (a merchant-initiated authorization, no login) and opens it on the shop's phone. Today it can release the hold, read back as VOIDED; priced lines wait for the staged photo set and a benchmarked model. A full-path button runs the real PayPal approval page with a sandbox buyer.</p></div></details></div>
+</section>
+</main>
+<footer class="counterfoil wrap" aria-label="Counterfoil">
+  <p class="keep"><span lang="id">Simpan bagian ini</span> · keep this part</p>
+  <div class="end">
+    <div>
+      <p class="big">What the shared baseline can't show, nobody can charge.</p>
+      <div class="ctas"><a class="cta solid" href="https://jaminan.edycu.dev/judge">Open the judge path →</a><a class="cta" href="pitch/">Pitch deck</a></div>
+    </div>
+    <ul class="links">
+      <li><a href="https://github.com/edycutjong/jaminan">GitHub · edycutjong/jaminan</a></li>
+      <li><a href="https://jaminan.edycu.dev">Live app · jaminan.edycu.dev</a></li>
+      <li><a href="evidence/README.md">Evidence pack</a></li>
+      <li><a href="https://github.com/edycutjong/jaminan/blob/main/LICENSE">MIT license</a></li>
+    </ul>
+  </div>
+  <p class="small">Built for the PayPal AI Hackathon · PayPal sandbox only · v0.0.0-dev · 0efd24c</p>
+</footer>
+<script>(() => {
+const D = {"steps": {"accept": [{"t": "16:29:37", "call": "capture $18.00 \u00b7 final_capture=true", "http": 201, "answer": "COMPLETED", "ok": true, "id": "1DK41086KS913835V", "debug": "f92235735fe35", "ms": 2283}, {"t": "16:29:37", "call": "read back the authorization", "http": 200, "answer": "CAPTURED", "ok": true, "id": null, "debug": "f2917404f2365", "ms": 484}], "again": [{"t": "16:29:38", "call": "capture $1.00 again", "http": 422, "answer": "AUTHORIZATION_ALREADY_CAPTURED", "ok": false, "id": null, "debug": "f5799404eea63", "ms": 671}], "contest": [{"t": "16:29:55", "call": "void the hold", "http": 200, "answer": "VOIDED", "ok": true, "id": "3EP89225J0560011A", "debug": "f36444694a742", "ms": 1475}, {"t": "16:29:55", "call": "read back the authorization", "http": 200, "answer": "VOIDED", "ok": true, "id": null, "debug": "f919047ff3ba4", "ms": 458}, {"t": "16:29:56", "call": "invoice the contested line \u00b7 $18.00", "http": 201, "answer": "DRAFT", "ok": true, "id": "INV2-EP2Z-3UZM-4A88-7E4W", "debug": "f919047966708", "ms": 574}, {"t": "16:29:57", "call": "send the invoice", "http": 200, "answer": "OK", "ok": true, "id": "INV2-EP2Z-3UZM-4A88-7E4W", "debug": "f5470326ae735", "ms": 1025}, {"t": "16:29:58", "call": "invoice QR code", "http": 200, "answer": "OK", "ok": true, "id": "INV2-EP2Z-3UZM-4A88-7E4W", "debug": "f94609796710e", "ms": 969}]}, "accepted": {"rid": "R-JUDGE-9001", "auth": "59Y22025SE889191E", "readback": "CAPTURED"}, "contested": {"rid": "R-JUDGE-9003", "auth": "3EP89225J0560011A", "readback": "VOIDED", "invoice": "INV2-EP2Z-3UZM-4A88-7E4W"}};
+const t = document.getElementById('ticket'); if (!t) return;
+const tape = t.querySelector('.tape'), more = tape.querySelector('.more'), seed = tape.querySelector('.seed');
+const rid = t.querySelector('[data-rid]'), rb = t.querySelector('[data-readback]');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sleep = (ms) => new Promise((r) => setTimeout(r, reduce ? 0 : ms));
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let busy = false, touched = false;
+const set = (s) => { t.dataset.state = s; };
+function row(s) {
+  const li = document.createElement('li');
+  li.innerHTML = `<span class="t">${esc(s.t)}</span><span class="call">${esc(s.call)}</span><span class="ans pending">…</span>` +
+    `<span class="meta">${s.id ? esc(s.id) + ' · ' : ''}debug ${esc(s.debug)} · ${s.ms.toLocaleString('en-US')} ms</span>`;
+  tape.insertBefore(li, more); return li;
+}
+async function play(list) {
+  for (const s of list) {
+    const li = row(s);
+    await sleep(Math.min(s.ms, 2200));
+    const a = li.querySelector('.ans'); a.className = 'ans ' + (s.ok ? 'ok' : 'no'); a.textContent = s.http + ' ' + s.answer;
+  }
+}
+function reset(run) {
+  tape.querySelectorAll('li:not(.seed):not(.more)').forEach((n) => n.remove());
+  seed.hidden = true; rid.textContent = D[run].rid; t.classList.remove('play');
+}
+async function accept(auto) {
+  if (busy) return; busy = true; touched = true;
+  const b = t.querySelector('.accept'); if (auto && b) { b.classList.add('pressed'); await sleep(260); b.classList.remove('pressed'); }
+  reset('accepted'); set('calling'); t.querySelectorAll('.decide button').forEach((x) => (x.disabled = true));
+  await play(D.steps.accept);
+  rb.textContent = 'PayPal: ' + D.accepted.readback; void t.offsetWidth; t.classList.add('play'); set('accepted');
+  t.querySelectorAll('.decide button').forEach((x) => (x.disabled = false));
+  more.querySelector('.again').hidden = false; busy = false;
+}
+async function again() {
+  if (busy) return; busy = true; more.querySelector('.again').hidden = true;
+  await play(D.steps.again); set('refused'); busy = false;
+}
+async function contest() {
+  if (busy) return; busy = true; touched = true;
+  reset('contested'); set('calling'); t.querySelectorAll('.decide button').forEach((x) => (x.disabled = true));
+  await play(D.steps.contest);
+  rb.textContent = 'PayPal: ' + D.contested.readback; void t.offsetWidth; t.classList.add('play'); set('contested');
+  t.querySelectorAll('.decide button').forEach((x) => (x.disabled = false));
+  more.querySelector('.again').hidden = true; busy = false;
+}
+function rewind() { reset('accepted'); seed.hidden = false; set('held'); rb.textContent = 'PayPal: ' + D.accepted.readback; }
+t.querySelector('.accept').addEventListener('click', () => accept(false));
+t.querySelector('.contest').addEventListener('click', contest);
+more.querySelector('.again').addEventListener('click', again);
+more.querySelector('.contest2').addEventListener('click', contest);
+more.querySelector('.replay').addEventListener('click', () => { rewind(); accept(true); });
+if (reduce) return;              // reduced motion: the settled stub stays; the buttons still replay without motion
+rewind();
+const io = new IntersectionObserver((es) => {
+  if (!es.some((e) => e.isIntersecting)) return; io.disconnect();
+  setTimeout(() => { if (!touched) accept(true); }, 3600);
+}, { threshold: 0.55 });
+io.observe(t);
+window.addEventListener('beforeprint', () => { if (t.dataset.state === 'held') { set('accepted'); } });
+})();</script>
+<script>(() => {
+const root = document.documentElement;
+setTimeout(() => root.classList.remove('anim'), 1700);      // drop the entrance once played: captures and print see the page
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+// count-ups: the markup holds the true value; this only animates toward it
+const nums = document.querySelectorAll('[data-count]');
+const fmt = (n) => n.toLocaleString('en-US');
+if (!reduce && 'IntersectionObserver' in window) {
+  const io = new IntersectionObserver((es) => es.forEach((en) => {
+    if (!en.isIntersecting) return; io.unobserve(en.target);
+    const el = en.target, to = +el.dataset.count, t0 = performance.now(), dur = 900;
+    const tick = (t) => { const p = Math.min(1, (t - t0) / dur), k = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmt(Math.round(to * k)); if (p < 1) requestAnimationFrame(tick); };
+    el.textContent = '0'; requestAnimationFrame(tick);
+  }), { threshold: 0.6 });
+  nums.forEach((n) => io.observe(n));
+}
+// recorded-run tabs (WAI-ARIA tabs: arrows move, Enter/Space or click select)
+const tabs = [...document.querySelectorAll('[role="tab"]')];
+const show = (t) => { tabs.forEach((x) => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1;
+  const p = document.getElementById(x.getAttribute('aria-controls')); p.hidden = !on;
+  if (on && !reduce) p.querySelectorAll('li:not(.h)').forEach((li, i) => { li.classList.remove('typed'); void li.offsetWidth;
+    li.style.animationDelay = (i * 90) + 'ms'; li.classList.add('typed'); }); }); };
+tabs.forEach((t, i) => { t.addEventListener('click', () => show(t));
+  t.addEventListener('keydown', (ev) => { const k = ev.key; if (k !== 'ArrowRight' && k !== 'ArrowLeft') return; ev.preventDefault();
+    const n = tabs[(i + (k === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length]; n.focus(); show(n); }); });
+const ledger = document.getElementById('calls');
+if (ledger && !reduce && 'IntersectionObserver' in window) {
+  const lo = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) { lo.disconnect(); show(tabs[0]); } }, { threshold: 0.35 });
+  lo.observe(ledger);
+}
+window.addEventListener('beforeprint', () => document.querySelectorAll('.faq details').forEach((d) => d.setAttribute('open', '')));
+// live before/after: real captures of one rental; plays once when in view, then the buttons decide
+const sw = document.getElementById('swap');
+if (sw) {
+  const btns = [...sw.querySelectorAll('.swap-ctl button')]; let touched = false;
+  const set = (v) => { sw.dataset.show = v; btns.forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === v)); };
+  btns.forEach((b) => b.addEventListener('click', () => { touched = true; set(b.dataset.v); }));
+  if (!reduce && 'IntersectionObserver' in window) {
+    const so = new IntersectionObserver((es) => { if (!es.some((x) => x.isIntersecting)) return; so.disconnect();
+      setTimeout(() => { if (!touched) set('released'); }, 1800); }, { threshold: 0.6 });
+    so.observe(sw);
+  }
+}
+})();</script>
+
+</body>
+</html>
