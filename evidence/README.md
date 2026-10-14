@@ -6,7 +6,7 @@ files it names. Recorded 2026-10-14 (UTC times inside each file).
 | File | What it is | Reproduce |
 |---|---|---|
 | [`paypal-sandbox-run.json`](paypal-sandbox-run.json) | Three settlements on the real PayPal sandbox, call by call: method, path, HTTP status, the status PayPal returned, amount, `final_capture`, PayPal debug id, milliseconds | `.venv/bin/python scripts/record_paypal_evidence.py` |
-| [`test-run.txt`](test-run.txt) | The full suite, one line per test: **101 passed** (92 offline, 8 against the real PayPal sandbox, 1 against the live Qwen API) | `.venv/bin/python -m pytest -v` (needs sandbox + Qwen credentials) |
+| [`test-run.txt`](test-run.txt) | The full suite, one line per test: **102 passed** (93 offline, 8 against the real PayPal sandbox, 1 against the live Qwen API) | `.venv/bin/python -m pytest -v` (needs sandbox + Qwen credentials) |
 | [`coverage.txt`](coverage.txt) | Offline suite with coverage: **86%** of `jaminan/` (1,415 statements) | `.venv/bin/python -m pytest -m "not sandbox and not live_model and not slow" --cov=jaminan` |
 | [`e2e-live.txt`](e2e-live.txt) | The live app driven as two phones at 375 px on https://jaminan.edycu.dev: **18/18** acceptance checks | `python scripts/e2e_live.py https://jaminan.edycu.dev --shots /tmp/shots` |
 

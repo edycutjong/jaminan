@@ -4,17 +4,17 @@ Everything here runs on the **PayPal sandbox**. No real money moves. The app is 
 
 ## 1. Two minutes: the judge route
 
-Open <https://jaminan.edycu.dev/judge>. Each visit mints a fresh rental (`R-JUDGE-<n>`) as a merchant-initiated `AUTHORIZE` of **$115.00** (fee $15.00 + deposit $100.00) on a saved sandbox wallet, captures the $15.00 fee with `final_capture=false`, writes the handover tracking, and opens the shop's return screen. No login is needed for this path.
+Open <https://jaminan.edycu.dev/judge> and tap **Start a judge rental**. Each tap mints a fresh rental (`R-JUDGE-<n>`) as a merchant-initiated `AUTHORIZE` of **$115.00** (fee $15.00 + deposit $100.00) on a saved sandbox wallet, captures the $15.00 fee with `final_capture=false`, writes the handover tracking, and opens a "Hold is live" screen with a read-back panel. No login is needed for this path. (The other button, "Full path", sends you through the real PayPal approval page; the sandbox buyer login is printed on the page.)
 
 | Step | What you see | What PayPal did |
 |---|---|---|
-| Fresh rental opens | Rental fee shown as paid; the deposit shown as held | `POST /v2/checkout/orders` (`intent=AUTHORIZE`), `…/authorizations/{id}/capture` (`final_capture=false`), `…/orders/{id}/track` |
-| Tap **Release** | The green RELEASED stamp lands over the hold | `POST …/authorizations/{id}/void`, then a read-back `GET`; the screen shows the status PayPal returned (`VOIDED`) |
+| Rental opens | The stub shows the hold; the panel on the right lists the authorization, fee capture and handover ids | `POST /v2/checkout/orders` (`intent=AUTHORIZE`), `…/authorizations/{id}/capture` (`final_capture=false`), `…/orders/{id}/track` |
+| Tap **Release the hold (clean return)** | The green RELEASED stamp lands over the hold | `POST …/authorizations/{id}/void`, then a read-back `GET`; the screen shows the status PayPal returned (`VOIDED`) |
 | Open `/integrations/verify` | Every PayPal call for the rental: method, path, HTTP status, PayPal's status, debug id, milliseconds | The same calls, read back live |
 
 The settle screen only stamps after PayPal's read-back, not after our own call returns.
 
-**What the live route cannot do yet.** No vision model is pinned as benchmarked, so a pointed claim ends `comparison_unavailable — nothing charged from the hold`. That is deliberate: only a benchmarked model can produce a chargeable line. The priced path is shown below as a recording and exercised by the test suite.
+**What the live route cannot do yet.** The staged scooter photo set is not in this deploy and no vision model is pinned as benchmarked, so on `/judge` you can release the hold but cannot tap a claim. On the ordinary shop flow a pointed claim ends `comparison_unavailable — nothing charged from the hold`. That is deliberate: only a benchmarked model can produce a chargeable line. The priced path is shown below as a recording and exercised by the test suite.
 
 ## 2. The priced path, recorded on the sandbox
 
@@ -31,7 +31,7 @@ The side-panel dent in the `accepted` run is the "already there" case: it was vi
 ## 3. Reproduce
 
 ```bash
-# offline suite (92 tests, no credentials)
+# offline suite (93 tests, no credentials)
 .venv/bin/python -m pytest -m "not sandbox and not live_model and not slow" --cov=jaminan
 
 # the claim-decision sweep (23,040 combinations) and the settle property test
@@ -49,7 +49,7 @@ python scripts/e2e_live.py https://jaminan.edycu.dev --shots /tmp/jaminan-e2e
 
 | Number | Where it comes from |
 |---|---|
-| 101 tests (92 offline, 8 real-sandbox, 1 live Qwen) | [`evidence/test-run.txt`](evidence/test-run.txt) |
+| 102 tests (93 offline, 8 real-sandbox, 1 live Qwen) | [`evidence/test-run.txt`](evidence/test-run.txt) |
 | 86% offline coverage of `jaminan/` | [`evidence/coverage.txt`](evidence/coverage.txt) |
 | 18/18 live acceptance checks at 375 px | [`evidence/e2e-live.txt`](evidence/e2e-live.txt) |
 | 23,040-case claim sweep | [`tests/test_invariants.py`](tests/test_invariants.py) |

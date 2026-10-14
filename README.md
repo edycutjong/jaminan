@@ -97,13 +97,13 @@ approve (Orders v2 AUTHORIZE + vault consent)
 | Invoicing v2 | contested lines and damage above the hold, with an evidence-pack link |
 | Webhooks v1 and `GET /api/integrations/verify` | events checked with PayPal's verify-webhook-signature call when a webhook id is configured and stored with their verified/failed flag; live read-back of PayPal state |
 
-The settle screen shows the status read back from PayPal after the call. Real-sandbox tests in [`tests/`](tests) cover authorize, vault, capture, void and invoice; tracking, webhooks and fine capture are covered by offline tests only.
+The APIMatic Context Plugin was used once, to write a Transaction Search call through PayPal's generated SDK ([`docs/APIMATIC.md`](docs/APIMATIC.md)); the client itself is hand-written. The settle screen shows the status read back from PayPal after the call. Real-sandbox tests in [`tests/`](tests) cover authorize, vault, capture, void and invoice; tracking, webhooks and fine capture are covered by offline tests only.
 
 ### How this differs
 
 | Existing approach | What it does | What it does not do |
 |---|---|---|
-| AI fleet-inspection products, as far as we found (e.g. [Monk](https://monk.ai), [Ravin](https://ravin.ai), [ProovStation](https://www.proovstation.com)) | Detect damage on vehicle photos | Move money: no hold, no capture, no release |
+| AI fleet-inspection products (e.g. [Monk](https://monk.ai), [Ravin](https://ravin.ai), [ProovStation](https://www.proovstation.com)) | Detect damage on vehicle photos | Their sites do not describe a payment hold, capture or release, as far as we found |
 | Turo-style photo check-in | Both sides photograph the car on a marketplace | Bind a hold: photos are not tied to an authorization that only accepted lines can capture |
 | A phone video before you ride | The renter's own record | Carry a co-signature, or get the passport back |
 
@@ -111,9 +111,9 @@ The settle screen shows the status read back from PayPal after the call. Real-sa
 
 | Metric | Value |
 |---|---|
-| Tests collected | 101 (`pytest`): 92 offline unit, contract and invariant tests, 8 against the real PayPal sandbox (including `CAPTURED` and second-capture `422` read-backs), 1 live Qwen schema check |
+| Tests collected | 102 (`pytest`): 93 offline unit, contract and invariant tests, 8 against the real PayPal sandbox (including `CAPTURED` and second-capture `422` read-backs), 1 live Qwen schema check |
 | Claim-decision sweep | `decide_claim` run over 23,040 combinations of the five yes/no answers, serving model (pinned, other, none), confidence, a confirmed baseline mark, a low-comparability tile, three parts and five damage classes: every chargeable result satisfies every "new since pickup" condition and carries a tariff price ([`tests/test_invariants.py`](tests/test_invariants.py)) |
-| Settle property test | up to 3,000 generated settlements (Hypothesis): the hold pays exactly the accepted chargeable lines at their tariff price, blocks exactly when a line is unanswered or mispriced, invoices only contested lines, and never exceeds the authorization |
+| Settle property test | up to 3,000 generated settlements (Hypothesis): the hold pays exactly the accepted chargeable lines at their tariff price, blocks exactly when a line is mispriced, or unanswered and the settle is not forced; invoices only contested lines plus any accepted amount above the deposit; and never captures more than the authorization |
 | Offline coverage | 86% of `jaminan/` (`pytest --cov`, 1,415 statements) |
 | CI | GitHub Actions: ruff, mypy, offline tests with coverage, pip-audit and an API boot smoke; eslint, `tsc`, production build and `npm audit`; gitleaks over full history; CodeQL (Python and TypeScript) once the repo is public; Dependabot monthly, grouped, no major bumps |
 | Live acceptance script | `scripts/e2e_live.py` (375 px viewport) |
@@ -133,7 +133,7 @@ The settle screen shows the status read back from PayPal after the call. Real-sa
 
 ### Prerequisites
 
-Node 20+, Python 3, a PayPal sandbox app, an Upstash Redis REST database and a Qwen (DashScope) key. Copy the variable names from [`jaminan/config.py`](jaminan/config.py) into `.env.local`.
+Node 22 (the version CI uses), Python 3.12, a PayPal sandbox app, an Upstash Redis REST database and a Qwen (DashScope) key. Copy the variable names from [`jaminan/config.py`](jaminan/config.py) into `.env.local`.
 
 ### Installation
 
@@ -143,7 +143,7 @@ npm install && python3 -m venv .venv && .venv/bin/pip install -r requirements-de
 npm run dev:api & npm run dev
 ```
 
-Or skip setup: open the live [`/judge`](https://jaminan.edycu.dev/judge) route, which runs a fresh sandbox rental end to end.
+Or skip setup: open the live [`/judge`](https://jaminan.edycu.dev/judge) route, which mints a fresh sandbox rental on one tap and lets you release the hold. Priced lines are in the recorded settlements in [`DEMO.md`](DEMO.md).
 
 ## 🧪 Testing & CI
 
