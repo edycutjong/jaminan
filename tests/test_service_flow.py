@@ -209,8 +209,8 @@ def test_expiry_guard_releases_an_unsettled_return():
     svc = make()
     rid, k = to_returned(svc)
     svc.claim(rid, k["shop"], 1, [0.4, 0.4, 0.1, 0.1], "front_fairing", "dent")
-    r = svc.settle(rid, None, force=True)       # I5: nobody acted → release; the line leaves as an invoice
-    assert r["settlement"]["void"] and r["invoice"]["items"][0]["kind"] == "contested"
+    r = svc.settle(rid, None, force=True)       # I5: nobody acted → release; nothing unanswered is invoiced
+    assert r["settlement"]["void"] and r["invoice"] is None
 
 
 def test_reauthorize_refused_falls_back_to_mit_resecure_and_voids_the_old_hold():
@@ -285,3 +285,35 @@ def test_daily_close_falls_back_to_read_back_when_transaction_search_is_refused(
     assert out["transaction_search_status"] == 403
     kinds = {(x["kind"], x["via"], x["match"]) for x in out["rows"]}
     assert ("void", "read_back", "match") in kinds and ("fee", "read_back", "match") in kinds
+
+
+def test_the_renter_cannot_release_and_a_spot_cannot_be_claimed_twice():
+    svc = make()
+    rid, k = to_returned(svc)
+    with pytest.raises(ServiceError) as e:
+        svc.release(rid, k["renter"])
+    assert e.value.status == 403
+    svc.claim(rid, k["shop"], 1, [0.4, 0.4, 0.1, 0.1], "front_fairing", "dent")
+    with pytest.raises(ServiceError) as e:
+        svc.claim(rid, k["shop"], 1, [0.41, 0.41, 0.1, 0.1], "front_fairing", "dent")
+    assert e.value.code == "DUPLICATE_CLAIM"
+    svc.claim(rid, k["shop"], 1, [0.41, 0.41, 0.1, 0.1], "front_fairing", "crack")   # another class is another claim
+
+
+def test_fine_after_the_renter_removed_saved_paypal_arrives_as_an_invoice():
+    svc = make()
+    rid, k = to_returned(svc)
+    svc.release(rid, k["shop"])
+    svc.revoke_vault(rid, k["renter"])
+    svc.db.set_json(f"rental:{rid}", {**svc.get(rid), "returned_at": "2100-01-01T00:00:00+00:00"})
+    f = svc.create_fine(rid, k["shop"], frame_bytes(9), 200000)
+    assert f["status"] == "invoiced" and f["invoice_id"]
+
+
+def test_evidence_pack_needs_a_key_or_its_link_token():
+    svc = make()
+    rid, k = to_returned(svc)
+    with pytest.raises(ServiceError):
+        svc.evidence(rid)
+    assert svc.evidence(rid, token=svc.get(rid)["evidence_token"])["rental"] == rid
+    assert svc.evidence(rid, key=k["renter"])["rental"] == rid

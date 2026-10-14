@@ -45,7 +45,7 @@ export default function Counter() {
           </select>
           <label className="label" htmlFor="days">Hari · days</label>
           <div className="row">
-            {[1, 2, 3, 5, 7].map((d) => <button key={d} className={`btn ${d === days ? "" : "ghost"} sm`} onClick={() => setDays(d)}>{d}</button>)}
+            {[1, 2, 3, 5, 7].map((d) => <button key={d} className={`btn ${d === days ? "" : "ghost"} sm`} aria-pressed={d === days} onClick={() => setDays(d)}>{d}</button>)}
           </div>
           {v ? <p className="small">Biaya {usd(v.daily_fee_cents * days)} · jaminan ditahan {usd(v.deposit_cents)} · tarif <span className="data">{shop.tariff.id} · {shop.tariff.sha256.slice(0, 12)}</span>
             <br /><span className="caption-en">Fee {usd(v.daily_fee_cents * days)} · deposit held {usd(v.deposit_cents)} (placeholder until the shop names it) · tariff is a DRAFT</span></p> : null}

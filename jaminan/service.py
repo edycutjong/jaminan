@@ -131,7 +131,7 @@ class Service:
         if not 1 <= int(days) <= 28:
             raise ServiceError(422, "BAD_DAYS", "a rental is 1–28 days (a PayPal hold lives 29 days)")
         tv = tariff.load("tv1")
-        rid = rid or f"R-{now().strftime('%m%d')}-{secrets.token_hex(2).upper()}"
+        rid = rid or f"R-{now().strftime('%m%d')}-{secrets.token_hex(4).upper()}"
         fee = veh["daily_fee_cents"] * int(days)
         r = {"id": rid, "kind": kind, "shop_id": shop_id, "vehicle_id": vehicle_id, "plate": veh["plate"],
              "vehicle_label": veh["label"], "days": int(days), "fee_cents": fee, "deposit_cents": veh["deposit_cents"],
@@ -143,7 +143,8 @@ class Service:
              "invoice": None, "settlement": None,
              # rental ids can repeat across re-seeds (R-JUDGE-<n>); the nonce keeps PayPal request ids and
              # invoice numbers unique so an old idempotent response is never replayed into a new rental
-             "nonce": secrets.token_hex(4)}
+             "nonce": secrets.token_hex(4),
+             "evidence_token": secrets.token_urlsafe(9)}
         self.db.set_json(f"rental:{rid}", r)
         self.db.zadd(f"shop:{shop_id}:rentals", time.time(), rid)
         return r
@@ -428,6 +429,10 @@ class Service:
         if angle not in ANGLES or len(bbox) != 4:
             raise ServiceError(422, "BAD_TAP", "a tap needs angle 1–8 and a box [x, y, w, h]")
         bbox = [min(max(float(v), 0.0), 1.0) for v in bbox]
+        for f in r["findings"]:
+            if f["angle"] == angle and f["part"] == part and f["damage_class"] == damage_class and \
+                    max(rules.bbox_overlap(bbox, f["bbox_return"]), rules.bbox_overlap(f["bbox_return"], bbox)) > 0.5:
+                raise ServiceError(409, "DUPLICATE_CLAIM", f"{f['id']} already claims this spot as {part}/{damage_class}")
         pick, ret = r["photos"]["pickup"][str(angle)], r["photos"]["return"][str(angle)]
         ret_crop, ret_region = gate.crop(self.frame(ret["sha256"]), bbox, scale=2.0)
         pick_area, pick_region = gate.crop(self.frame(pick["sha256"]), bbox, scale=4.0)
@@ -547,7 +552,7 @@ class Service:
     def _invoice(self, r: dict, items: list[dict]) -> None:
         rid = r["id"]
         number = f"JMN-{rid}-{r['nonce'][:4]}"[-25:]
-        evidence = f"{self.s.app_url}/r/{rid}/evidence"
+        evidence = f"{self.s.app_url}/r/{rid}/evidence?t={r.get('evidence_token', '')}"
         res = self.pp.create_invoice(rid, number, r.get("payer_email"),
                                      [{"name": i["name"][:200], "quantity": "1",
                                        "unit_amount": {"currency_code": "USD", "value": f"{i['amount_cents'] / 100:.2f}"}}
@@ -571,10 +576,9 @@ class Service:
             self._to(r, "INVOICED")
 
     def release(self, rid: str, key: str) -> dict:
-        """Clean return: one tap releases the hold (void) — the shop or the renter can do it."""
+        """Clean return: one tap on the shop phone releases the hold (void)."""
         r = self.get(rid)
-        if not self.role_of(r, key):
-            raise ServiceError(403, "FORBIDDEN", "needs the renter's or the shop's key")
+        self.auth(r, key, "shop")  # the renter cannot void the deposit while the scooter is out
         if any(f["disposition"] == "chargeable" for f in r["findings"]):
             raise ServiceError(409, "HAS_LINES", "there are priced lines: the renter settles them")
         return self.settle(rid, key, force=True)
@@ -597,8 +601,11 @@ class Service:
                 r["vault_status"] = "DELETED"
             return self._save(r)
 
-    def evidence(self, rid: str) -> dict:
+    def evidence(self, rid: str, key: str | None = None, token: str | None = None) -> dict:
         r = self.get(rid)
+        ok_token = bool(token and r.get("evidence_token") and secrets.compare_digest(token, r["evidence_token"]))
+        if not ok_token and not self.role_of(r, key):
+            raise ServiceError(403, "FORBIDDEN", "the evidence pack needs the renter's or shop's key, or its link")
         return {"rental": r["id"], "tariff_version": r["tariff_version_id"], "tariff_sha256": r["tariff_sha256"],
                 "baseline_sha256": r.get("baseline_sha256"), "tracking_number": r.get("tracking_number"),
                 "pickup": r["photos"]["pickup"], "closeups": r["closeups"], "return": r["photos"]["return"],
@@ -648,8 +655,7 @@ class Service:
         self.auth(r, key, "shop")
         if r["state"] not in ("SETTLED", "RELEASED", "INVOICED", "CLOSED"):
             raise ServiceError(409, "RENTAL_OPEN", "fines attach to a returned, settled rental")
-        if not r.get("vault_id") or r.get("vault_status") == "DELETED":
-            raise ServiceError(409, "NO_VAULT", "the renter removed saved PayPal: send the fine as an invoice")
+        has_vault = bool(r.get("vault_id")) and r.get("vault_status") != "DELETED"
         tv = tariff.load(r["tariff_version_id"])
         res, jpeg = gate.check(image)
         self.db.set_bytes(f"frame:{res.sha256}", jpeg, ex=self._frame_ttl())
@@ -666,8 +672,12 @@ class Service:
                 "ticket_amount_idr": int(ticket_amount_idr), "quote": q.__dict__, "status":
                 "notified" if q.chargeable else "not_chargeable", "notified_at": iso(),
                 "contest_until": iso(now() + timedelta(hours=72)), "capture_id": None, "invoice_id": None}
+        if q.chargeable and not has_vault:
+            # the renter removed saved PayPal: the fine arrives as an itemized invoice instead (consent copy)
+            inv = self._fine_invoice(r, fine, "Traffic fine (e-TLE) during the rental")
+            fine.update(status="invoiced", invoice_id=inv)
         self.db.set_json(f"fine:{fid}", fine)
-        if q.chargeable:
+        if q.chargeable and has_vault:
             self.db.zadd("fines:due", (now() + timedelta(hours=72)).timestamp(), fid)
         with self.lock(rid):
             r = self.get(rid)
@@ -683,18 +693,23 @@ class Service:
             raise ServiceError(404, "NO_FINE", fid)
         if f["status"] != "notified" or iso() > f["contest_until"]:
             raise ServiceError(409, "NOT_CONTESTABLE", f"fine is {f['status']}")
-        res = self.pp.create_invoice(rid, f"JMN-{fid}-{r['nonce'][:4]}", r.get("payer_email"),
-                                     [{"name": "Traffic fine (e-TLE) during the rental, contested", "quantity": "1",
-                                       "unit_amount": {"currency_code": "USD",
-                                                       "value": f"{f['quote']['amount_cents'] / 100:.2f}"}}],
-                                     note=f"Ticket image sha256 {f['ticket_sha256'][:12]}; capped at the published ceiling.")
         f["status"], f["contested_at"] = "contested_invoiced", iso()
-        f["invoice_id"] = res.body.get("id") or (res.body.get("href", "").rsplit("/", 1)[-1] or None)
-        if res.ok and f["invoice_id"]:
-            self.pp.send_invoice(f["invoice_id"], rid)
+        f["invoice_id"] = self._fine_invoice(r, f, "Traffic fine (e-TLE) during the rental, contested")
         self.db.zrem("fines:due", fid)
         self.db.set_json(f"fine:{fid}", f)
         return f
+
+    def _fine_invoice(self, r: dict, f: dict, name: str) -> str | None:
+        res = self.pp.create_invoice(r["id"], f"JMN-{f['id']}-{r['nonce'][:4]}", r.get("payer_email"),
+                                     [{"name": name, "quantity": "1",
+                                       "unit_amount": {"currency_code": "USD",
+                                                       "value": f"{f['quote']['amount_cents'] / 100:.2f}"}}],
+                                     note=f"Ticket image sha256 {f['ticket_sha256'][:12]}; amount capped at the "
+                                          f"published ceiling of the article on the ticket.")
+        inv = res.body.get("id") or (res.body.get("href", "").rsplit("/", 1)[-1] or None)
+        if res.ok and inv:
+            self.pp.send_invoice(inv, r["id"])
+        return inv
 
     def capture_fine(self, fid: str) -> dict:
         f = self.db.get_json(f"fine:{fid}")
@@ -702,7 +717,7 @@ class Service:
             return f or {}
         r = self.get(f["rental_id"])
         res = self.pp.create_vault_order(fid, r["vault_id"], f["quote"]["amount_cents"], "CAPTURE",
-                                         f"e-TLE traffic fine during rental {r['id']} (ticket attached)", rental_id=r["id"])
+                                         f"e-TLE traffic fine during rental {r['id']} (ticket sha256 {f['ticket_sha256'][:12]})", rental_id=r["id"])
         cap = first_capture(res.body) if res.ok else None
         f["status"] = "captured" if cap else "capture_failed"
         f["capture_id"], f["captured_at"], f["debug_id"] = (cap or {}).get("id"), iso(), res.debug_id

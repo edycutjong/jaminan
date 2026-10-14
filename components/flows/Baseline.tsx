@@ -66,7 +66,7 @@ export function RenterBaseline({ r, rkey, onChange }: { r: Rental; rkey: string;
   return (
     <div>
       <h1>Pickup walkaround</h1>
-      <p className="muted" style={{ marginTop: 0 }}>Eight angles, on your phone. These photos are the shared baseline: anything visible here can never be charged at return.</p>
+      <p className="muted" style={{ marginTop: 0 }}>Eight angles, on your phone. These photos are the shared baseline: at return, any mark the shop points at is checked against them, and a mark already visible here cannot be charged.</p>
       {r.retake_requests.length ? <div className="toast">The shop asked for a retake of angle {r.retake_requests.map((x) => x.angle).join(", ")} — marks in glare or blur there can't be charged later.</div> : null}
       {shot < 8 || r.retake_requests.length ? <Walkaround r={r} rkey={rkey} phase="pickup" lang="en" onChange={onChange} /> : (
         <>

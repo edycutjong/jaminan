@@ -5,7 +5,8 @@ import Bar from "@/components/Bar";
 import Stub from "@/components/Stub";
 import RenterSettle from "@/components/flows/RenterSettle";
 import ShopReturn from "@/components/flows/ShopReturn";
-import { ApiError, Rental, api, saveKey } from "@/lib/api";
+import Receipt from "@/components/flows/Receipt";
+import { ApiError, Rental, api, keyFor, saveKey } from "@/lib/api";
 
 type Minted = Rental & { shop_key: string; renter_key: string };
 
@@ -27,6 +28,13 @@ export default function Judge() {
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => { api("/judge/info").then(setInfo).catch(() => setInfo({})); }, []);
+  useEffect(() => {
+    // the full path comes back here from PayPal: resume the rental with the keys this browser kept
+    const id = new URL(window.location.href).searchParams.get("rental");
+    const sk = id ? keyFor(id, "shop") : null, rk = id ? keyFor(id, "renter") : null;
+    if (!id || !sk || !rk) return;
+    api<Rental>(`/rentals/${id}`, { key: sk }).then((x) => setR({ ...x, shop_key: sk, renter_key: rk })).catch((e) => setErr(String(e)));
+  }, []);
   const mint = async () => {
     setBusy("mint"); setErr(null);
     try {
@@ -69,13 +77,15 @@ export default function Judge() {
         <div className="split">
           <div>
             <div className="row" style={{ marginTop: 12 }}>
-              <button className={`btn sm ${view === "shop" ? "" : "ghost"}`} onClick={() => setView("shop")}>Shop phone</button>
-              <button className={`btn sm ${view === "renter" ? "" : "ghost"}`} onClick={() => setView("renter")}>Renter phone</button>
+              <button className={`btn sm ${view === "shop" ? "" : "ghost"}`} aria-pressed={view === "shop"} onClick={() => setView("shop")}>Shop phone</button>
+              <button className={`btn sm ${view === "renter" ? "" : "ghost"}`} aria-pressed={view === "renter"} onClick={() => setView("renter")}>Renter phone</button>
             </div>
             {["RETURNED", "CLAIMED"].includes(r.state) && view === "shop" ? (
               <ShopReturn r={r} skey={r.shop_key} onChange={(x) => { merge(x); if (x.state === "PROPOSED") setView("renter"); }} english />
             ) : r.state === "PROPOSED" && view === "renter" ? (
               <RenterSettle r={r} rkey={r.renter_key} onChange={merge} />
+            ) : r.settlement && view === "renter" ? (
+              <Receipt r={r} rkey={r.renter_key} onChange={merge} />
             ) : (
               <>
                 <h1>{r.settlement ? "Settled" : "Hold is live"}</h1>
@@ -87,11 +97,12 @@ export default function Judge() {
                   }}>{busy === "release" ? <><span className="spin" /> asking PayPal to void…</> : "Release the hold (clean return)"}</button>
                 ) : null}
                 {r.state === "PROPOSED" && view === "shop" ? <p className="small">Lines sent. Switch to the renter phone to accept or contest.</p> : null}
+                {r.settlement && view === "shop" ? <p className="small">Switch to the renter phone for the receipt.</p> : null}
               </>
             )}
             {err ? <div className="toast" role="alert">{err}</div> : null}
           </div>
-          <aside>
+          <aside className="readback-panel">
             <h2>What PayPal says</h2>
             <ReadBack key={`${r.id}-${r.state}-${r.settlement?.at || ""}`} rid={r.id} />
             <dl className="kv">

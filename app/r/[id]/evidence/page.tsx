@@ -2,12 +2,16 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Bar from "@/components/Bar";
-import { api, frameUrl, human, usd } from "@/lib/api";
+import { api, frameUrl, human, keyFor, usd } from "@/lib/api";
 
 export default function Evidence() {
   const { id } = useParams<{ id: string }>();
   const [e, setE] = useState<any>(null);
-  useEffect(() => { api(`/rentals/${id}/evidence`).then(setE).catch((x) => setE({ error: String(x) })); }, [id]);
+  useEffect(() => {
+    const t = new URL(window.location.href).searchParams.get("t");
+    const key = keyFor(id, "renter") || keyFor(id, "shop");
+    api(`/rentals/${id}/evidence${t ? `?t=${encodeURIComponent(t)}` : ""}`, { key }).then(setE).catch((x) => setE({ error: x.message || String(x) }));
+  }, [id]);
   if (!e) return <main className="wrap"><Bar /><div className="skeleton" style={{ marginTop: 20 }} /></main>;
   if (e.error) return <main className="wrap"><Bar /><div className="toast">{e.error}</div></main>;
   return (
@@ -22,8 +26,10 @@ export default function Evidence() {
       </dl>
       <h2>Pickup frames (hashed at capture)</h2>
       <div className="angles">{Object.entries(e.pickup).map(([a, p]: any) => (
-        <a key={a} className="angle done" href={p.sha256 ? frameUrl(p.sha256) : undefined} style={p.sha256 ? { backgroundImage: `url(${frameUrl(p.sha256)})` } : undefined}>
-          <span>{a} · {p.sha256 ? p.sha256.slice(0, 8) : "placeholder"}</span></a>
+        p.sha256 ? (
+          <a key={a} className="angle done" href={frameUrl(p.sha256)} style={{ backgroundImage: `url(${frameUrl(p.sha256)})` }}>
+            <span>{a} · {p.sha256.slice(0, 8)}</span></a>
+        ) : <div key={a} className="angle" style={{ cursor: "default" }}><span>{a} · placeholder</span></div>
       ))}</div>
       <h2>Lines</h2>
       <div className="table-wrap"><table>

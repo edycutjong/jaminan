@@ -166,7 +166,8 @@ def settle_plan(*, fee_cents: int, deposit_cents: int, authorized_cents: int, fe
 
     `lines` are findings; only `chargeable` ones can be accepted. `tariff_price(part, cls)` re-prices each
     accepted line from the published tariff (I1: the stored price is never trusted). `force` (expiry guard,
-    I5) treats undecided chargeable lines as contested instead of blocking.
+    I5) releases instead of blocking: undecided lines are never paid from the hold and never invoiced —
+    the renter did not contest them, so they stay in the evidence pack.
     """
     chargeable = [l for l in lines if l.get("disposition") == "chargeable"]
     undecided = [l for l in chargeable if l.get("renter_decision") not in ("accepted", "contested")]
@@ -174,6 +175,8 @@ def settle_plan(*, fee_cents: int, deposit_cents: int, authorized_cents: int, fe
         raise SettleBlocked(f"{len(undecided)} chargeable line(s) still need the renter's accept or contest")
     accepted, contested = [], []
     for l in chargeable:
+        if l.get("renter_decision") not in ("accepted", "contested"):
+            continue  # only reachable with force=True
         price = tariff_price(l["part"], l["damage_class"])
         if price is None or price != l.get("price_cents"):
             raise SettleBlocked(f"line {l.get('id')} price does not match the published tariff (I1)")
@@ -213,6 +216,18 @@ def expiry_guard_due(state: str, age_days: float, margin_days: float = 2.0) -> b
     return state in {"RETURNED", "CLAIMED", "PROPOSED"} and age_days >= AUTH_VALID_DAYS - margin_days
 
 
+def _aware(ts: str | None):
+    """Parse an ISO 8601 timestamp; a value without an offset is refused (WIB vs UTC would shift it 7 h)."""
+    from datetime import datetime
+    if not ts:
+        return None
+    try:
+        d = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return d if d.tzinfo else None
+
+
 @dataclass
 class FineQuote:
     chargeable: bool
@@ -230,7 +245,10 @@ def fine_quote(*, plate_read: str | None, rental_plate: str, ticket_time: str | 
     norm = lambda p: "".join(ch for ch in (p or "").upper() if ch.isalnum())  # noqa: E731
     if not plate_read or norm(plate_read) != norm(rental_plate):
         return FineQuote(False, "plate on the ticket does not match the rental's vehicle")
-    if not ticket_time or not (pickup_at <= ticket_time <= (return_at or "9999")):
+    t, start, end = _aware(ticket_time), _aware(pickup_at), _aware(return_at) if return_at else None
+    if t is None or start is None:
+        return FineQuote(False, "ticket time could not be read as a date and time with its offset")
+    if not (start <= t <= (end or t)):
         return FineQuote(False, "ticket time is outside the rental window")
     if violation_read not in ceilings:
         return FineQuote(False, "violation article not in the published closed list")

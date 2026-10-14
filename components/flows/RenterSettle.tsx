@@ -19,7 +19,7 @@ export default function RenterSettle({ r, rkey, onChange }: { r: Rental; rkey: s
   return (
     <div>
       <h1>Settle your deposit</h1>
-      <p className="muted">The shop pointed at {r.findings.length} mark{r.findings.length === 1 ? "" : "s"}. Each one was checked against the pickup photos you both confirmed.</p>
+      <p className="muted">The shop pointed at {r.findings.length} mark{r.findings.length === 1 ? "" : "s"}. Here is what the pickup photos you both confirmed say about each one.</p>
       <div className="note small">The hold only pays lines you accept — a contested line arrives as an itemized PayPal invoice at its tariff price.</div>
       {priced.map((f) => (
         <div key={f.id} className="paper" style={{ marginTop: 14 }}>
@@ -55,7 +55,7 @@ export default function RenterSettle({ r, rkey, onChange }: { r: Rental; rkey: s
         {busy === "settle" ? <><span className="spin" /> asking PayPal…</> :
           undecided ? `Decide ${undecided} line${undecided === 1 ? "" : "s"} first` :
             priced.some((f) => f.renter_decision === "accepted")
-              ? `Pay ${usd(priced.filter((f) => f.renter_decision === "accepted").reduce((s, f) => s + (f.price_cents || 0), 0))} from the hold · release the rest`
+              ? `Pay ${usd(Math.min(r.deposit_cents, priced.filter((f) => f.renter_decision === "accepted").reduce((s, f) => s + (f.price_cents || 0), 0)))} from the hold · release the rest`
               : "Release the whole hold"}
       </button>
     </div>

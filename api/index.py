@@ -86,7 +86,10 @@ def shop_rentals(shop_id: str):
 def get_rental(rid: str, key: str | None = Key):
     s = svc()
     r = s.get(rid)
-    return s.view(r, s.role_of(r, key))
+    role = s.role_of(r, key)
+    if not role:  # payer email, plate and photos are only for the two parties
+        raise ServiceError(403, "FORBIDDEN", "open this rental from the shop's QR (renter) or the shop phone")
+    return s.view(r, role)
 
 
 def _v(rid: str, key: str | None) -> dict:
@@ -222,8 +225,8 @@ def revoke(rid: str, key: str | None = Key):
 
 
 @app.get("/api/rentals/{rid}/evidence")
-def evidence(rid: str):
-    return svc().evidence(rid)
+def evidence(rid: str, t: str | None = None, key: str | None = Key):
+    return svc().evidence(rid, key, t)
 
 
 @app.post("/api/rentals/{rid}/fines")
@@ -232,8 +235,10 @@ async def fine(rid: str, ticket_amount_idr: int = Form(...), file: UploadFile = 
 
 
 @app.get("/api/rentals/{rid}/fines")
-def fines(rid: str):
+def fines(rid: str, key: str | None = Key):
     r = svc().get(rid)
+    if not svc().role_of(r, key):
+        raise ServiceError(403, "FORBIDDEN", "fines are shown to the renter and the shop")
     return {"fines": [x for x in svc().db.mget_json([f"fine:{f}" for f in r.get("fines", [])]) if x]}
 
 

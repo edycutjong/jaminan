@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import Stub from "@/components/Stub";
-import { ApiError, Rental, api, usd } from "@/lib/api";
+import CropPair from "@/components/CropPair";
+import Stub, { answerText } from "@/components/Stub";
+import { ApiError, Rental, api, frameUrl, human, usd } from "@/lib/api";
 
 export default function Receipt({ r, rkey, onChange }: { r: Rental; rkey: string | null; onChange: (r: Rental) => void }) {
   const [err, setErr] = useState<string | null>(null);
   const [fines, setFines] = useState<any[]>([]);
-  useEffect(() => { if (r.fines?.length) api(`/rentals/${r.id}/fines`).then((x) => setFines(x.fines)).catch(() => {}); }, [r.id, r.fines]);
+  useEffect(() => { if (r.fines?.length && rkey) api(`/rentals/${r.id}/fines`, { key: rkey }).then((x) => setFines(x.fines)).catch(() => {}); }, [r.id, r.fines, rkey]);
   const st = r.settlement;
   const revoke = async () => {
     try { onChange(await api(`/rentals/${r.id}/vault`, { method: "DELETE", key: rkey })); } catch (e) { setErr(e instanceof ApiError ? e.message : String(e)); }
@@ -24,6 +25,18 @@ export default function Receipt({ r, rkey, onChange }: { r: Rental; rkey: string
         <dt>Handover</dt><dd>{r.tracking_number}</dd>
         <dt>Baseline</dt><dd>sha256 {r.baseline_sha256?.slice(0, 16)}…</dd>
       </dl>
+      {r.findings.length ? (
+        <>
+          <h2>What the shop pointed at</h2>
+          {r.findings.map((f) => (
+            <div key={f.id} className={`paper ${f.disposition === "chargeable" ? "" : "line excluded"}`} style={{ marginTop: 10, display: "block" }}>
+              <strong>{human(f.part)} — {human(f.damage_class)}</strong>
+              <CropPair f={f} />
+              <p className="small" style={{ margin: "4px 0 0" }}><strong>{answerText(f)}</strong>{f.renter_decision ? ` · you ${f.renter_decision}` : ""}</p>
+            </div>
+          ))}
+        </>
+      ) : null}
       {r.invoice ? (
         <div className="paper" style={{ marginTop: 14 }}>
           <div className="label">Itemized invoice</div>
@@ -35,7 +48,8 @@ export default function Receipt({ r, rkey, onChange }: { r: Rental; rkey: string
       {fines.map((f) => (
         <div key={f.id} className="paper" style={{ marginTop: 14 }}>
           <div className="label">Traffic fine {f.id}</div>
-          <p className="small">{f.quote?.reason} · {usd(f.quote?.amount_cents)} · {f.status}{f.status === "notified" ? ` · contest until ${f.contest_until?.slice(0, 16)}` : ""}</p>
+          {f.ticket_sha256 ? <img src={frameUrl(f.ticket_sha256)} alt="the traffic ticket" style={{ maxHeight: 220, margin: "6px 0", border: "1.5px solid var(--rule)" }} /> : null}
+          <p className="small">{f.quote?.reason} · {usd(f.quote?.amount_cents)}{f.quote?.capped ? " (capped at the article's ceiling)" : ""} · {f.status === "notified" ? `charged to your saved PayPal after ${f.contest_until?.slice(0, 16).replace("T", " ")} UTC unless you contest` : f.status.replace(/_/g, " ")}</p>
           {f.status === "notified" && rkey ? <button className="btn ghost sm" onClick={async () => { await api(`/rentals/${r.id}/fines/${f.id}/contest`, { method: "POST", key: rkey }); setFines((x) => x.map((y) => y.id === f.id ? { ...y, status: "contested_invoiced" } : y)); }}>Contest → invoice instead</button> : null}
         </div>
       ))}

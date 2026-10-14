@@ -20,7 +20,7 @@ export default function Verify() {
     <main className="wrap wide">
       <Bar who="PayPal integration" />
       <h1>Every PayPal call{rental ? ` · ${rental}` : ""}</h1>
-      <p className="muted" style={{ marginTop: 0 }}>Live from the service ledger: action, object id, HTTP status and PayPal-Debug-Id. The read-back column re-asks PayPal for the authorization — PayPal&apos;s side, not ours.</p>
+      <p className="muted" style={{ marginTop: 0 }}>Live from the service ledger: action, object id, HTTP status and PayPal-Debug-Id. With a rental selected, the read-back line re-asks PayPal for its authorization — PayPal&apos;s side, not ours.</p>
       {d?.read_back ? (
         <div className="note">Read-back now: <span className="data">{d.read_back.authorization_id}</span> → <strong className={["VOIDED", "CAPTURED"].includes(d.read_back.status) ? "st-ok" : "st-held"}>{d.read_back.status}</strong> <span className="data small">(debug {d.read_back.debug_id})</span></div>
       ) : null}

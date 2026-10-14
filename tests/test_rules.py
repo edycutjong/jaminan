@@ -125,8 +125,8 @@ def test_undecided_lines_block_settle_unless_the_expiry_guard_forces_it():
     lines = [line(1, "mirror_housing", "crack", None)]
     with pytest.raises(SettleBlocked):
         plan(lines)
-    p = plan(lines, force=True)  # I5: default outcome is release
-    assert p.void and p.invoice_cents == 1800
+    p = plan(lines, force=True)  # I5: default outcome is release; nothing unanswered is invoiced
+    assert p.void and p.invoice_cents == 0
 
 
 def test_a_tampered_line_price_blocks_settle():
@@ -202,3 +202,17 @@ def test_fine_not_chargeable(kw):
 def test_tariff_hash_is_stable_and_public_view_has_no_admin_line():
     assert T.sha256 == tariff.load("tv1").sha256 and len(T.sha256) == 64
     assert all(l["damage_class"] in tariff.DAMAGE_CLASSES for l in T.public()["lines"])
+
+
+def test_fine_window_compares_real_instants_across_offsets():
+    # 16:00 WIB on the 15th = 09:00 UTC, before a pickup at 10:00 UTC → outside, although "16:00" > "10:00" as text
+    q = fine(ticket_time="2026-10-15T16:00:00+07:00", pickup_at="2026-10-15T10:00:00+00:00",
+             return_at="2026-10-15T20:00:00+00:00")
+    assert not q.chargeable and "outside" in q.reason
+    q = fine(ticket_time="2026-10-15T18:00:00+07:00", pickup_at="2026-10-15T10:00:00+00:00",
+             return_at="2026-10-15T20:00:00+00:00")
+    assert q.chargeable
+
+
+def test_fine_time_without_an_offset_is_refused():
+    assert not fine(ticket_time="2026-10-15 10:00").chargeable

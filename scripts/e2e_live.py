@@ -58,6 +58,12 @@ def walkaround(pg, label: str, shots: Path) -> bool:
     return check(f"{label}: 8 angles captured in-app, gated and hashed", True)
 
 
+def GET(rid: str) -> str:
+    """JS that reads the rental with whichever party key this phone holds."""
+    return (f"() => fetch('/api/rentals/{rid}', {{headers: {{'X-Jaminan-Key': localStorage.getItem('jaminan:key:{rid}:shop')"
+            f" || localStorage.getItem('jaminan:key:{rid}:renter')}}}}).then(r => r.json())")
+
+
 def no_hscroll(pg, name: str) -> None:
     w = pg.evaluate("() => [document.documentElement.scrollWidth, window.innerWidth]")
     check(f"375 px: no horizontal scroll on {name}", w[0] <= w[1], f"scrollWidth {w[0]} vs {w[1]}")
@@ -100,7 +106,7 @@ def main(base: str, shots: Path) -> int:
         approve_on_page(rp)
         rp.wait_for_url(f"**/r/{rid}", timeout=90000)
         rp.wait_for_selector("text=Pickup walkaround", timeout=60000)
-        st = rp.evaluate(f"() => fetch('/api/rentals/{rid}').then(r => r.json())")
+        st = rp.evaluate(GET(rid))
         check("one approval → authorization + saved wallet", st["state"] == "APPROVED" and bool(st.get("vault_id")),
               f"{st['state']} auth {st.get('authorization_id')}")
 
@@ -117,7 +123,7 @@ def main(base: str, shots: Path) -> int:
         no_hscroll(sp, "/shop/r/[id] baseline")
         sp.click("text=Konfirmasi foto awal")
         sp.wait_for_selector("text=Motor sedang jalan", timeout=60000)
-        st = sp.evaluate(f"() => fetch('/api/rentals/{rid}').then(r => r.json())")
+        st = sp.evaluate(GET(rid))
         check("both confirm → fee captured (final_capture=false), tracking written",
               st["state"] == "OUT" and st.get("auth_status") == "PARTIALLY_CAPTURED" and str(st.get("tracking_number", "")).startswith("JMN-"),
               f"{st.get('auth_status')} {st.get('tracking_number')}")
@@ -137,7 +143,7 @@ def main(base: str, shots: Path) -> int:
         answer = sp.locator("[role=status] strong").nth(1).inner_text()
         sp.screenshot(path=str(shots / "5-return-claim.png"), full_page=True)
         no_hscroll(sp, "/shop/r/[id] return")
-        st = sp.evaluate(f"() => fetch('/api/rentals/{rid}').then(r => r.json())")
+        st = sp.evaluate(GET(rid))
         f = st["findings"][-1]
         check("pointed claim → model answer recorded with the serving model id", bool(f.get("model")) or bool(f.get("model_error")),
               f"{f['disposition']} · model {f.get('model')} · {answer}")
@@ -147,7 +153,7 @@ def main(base: str, shots: Path) -> int:
         # 5 clean release → PayPal read-back
         sp.click("text=Lepas jaminan")
         sp.wait_for_selector(".stamp.released", timeout=60000)
-        st = sp.evaluate(f"() => fetch('/api/rentals/{rid}').then(r => r.json())")
+        st = sp.evaluate(GET(rid))
         check("release → void, stamp fires on PayPal read-back VOIDED",
               (st.get("settlement") or {}).get("auth_read_back") == "VOIDED", json.dumps(st.get("settlement"))[:160])
         sp.screenshot(path=str(shots / "6-released-shop.png"), full_page=True)
