@@ -179,6 +179,7 @@ tests/      unit, contract, invariant and real-sandbox tests
 
 ## 📽️ Demo Materials
 
+- Walkthrough, recorded PayPal settlements with ids, reproduce commands: [DEMO.md](DEMO.md)
 - Live app: https://jaminan.edycu.dev
 - Judge path: https://jaminan.edycu.dev/judge
 - Read-back stream: https://jaminan.edycu.dev/integrations/verify
