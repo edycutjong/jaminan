@@ -110,9 +110,7 @@ h2 {
 
 /* --- paper & stub ---------------------------------------------------------------------------- */
 .paper {
-  background:
-    repeating-linear-gradient(to bottom, transparent 0 31px, rgba(207, 197, 172, 0.55) 31px 32px),
-    #F7F3E8;
+  background: #F7F3E8;
   border: 1px solid var(--rule);
   border-radius: var(--radius);
   padding: 16px;
@@ -130,14 +128,17 @@ h2 {
   padding: 12px 14px 10px; border-bottom: 1.5px dashed var(--ink);
 }
 .stub-head .no { font-family: var(--font-data); font-weight: 700; font-size: 15px; }
-.stub-body { padding: 4px 14px 12px; position: relative; }
+.stub-body {
+  padding: 4px 14px 12px; position: relative;
+  background: repeating-linear-gradient(to bottom, transparent 0 31px, rgba(207, 197, 172, 0.35) 31px 32px);
+}
 .perf {
   height: 14px; margin: 0 -1px;
   background:
     radial-gradient(circle at 7px 7px, var(--bg) 4px, transparent 4.5px) 0 0 / 14px 14px repeat-x;
   border-top: 1.5px dashed var(--rule);
 }
-.stub-foot { padding: 10px 14px 14px; position: relative; min-height: 86px; }
+.stub-foot { padding: 10px 14px 14px; position: relative; min-height: 112px; }
 .held { color: var(--before); }
 .line {
   display: grid; grid-template-columns: 1fr auto; gap: 4px 12px;
@@ -164,7 +165,7 @@ h2 {
   animation: stamp-in 180ms var(--ease-out) both;
   white-space: nowrap;
 }
-.stamp.released { color: var(--after); font-size: 22px; right: 12px; top: 10px; }
+.stamp.released { color: var(--after); font-size: 20px; right: 10px; bottom: 12px; }
 .stamp.charged { color: var(--charge); font-size: 15px; right: 6px; top: 8px; }
 .stamp.held { color: var(--before); font-size: 15px; right: 12px; top: 12px; animation: none; opacity: 0.75; }
 .stamp small { display: block; font-family: var(--font-data); font-size: 12px; letter-spacing: 0; text-transform: none; }
@@ -208,7 +209,7 @@ h2 {
 .angle span { background: rgba(243, 238, 225, 0.9); padding: 0 4px; border-radius: 2px; }
 .crops { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0 4px; }
 .crop { border: 1.5px solid var(--ink); border-radius: var(--radius); overflow: hidden; background: var(--paper-2); }
-.crop img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; }
+.crop img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; background: var(--paper-2); }
 .crop figcaption { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 6px; }
 .frame { position: relative; border: 1.5px solid var(--ink); border-radius: var(--radius); overflow: hidden; touch-action: none; }
 .frame img { width: 100%; user-select: none; -webkit-user-drag: none; }
