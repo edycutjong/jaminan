@@ -124,7 +124,7 @@ The APIMatic Context Plugin was used once, to write a Transaction Search call th
 
 1. **Sandbox only.** Nothing here has moved live money; live vault and merchant-initiated eligibility are unverified.
 2. **One merchant.** The demo uses a single sandbox merchant; a production path needs one onboarded merchant per shop.
-3. **Wallet path only.** Advanced card processing was not enabled on our sandbox app (the card-path authorize answered 422 on 2026-10-14), so cards are out of scope.
+3. **Wallet path only.** The card-path authorize answered 422 on 2026-10-14 without a stated reason (we believe advanced card processing is not enabled for this Indonesia-region sandbox merchant), so cards are out of scope.
 4. **Non-return is out of scope.** Jaminan covers damage and fines, not a scooter that never comes back.
 5. **No vision accuracy claim yet.** Until the benchmark runs, no finding from a non-benchmarked model is chargeable.
 6. **Reauthorize success is pending.** PayPal only allows it from Day 4; only the refusal fallback (re-authorize on the vaulted wallet, then void the old hold) is unit-tested; the sandbox run is scheduled for 2026-10-18 or later.
@@ -182,7 +182,7 @@ tests/      unit, contract, invariant and real-sandbox tests
 - Walkthrough, recorded PayPal settlements with ids, reproduce commands: [DEMO.md](DEMO.md)
 - Live app: https://jaminan.edycu.dev
 - Judge path: https://jaminan.edycu.dev/judge
-- Read-back stream: https://jaminan.edycu.dev/integrations/verify
+- PayPal call log: https://jaminan.edycu.dev/integrations/verify (add `?rental=<id>` for one rental's calls and a live read-back)
 - Landing page: https://jaminan-landing.vercel.app
 - Pitch deck: https://jaminan-landing.vercel.app/pitch/ ([PDF](docs/pitch/jaminan-pitch-deck.pdf))
 

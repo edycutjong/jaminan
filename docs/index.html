@@ -584,8 +584,8 @@ section.block { padding-top: 88px; }
       <figcaption><b>Shop phone, Bahasa.</b> A new stub before the renter approves (live e2e run, rental <span class="amt">R-1014-2E81996C</span>; the renter's QR is cropped out: it carries their key).</figcaption></figure>
     <figure class="shot phone"><div class="frame"><img src="site/screens/receipt.webp" width="780" height="1180" loading="lazy" decoding="async" alt="Jaminan — the renter's receipt in English: the released stamp, PayPal says VOIDED, with the authorization, fee capture and handover ids"></div>
       <figcaption><b>Renter phone, English.</b> The receipt with PayPal's ids (R-JUDGE-13).</figcaption></figure>
-    <figure class="shot wide"><div class="frame"><img src="site/screens/verify.webp" width="1225" height="925" loading="lazy" decoding="async" alt="Jaminan — every PayPal call for the rental with HTTP status and PayPal debug ids, the live read-back VOIDED, and the rental's webhooks marked verified"></div>
-      <figcaption><b>Every PayPal call, live.</b> <a href="https://jaminan.edycu.dev/integrations/verify">/integrations/verify</a> lists each call with its debug id, re-asks PayPal for the authorization, and shows the rental's webhooks with PayPal's signature check.</figcaption></figure>
+    <figure class="shot wide"><div class="frame"><img src="site/screens/verify.webp" width="1225" height="925" loading="lazy" decoding="async" alt="Jaminan — every PayPal call for the rental with HTTP status and PayPal debug ids, the live read-back VOIDED, and recent webhooks with their verification result"></div>
+      <figcaption><b>Every PayPal call, live.</b> <a href="https://jaminan.edycu.dev/integrations/verify">/integrations/verify</a> lists each call with its debug id, re-asks PayPal for the authorization, and shows recent webhooks with the result of PayPal's signature check.</figcaption></figure>
   </div>
 </section>
 <section class="block wrap" id="built" aria-labelledby="built-h">
@@ -618,7 +618,7 @@ section.block { padding-top: 88px; }
       <li><a href="https://github.com/edycutjong/jaminan/blob/main/LICENSE">MIT license</a></li>
     </ul>
   </div>
-  <p class="small">Built for the PayPal AI Hackathon · PayPal sandbox only · v0.0.0-dev · 0180da9</p>
+  <p class="small">Built for the PayPal AI Hackathon · PayPal sandbox only · v0.0.0-dev · cfb6a58</p>
 </footer>
 <script>(() => {
 const D = {"steps": {"accept": [{"t": "16:29:37", "call": "capture $18.00 \u00b7 final_capture=true", "http": 201, "answer": "COMPLETED", "ok": true, "id": "1DK41086KS913835V", "debug": "f92235735fe35", "ms": 2283}, {"t": "16:29:37", "call": "read back the authorization", "http": 200, "answer": "CAPTURED", "ok": true, "id": null, "debug": "f2917404f2365", "ms": 484}], "again": [{"t": "16:29:38", "call": "capture $1.00 again", "http": 422, "answer": "AUTHORIZATION_ALREADY_CAPTURED", "ok": false, "id": null, "debug": "f5799404eea63", "ms": 671}], "contest": [{"t": "16:29:55", "call": "void the hold", "http": 200, "answer": "VOIDED", "ok": true, "id": "3EP89225J0560011A", "debug": "f36444694a742", "ms": 1475}, {"t": "16:29:55", "call": "read back the authorization", "http": 200, "answer": "VOIDED", "ok": true, "id": null, "debug": "f919047ff3ba4", "ms": 458}, {"t": "16:29:56", "call": "invoice the contested line \u00b7 $18.00", "http": 201, "answer": "DRAFT", "ok": true, "id": "INV2-EP2Z-3UZM-4A88-7E4W", "debug": "f919047966708", "ms": 574}, {"t": "16:29:57", "call": "send the invoice", "http": 200, "answer": "OK", "ok": true, "id": "INV2-EP2Z-3UZM-4A88-7E4W", "debug": "f5470326ae735", "ms": 1025}, {"t": "16:29:58", "call": "invoice QR code", "http": 200, "answer": "OK", "ok": true, "id": "INV2-EP2Z-3UZM-4A88-7E4W", "debug": "f94609796710e", "ms": 969}]}, "accepted": {"rid": "R-JUDGE-9001", "auth": "59Y22025SE889191E", "readback": "CAPTURED"}, "contested": {"rid": "R-JUDGE-9003", "auth": "3EP89225J0560011A", "readback": "VOIDED", "invoice": "INV2-EP2Z-3UZM-4A88-7E4W"}};

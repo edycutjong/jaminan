@@ -9,6 +9,7 @@ folder or from the test files it names. Recorded 2026-10-14 (UTC times inside ea
 | [`test-run.txt`](test-run.txt) | The full suite, one line per test: **102 passed** (93 offline, 8 against the real PayPal sandbox, 1 against the live Qwen API) | `.venv/bin/python -m pytest -v` (needs sandbox + Qwen credentials) |
 | [`coverage.txt`](coverage.txt) | Offline suite with coverage: **86%** of `jaminan/` (1,415 statements) | `.venv/bin/python -m pytest -m "not sandbox and not live_model and not slow" --cov=jaminan` |
 | [`e2e-live.txt`](e2e-live.txt) | The live app driven as two phones at 375 px on https://jaminan.edycu.dev: **18/18** acceptance checks | `python scripts/e2e_live.py https://jaminan.edycu.dev --shots /tmp/shots` |
+| [`apimatic-transaction-search.txt`](apimatic-transaction-search.txt) | The output of `scripts/apimatic_transaction_search.py` (PayPal's generated SDK): 403 `NOT_AUTHORIZED` on Transaction Search, and the SDK's controller list; see `docs/APIMATIC.md` | `pip install paypal-server-sdk && python scripts/apimatic_transaction_search.py` |
 
 ## The three recorded settlements (`paypal-sandbox-run.json`)
 
@@ -40,5 +41,5 @@ dashboard; the daily close reconciles by per-object read-back meanwhile.
 
 ## Recorded note: the card path
 Advanced Card Processing (`AUTHORIZE` with a card and vault) was tried on this sandbox app on 2026-10-14 and PayPal answered
-`422 UNPROCESSABLE_ENTITY` (the app's merchant is Indonesia-region and advanced cards are not enabled). Jaminan is therefore
+`422 UNPROCESSABLE_ENTITY` without a stated reason (we believe advanced cards are not enabled for this Indonesia-region sandbox merchant). Jaminan is therefore
 wallet-only; nothing in the product depends on the card path.
