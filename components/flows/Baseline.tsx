@@ -67,7 +67,7 @@ export function RenterBaseline({ r, rkey, onChange }: { r: Rental; rkey: string;
     <div>
       <h1>Pickup walkaround</h1>
       <p className="muted" style={{ marginTop: 0 }}>Eight angles, on your phone. These photos are the shared baseline: at return, any mark the shop points at is checked against them, and a mark already visible here cannot be charged.</p>
-      {r.retake_requests.length ? <div className="toast">The shop asked for a retake of angle {r.retake_requests.map((x) => x.angle).join(", ")} — marks in glare or blur there can't be charged later.</div> : null}
+      {r.retake_requests.length ? <div className="toast">The shop asked for a retake of angle {r.retake_requests.map((x) => x.angle).join(", ")} — marks in glare or blur there can&apos;t be charged later.</div> : null}
       {shot < 8 || r.retake_requests.length ? <Walkaround r={r} rkey={rkey} phase="pickup" lang="en" onChange={onChange} /> : (
         <>
           <h2>Existing marks</h2>
@@ -114,7 +114,7 @@ export function ShopBaseline({ r, skey, onChange }: { r: Rental; skey: string; o
       <h1>Foto awal bersama</h1>
       <p className="muted" style={{ marginTop: 0 }}>Penyewa memotret 8 sudut ({shot}/8).<br /><span className="caption-en">The renter is shooting the 8 angles ({shot}/8).</span></p>
       <div className="note small">Area arsir = silau/buram di foto awal: tanda di sana tidak bisa ditagih nanti — minta foto ulang?
-        <br /><span className="caption-en">Hatched = glare/blur at pickup: marks there can't be charged later — ask for a retake?</span></div>
+        <br /><span className="caption-en">Hatched = glare/blur at pickup: marks there can&apos;t be charged later — ask for a retake?</span></div>
       <div className="crops" style={{ gridTemplateColumns: "1fr 1fr", marginTop: 12 }}>
         {ALL.map((a) => (
           <div key={a}>

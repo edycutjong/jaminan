@@ -20,7 +20,7 @@ function FineForm({ rid, skey }: { rid: string; skey: string }) {
     <div className="paper stack" style={{ marginTop: 14 }}>
       <div className="label">Tilang e-TLE · traffic fine</div>
       <p className="small" style={{ margin: 0 }}>Foto surat tilang → model membaca plat, waktu dan pasal → cocok dengan masa sewa? Jumlah dibatasi plafon pasal; penyewa punya 72 jam untuk keberatan.
-        <br /><span className="caption-en">Ticket photo → plate, time and article read → inside the rental window? Amount capped by the article's ceiling; the renter has 72 h to contest.</span></p>
+        <br /><span className="caption-en">Ticket photo → plate, time and article read → inside the rental window? Amount capped by the article&apos;s ceiling; the renter has 72 h to contest.</span></p>
       <input type="file" accept="image/*" capture="environment" onChange={(e) => setFile(e.target.files?.[0] || null)} aria-label="ticket photo" />
       <label className="small">Jumlah di surat (IDR) <input type="number" value={idr} onChange={(e) => setIdr(+e.target.value)} className="data" style={{ width: 140 }} /></label>
       <button className="btn ghost" disabled={!file || busy} onClick={async () => {
