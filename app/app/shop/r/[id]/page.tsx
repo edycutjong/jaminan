@@ -72,7 +72,7 @@ export default function ShopRental() {
           <p className="caption-en" style={{ marginTop: 0 }}>{r.state === "PROPOSED" ? "The renter accepts or contests each line on their own phone" : "Settled — read back from PayPal"}</p>
           <Stub r={r} lang="id" />
           {r.settlement ? <FineForm rid={r.id} skey={skey!} /> : null}
-          <p><Link href={`/integrations/verify?rental=${r.id}`}>Panggilan PayPal · read-back</Link> · <Link href={`/r/${r.id}/evidence`}>paket bukti</Link></p>
+          <p><Link href={`/app/integrations/verify?rental=${r.id}`}>Panggilan PayPal · read-back</Link> · <Link href={`/app/r/${r.id}/evidence`}>paket bukti</Link></p>
         </>
       )}
     </main>

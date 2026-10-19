@@ -23,3 +23,10 @@ coverage.xml
 *.log
 *.pem
 *.key
+# landing copied from docs/ + evidence/ at build time (scripts/sync-landing.mjs)
+/public/index.html
+/public/APIMATIC.md
+/public/assets/
+/public/site/
+/public/pitch/
+/public/evidence/

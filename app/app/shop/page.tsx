@@ -58,20 +58,20 @@ export default function Counter() {
           <Stub r={created} lang="id" />
           <p className="small" style={{ textAlign: "center" }}>Penyewa memindai ini dengan ponselnya<br /><span className="caption-en">The renter scans this with their own phone</span></p>
           <QR value={created.renter_link!} label="renter QR" />
-          <p className="small" style={{ textAlign: "center", wordBreak: "break-all" }}><a href={created.renter_link}>buka di ponsel ini</a> · <Link href={`/shop/r/${created.id}`}>layar toko untuk sewa ini</Link></p>
+          <p className="small" style={{ textAlign: "center", wordBreak: "break-all" }}><a href={created.renter_link}>buka di ponsel ini</a> · <Link href={`/app/shop/r/${created.id}`}>layar toko untuk sewa ini</Link></p>
         </div>
       ) : null}
       <h2>Hari ini</h2>
       <p className="caption-en" style={{ marginTop: -6 }}>Today&apos;s stubs</p>
       {list.length === 0 ? <p className="muted small">Belum ada sewa.</p> : null}
       {list.map((x) => (
-        <Link key={x.id} href={`/shop/r/${x.id}`} className="line" style={{ textDecoration: "none", color: "inherit" }}>
+        <Link key={x.id} href={`/app/shop/r/${x.id}`} className="line" style={{ textDecoration: "none", color: "inherit" }}>
           <span className="what data">{x.id}</span>
           <span><span className={`pill ${(PILL[x.state] || ["neutral"])[0]}`}>{(PILL[x.state] || ["", x.state])[1]}</span></span>
           <span className="why">{x.vehicle_label} · {usd(x.deposit_cents)} {x.settlement ? `· PayPal ${x.settlement.auth_read_back}` : x.auth_status ? `· PayPal ${x.auth_status}` : ""}</span>
         </Link>
       ))}
-      <p style={{ marginTop: 16 }}><Link href="/shop/close">Tutup buku hari ini · daily close</Link></p>
+      <p style={{ marginTop: 16 }}><Link href="/app/shop/close">Tutup buku hari ini · daily close</Link></p>
     </main>
   );
 }

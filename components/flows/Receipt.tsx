@@ -53,7 +53,7 @@ export default function Receipt({ r, rkey, onChange }: { r: Rental; rkey: string
           {f.status === "notified" && rkey ? <button className="btn ghost sm" onClick={async () => { await api(`/rentals/${r.id}/fines/${f.id}/contest`, { method: "POST", key: rkey }); setFines((x) => x.map((y) => y.id === f.id ? { ...y, status: "contested_invoiced" } : y)); }}>Contest → invoice instead</button> : null}
         </div>
       ))}
-      <p style={{ marginTop: 16 }}><Link href={`/r/${r.id}/evidence`}>Evidence pack</Link> · <Link href={`/integrations/verify?rental=${r.id}`}>PayPal calls + read-back</Link></p>
+      <p style={{ marginTop: 16 }}><Link href={`/app/r/${r.id}/evidence`}>Evidence pack</Link> · <Link href={`/app/integrations/verify?rental=${r.id}`}>PayPal calls + read-back</Link></p>
       {rkey && r.vault_id ? (
         <div className="paper" style={{ marginTop: 14 }}>
           <div className="label">Saved PayPal</div>

@@ -6,10 +6,10 @@
 
   <br/>
 
-  [![Live Demo](https://img.shields.io/badge/🚀_Live-Demo-06b6d4?style=for-the-badge)](https://jaminan.edycu.dev)
-  [![Judge Path](https://img.shields.io/badge/⚖️_Judge-Path-f59e0b?style=for-the-badge)](https://jaminan.edycu.dev/judge)
-  [![Landing Page](https://img.shields.io/badge/🧾_Landing-Page-1D7A4A?style=for-the-badge)](https://jaminan-landing.vercel.app)
-  [![Pitch Deck](https://img.shields.io/badge/🗂️_Pitch-Deck-3346A6?style=for-the-badge)](https://jaminan-landing.vercel.app/pitch/)
+  [![Live Demo](https://img.shields.io/badge/🚀_Live-Demo-06b6d4?style=for-the-badge)](https://jaminan.edycu.dev/app)
+  [![Judge Path](https://img.shields.io/badge/⚖️_Judge-Path-f59e0b?style=for-the-badge)](https://jaminan.edycu.dev/app/judge)
+  [![Landing Page](https://img.shields.io/badge/🧾_Landing-Page-1D7A4A?style=for-the-badge)](https://jaminan.edycu.dev)
+  [![Pitch Deck](https://img.shields.io/badge/🗂️_Pitch-Deck-3346A6?style=for-the-badge)](https://jaminan.edycu.dev/pitch/)
   [![Built for PayPal AI Hackathon](https://img.shields.io/badge/Devpost-PayPal_AI_Hackathon-8b5cf6?style=for-the-badge)](https://paypalaihackathon.devpost.com/)
 
   <br/>
@@ -143,7 +143,7 @@ npm install && python3 -m venv .venv && .venv/bin/pip install -r requirements-de
 npm run dev:api & npm run dev
 ```
 
-Or skip setup: open the live [`/judge`](https://jaminan.edycu.dev/judge) route, which mints a fresh sandbox rental on one tap and lets you release the hold. Priced lines are in the recorded settlements in [`DEMO.md`](DEMO.md).
+Or skip setup: open the live [`/judge`](https://jaminan.edycu.dev/app/judge) route, which mints a fresh sandbox rental on one tap and lets you release the hold. Priced lines are in the recorded settlements in [`DEMO.md`](DEMO.md).
 
 ## 🧪 Testing & CI
 
@@ -151,7 +151,7 @@ Or skip setup: open the live [`/judge`](https://jaminan.edycu.dev/judge) route, 
 make ci                                                                       # ruff, mypy, offline tests + coverage, pip-audit, eslint, tsc, build, npm audit
 .venv/bin/python -m pytest -m "not sandbox and not live_model and not slow"   # offline suite only
 .venv/bin/python -m pytest                                                    # + real sandbox, live Qwen, headless browser (needs credentials)
-python scripts/e2e_live.py https://jaminan.edycu.dev --shots /tmp/jaminan-e2e   # live acceptance as two phones at 375 px
+python scripts/e2e_live.py https://jaminan.edycu.dev/app --shots /tmp/jaminan-e2e   # live acceptance as two phones at 375 px
 ```
 
 The sandbox, live-model and browser tests need credentials, so CI runs the offline suite only; run them yourself with the third command. Tests that pin a fixed defect are named for it. [`.env.example`](.env.example) lists every variable.
@@ -180,11 +180,11 @@ tests/      unit, contract, invariant and real-sandbox tests
 ## 📽️ Demo Materials
 
 - Walkthrough, recorded PayPal settlements with ids, reproduce commands: [DEMO.md](DEMO.md)
-- Live app: https://jaminan.edycu.dev
-- Judge path: https://jaminan.edycu.dev/judge
-- PayPal call log: https://jaminan.edycu.dev/integrations/verify (add `?rental=<id>` for one rental's calls and a live read-back)
-- Landing page: https://jaminan-landing.vercel.app
-- Pitch deck: https://jaminan-landing.vercel.app/pitch/ ([PDF](docs/pitch/jaminan-pitch-deck.pdf))
+- Live app: https://jaminan.edycu.dev/app
+- Judge path: https://jaminan.edycu.dev/app/judge
+- PayPal call log: https://jaminan.edycu.dev/app/integrations/verify (add `?rental=<id>` for one rental's calls and a live read-back)
+- Landing page: https://jaminan.edycu.dev
+- Pitch deck: https://jaminan.edycu.dev/pitch/ ([PDF](docs/pitch/jaminan-pitch-deck.pdf))
 
 ## 📄 License
 

@@ -71,7 +71,7 @@ export default function RenterRental() {
       ) : (
         <Receipt r={r} rkey={rkey ?? null} onChange={setR} />
       )}
-      {["DRAFT", "SETTLED", "RELEASED", "INVOICED", "CLOSED"].includes(r.state) ? null : <p className="small" style={{ marginTop: 24 }}><Link href={`/r/${r.id}/evidence`}>Evidence pack</Link></p>}
+      {["DRAFT", "SETTLED", "RELEASED", "INVOICED", "CLOSED"].includes(r.state) ? null : <p className="small" style={{ marginTop: 24 }}><Link href={`/app/r/${r.id}/evidence`}>Evidence pack</Link></p>}
     </main>
   );
 }

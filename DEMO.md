@@ -1,10 +1,10 @@
 # Demo guide
 
-Everything here runs on the **PayPal sandbox**. No real money moves. The app is live at <https://jaminan.edycu.dev>; no install is needed.
+Everything here runs on the **PayPal sandbox**. No real money moves. The app is live at <https://jaminan.edycu.dev/app>; no install is needed.
 
 ## 1. Two minutes: the judge route
 
-Open <https://jaminan.edycu.dev/judge> and tap **Start a judge rental**. Each tap mints a fresh rental (`R-JUDGE-<n>`) as a merchant-initiated `AUTHORIZE` of **$115.00** (fee $15.00 + deposit $100.00) on a saved sandbox wallet, captures the $15.00 fee with `final_capture=false`, writes the handover tracking, and opens a "Hold is live" screen with a read-back panel. No login is needed for this path. (The other button, "Full path", sends you through the real PayPal approval page; the sandbox buyer login is printed on the page.)
+Open <https://jaminan.edycu.dev/app/judge> and tap **Start a judge rental**. Each tap mints a fresh rental (`R-JUDGE-<n>`) as a merchant-initiated `AUTHORIZE` of **$115.00** (fee $15.00 + deposit $100.00) on a saved sandbox wallet, captures the $15.00 fee with `final_capture=false`, writes the handover tracking, and opens a "Hold is live" screen with a read-back panel. No login is needed for this path. (The other button, "Full path", sends you through the real PayPal approval page; the sandbox buyer login is printed on the page.)
 
 | Step | What you see | What PayPal did |
 |---|---|---|
@@ -44,7 +44,7 @@ The side-panel dent in the `accepted` run is the "already there" case: it was vi
 .venv/bin/python scripts/record_paypal_evidence.py
 
 # drive the live app as two phones at 375 px
-python scripts/e2e_live.py https://jaminan.edycu.dev --shots /tmp/jaminan-e2e
+python scripts/e2e_live.py https://jaminan.edycu.dev/app --shots /tmp/jaminan-e2e
 ```
 
 | Number | Where it comes from |

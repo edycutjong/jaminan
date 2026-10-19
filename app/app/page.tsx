@@ -9,13 +9,13 @@ export default function Home() {
       <p>Scooter shops in Bali and Jakarta keep the renter&apos;s passport as the <em>jaminan</em> — the deposit. At return the owner points at a dent; whoever holds the passport wins.</p>
       <p>Jaminan makes the deposit a PayPal authorization and the argument a shared walkaround. <strong>The owner points, the shared baseline answers.</strong> What the shared baseline can&apos;t show, nobody can charge.</p>
       <div className="stack" style={{ marginTop: 22 }}>
-        <Link className="btn" href="/judge">Try it as the shop — /judge</Link>
-        <Link className="btn ghost" href="/shop">Shop counter (Bahasa Indonesia)</Link>
-        <Link className="btn ghost" href="/integrations/verify">Every PayPal call, live</Link>
+        <Link className="btn" href="/app/judge">Try it as the shop — /judge</Link>
+        <Link className="btn ghost" href="/app/shop">Shop counter (Bahasa Indonesia)</Link>
+        <Link className="btn ghost" href="/app/integrations/verify">Every PayPal call, live</Link>
       </div>
       <p className="small" style={{ marginTop: 14 }}>
-        The story and the evidence: <a href="https://jaminan-landing.vercel.app">landing page</a> ·{" "}
-        <a href="https://jaminan-landing.vercel.app/pitch/">pitch deck</a>
+        The story and the evidence: <a href="/">landing page</a> ·{" "}
+        <a href="/pitch/">pitch deck</a>
       </p>
       <h2>The PayPal lifecycle</h2>
       <ol className="small" style={{ paddingLeft: 20 }}>

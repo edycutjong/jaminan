@@ -71,7 +71,7 @@ export default function Judge() {
           ) : null}
           {info && info.pool === 0 ? <p className="small muted">Judge wallet pool not configured on this deploy — use the full path.</p> : null}
           {err ? <div className="toast" role="alert">{err}</div> : null}
-          <p className="small" style={{ marginTop: 20 }}><Link href="/integrations/verify">Every PayPal call, live</Link></p>
+          <p className="small" style={{ marginTop: 20 }}><Link href="/app/integrations/verify">Every PayPal call, live</Link></p>
         </div>
       ) : (
         <div className="split">
@@ -112,7 +112,7 @@ export default function Judge() {
               <dt>Handover</dt><dd>{r.tracking_number}</dd>
               {r.settlement?.capture_id ? <><dt>Final capture</dt><dd>{r.settlement.capture_id}</dd></> : null}
             </dl>
-            <p className="small"><Link href={`/integrations/verify?rental=${r.id}`}>Full call log with debug ids</Link> · <Link href={`/r/${r.id}/evidence`}>evidence pack</Link></p>
+            <p className="small"><Link href={`/app/integrations/verify?rental=${r.id}`}>Full call log with debug ids</Link> · <Link href={`/app/r/${r.id}/evidence`}>evidence pack</Link></p>
             <button className="btn ghost sm" onClick={() => { setR(null); setErr(null); }}>Start another</button>
           </aside>
         </div>

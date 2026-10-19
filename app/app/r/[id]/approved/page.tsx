@@ -16,7 +16,7 @@ export default function Approved() {
     adoptUrlKey(id);
     const key = keyFor(id, "renter");
     api(`/rentals/${id}/authorize`, { method: "POST", key })
-      .then((r) => router.replace(r.kind === "judge_full" ? `/judge?rental=${id}` : `/r/${id}`))
+      .then((r) => router.replace(r.kind === "judge_full" ? `/app/judge?rental=${id}` : `/app/r/${id}`))
       .catch((e) => setErr(e instanceof ApiError ? e.message : String(e)));
   }, [id, router]);
   return (

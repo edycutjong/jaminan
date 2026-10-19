@@ -4,8 +4,10 @@
   "private": true,
   "license": "MIT",
   "scripts": {
+    "predev": "node scripts/sync-landing.mjs",
     "dev": "next dev",
     "dev:api": ".venv/bin/uvicorn api.index:app --port 8000 --reload",
+    "prebuild": "node scripts/sync-landing.mjs",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",

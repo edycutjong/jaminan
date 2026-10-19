@@ -54,7 +54,7 @@ class Settings:
     judge_vault_ids: tuple[str, ...] = field(default_factory=lambda: _csv("JUDGE_VAULT_IDS", ""))
     judge_buyer_email: str = field(default_factory=lambda: os.environ.get("JUDGE_BUYER_EMAIL", ""))
     judge_buyer_password: str = field(default_factory=lambda: os.environ.get("JUDGE_BUYER_PASSWORD", ""))
-    app_url: str = field(default_factory=lambda: os.environ.get("APP_URL", "http://localhost:3000").rstrip("/"))
+    app_url: str = field(default_factory=lambda: os.environ.get("APP_URL", "http://localhost:3000/app").rstrip("/"))
     cron_secret: str = field(default_factory=lambda: os.environ.get("CRON_SECRET", ""))
 
     def __post_init__(self) -> None:

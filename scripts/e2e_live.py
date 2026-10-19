@@ -178,5 +178,5 @@ def main(base: str, shots: Path) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1].rstrip("/") if len(sys.argv) > 1 else "https://jaminan.edycu.dev",
+    sys.exit(main(sys.argv[1].rstrip("/") if len(sys.argv) > 1 else "https://jaminan.edycu.dev/app",
                   Path(sys.argv[3] if len(sys.argv) > 3 and sys.argv[2] == "--shots" else "/tmp/jaminan-e2e")))
