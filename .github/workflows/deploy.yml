@@ -43,7 +43,7 @@ jobs:
 
       - name: Smoke test the live domain
         run: |
-          for path in / /judge /integrations/verify; do
+          for path in / /pitch /app /app/judge /app/integrations/verify /evidence/README.md; do
             code=$(curl -s -o /dev/null -w '%{http_code}' --retry 5 --retry-delay 5 --retry-all-errors "$APP_URL$path")
             echo "$path -> $code"
             test "$code" = 200
