@@ -1,7 +1,8 @@
 # Evidence
 
 Every test, PayPal and coverage number on the landing page, the pitch deck and the README comes from a file in this
-folder or from the test files it names. Recorded 2026-10-14 (UTC times inside each file).
+folder or from the test files it names. Recorded 2026-10-14 (UTC times inside each file), except
+`paypal-reauthorize.jsonl` (2026-10-23, local WIB times, UTC+7).
 
 | File | What it is | Reproduce |
 |---|---|---|
@@ -9,7 +10,8 @@ folder or from the test files it names. Recorded 2026-10-14 (UTC times inside ea
 | [`test-run.txt`](test-run.txt) | The full suite, one line per test: **102 passed** (93 offline, 8 against the real PayPal sandbox, 1 against the live Qwen API) | `.venv/bin/python -m pytest -v` (needs sandbox + Qwen credentials) |
 | [`coverage.txt`](coverage.txt) | Offline suite with coverage: **86%** of `jaminan/` (1,415 statements) | `.venv/bin/python -m pytest -m "not sandbox and not live_model and not slow" --cov=jaminan` |
 | [`e2e-live.txt`](e2e-live.txt) | The live app driven as two phones at 375 px on https://jaminan.edycu.dev: **18/18** acceptance checks | `python scripts/e2e_live.py https://jaminan.edycu.dev --shots /tmp/shots` |
-| [`paypal-reauthorize.jsonl`](paypal-reauthorize.jsonl) | `POST /v2/payments/authorizations/{id}/reauthorize` (the endpoint `PayPal.reauthorize` calls) on 2026-10-23, day 9 of two 2026-10-14 sandbox holds: **201** on a plain hold, **201** on a hold whose fee was already captured, then a second reauthorize on the first hold refused **422 `REAUTHORIZATION_TOO_SOON`** ("only allowed once from Day 4 to Day 29"). PayPal debug ids included | needs a sandbox hold between Day 4 and Day 29; works once per hold |
+| [`paypal-reauthorize.jsonl`](paypal-reauthorize.jsonl) | `POST /v2/payments/authorizations/{id}/reauthorize` (the endpoint `PayPal.reauthorize` calls) on 2026-10-23, day 9 of two 2026-10-14 sandbox holds: **201** on a plain hold (`94D57335A25884833`), **201** on a hold whose fee was already captured (`1CE70904NP210710M`), then a second reauthorize on the first hold refused **422 `REAUTHORIZATION_TOO_SOON`** ("only allowed once from Day 4 to Day 29"). PayPal debug ids included | needs a sandbox hold between Day 4 and Day 29; works once per hold |
+| [`video-run.json`](video-run.json) | The live sandbox rentals the demo video shows (2026-10-15 take): the renter approval, the judge rental R-JUDGE-16 (every call, the read-backs printed on the page, its webhooks, and the verify page's webhook table as captured), and the recorded pytest run on the terminal plate | re-take with the video's capture script; the ids are sandbox objects |
 | [`apimatic-transaction-search.txt`](apimatic-transaction-search.txt) | The output of `scripts/apimatic_transaction_search.py` (PayPal's generated SDK): 403 `NOT_AUTHORIZED` on Transaction Search, and the SDK's controller list; see `docs/APIMATIC.md` | `pip install paypal-server-sdk && python scripts/apimatic_transaction_search.py` |
 
 ## The three recorded settlements (`paypal-sandbox-run.json`)

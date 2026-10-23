@@ -1,0 +1,852 @@
+{
+ "what": "The live PayPal sandbox rentals and the test run shown in the demo video (pass A, 2026-10-15). Every id, status and figure on screen in the video's live scenes is below; the priced settlement in the video replays evidence/paypal-sandbox-run.json (claim answers scripted there). No claim was pointed in these live rentals.",
+ "environment": "https://api-m.sandbox.paypal.com",
+ "app": "https://jaminan.edycu.dev",
+ "tariff_shown": {
+  "id": "tv1",
+  "sha256": "14adea8e891c43229cf94278a29ccdafcd9c2aa5ab87755f307f8b2e16d2687b",
+  "note": "shown on the shop and renter screens as 'tarif tv1 \u00b7 <first 12 hex>'; computed by the service from fixtures/tariff_v1.*"
+ },
+ "renter_approval": {
+  "rental_id": "R-1014-3B46D97A",
+  "recorded_at": "2026-10-14T20:16:04.217Z",
+  "flow": "shop phone /shop \u2192 'Buat QR untuk penyewa' \u2192 renter phone opens the same rental's link \u2192 consent \u2192 'Approve with PayPal' \u2192 PayPal's own sandbox checkout (buyer login, review, 'Setuju & Lanjutkan') \u2192 back to /r/<id>/approved \u2192 authorize \u2192 the pickup walkaround screen",
+  "paypal_checkout_token": "6YK43199MP415945X",
+  "cut_in_video": {
+   "buyer_login_s": 6.6
+  },
+  "calls": [
+   {
+    "rental_id": "R-1014-3B46D97A",
+    "action": "order.create",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "request_id": "947392a014f4ccaefa0295e1176d60ab",
+    "http_status": 200,
+    "debug_id": "f15719606714f",
+    "object_id": "6YK43199MP415945X",
+    "issue": null,
+    "ms": 1059,
+    "at": "2026-10-14T20:16:14+00:00"
+   },
+   {
+    "rental_id": "R-1014-3B46D97A",
+    "action": "order.get",
+    "method": "GET",
+    "path": "/v2/checkout/orders/6YK43199MP415945X",
+    "request_id": null,
+    "http_status": 200,
+    "debug_id": "f4320845ddbf1",
+    "object_id": "6YK43199MP415945X",
+    "issue": null,
+    "ms": 484,
+    "at": "2026-10-14T20:16:32+00:00"
+   },
+   {
+    "rental_id": "R-1014-3B46D97A",
+    "action": "order.authorize",
+    "method": "POST",
+    "path": "/v2/checkout/orders/6YK43199MP415945X/authorize",
+    "request_id": "a0dd6e4f49057ed7ccf04e0a556b63ef",
+    "http_status": 201,
+    "debug_id": "f76175296747c",
+    "object_id": "6YK43199MP415945X",
+    "issue": null,
+    "ms": 1847,
+    "at": "2026-10-14T20:16:34+00:00"
+   }
+  ],
+  "read_back_now": {
+   "authorization_id": "7D821002D3901394T",
+   "status": "CREATED",
+   "http_status": 200,
+   "debug_id": "f18049192d39b",
+   "at": "2026-10-14T21:38:39+00:00"
+  }
+ },
+ "judge_release": {
+  "rental_id": "R-JUDGE-16",
+  "authorization_id": "0GX50713GR7567731",
+  "recorded_at": "2026-10-14T21:28:18.257Z",
+  "flow": "/judge \u2192 'Start a judge rental' (merchant-initiated AUTHORIZE on the saved sandbox wallet, fee capture, tracking) \u2192 'Release the hold (clean return)' \u2192 void \u2192 read-back \u2192 /integrations/verify?rental=",
+  "calls": [
+   {
+    "rental_id": "R-JUDGE-16",
+    "action": "order.create.mit.authorize",
+    "method": "POST",
+    "path": "/v2/checkout/orders",
+    "request_id": "70ffe51c9d7405024072ff00846aa344",
+    "http_status": 201,
+    "debug_id": "ca4a9abad5aa6",
+    "object_id": "1DJ309072J7508619",
+    "issue": null,
+    "ms": 1728,
+    "at": "2026-10-14T21:27:54+00:00"
+   },
+   {
+    "rental_id": "R-JUDGE-16",
+    "action": "auth.capture.fee",
+    "method": "POST",
+    "path": "/v2/payments/authorizations/0GX50713GR7567731/capture",
+    "request_id": "df766f748ccf9ae2714b41d11a3dd557",
+    "http_status": 201,
+    "debug_id": "ca4a9abb83e82",
+    "object_id": "2CA57820KM7107133",
+    "issue": null,
+    "ms": 1449,
+    "at": "2026-10-14T21:27:56+00:00"
+   },
+   {
+    "rental_id": "R-JUDGE-16",
+    "action": "order.track",
+    "method": "POST",
+    "path": "/v2/checkout/orders/1DJ309072J7508619/track",
+    "request_id": "c18330bc74298fff79867587fbb3e99c",
+    "http_status": 201,
+    "debug_id": "ca4a9abc15fea",
+    "object_id": "1DJ309072J7508619",
+    "issue": null,
+    "ms": 777,
+    "at": "2026-10-14T21:27:57+00:00"
+   },
+   {
+    "rental_id": "R-JUDGE-16",
+    "action": "auth.get",
+    "method": "GET",
+    "path": "/v2/payments/authorizations/0GX50713GR7567731",
+    "request_id": null,
+    "http_status": 200,
+    "debug_id": "ca4a9abc64c85",
+    "object_id": "0GX50713GR7567731",
+    "issue": null,
+    "ms": 295,
+    "at": "2026-10-14T21:27:57+00:00"
+   },
+   {
+    "rental_id": "R-JUDGE-16",
+    "action": "auth.void",
+    "method": "POST",
+    "path": "/v2/payments/authorizations/0GX50713GR7567731/void",
+    "request_id": "99cde08a07af95a7ed3308dc41469212",
+    "http_status": 200,
+    "debug_id": "ca4a9abea1a4b",
+    "object_id": "0GX50713GR7567731",
+    "issue": null,
+    "ms": 917,
+    "at": "2026-10-14T21:28:03+00:00"
+   },
+   {
+    "rental_id": "R-JUDGE-16",
+    "action": "auth.get",
+    "method": "GET",
+    "path": "/v2/payments/authorizations/0GX50713GR7567731",
+    "request_id": null,
+    "http_status": 200,
+    "debug_id": "ca4a9abefe965",
+    "object_id": "0GX50713GR7567731",
+    "issue": null,
+    "ms": 409,
+    "at": "2026-10-14T21:28:04+00:00"
+   }
+  ],
+  "read_back": {
+   "authorization_id": "0GX50713GR7567731",
+   "status": "VOIDED",
+   "http_status": 200,
+   "debug_id": "ca4a9ac429d5e",
+   "at": "2026-10-14T21:28:17+00:00"
+  },
+  "shown_on_judge_page": {
+   "kv": {
+    "name": "kv_shown",
+    "t": 12.468,
+    "Rental": "R-JUDGE-16",
+    "Authorization": "0GX50713GR7567731",
+    "Fee capture": "2CA57820KM7107133",
+    "Handover": "JMN-R-JUDGE-16-02ebc040"
+   },
+   "read_back_while_held": "PayPal read-back: authorization 0GX50713GR7567731 is PARTIALLY_CAPTURED (debug ca4a9abc9f82b)",
+   "read_back_after_release": "PayPal read-back: authorization 0GX50713GR7567731 is VOIDED (debug ca4a9abf45e21)"
+  },
+  "webhooks_for_this_authorization": [
+   {
+    "id": "WH-6D325325WF755182L-16V97362UH112942F",
+    "event_type": "PAYMENT.AUTHORIZATION.VOIDED",
+    "resource_id": "0GX50713GR7567731",
+    "status": "VOIDED",
+    "verified": true,
+    "received_at": "2026-10-14T21:28:08+00:00",
+    "custom_id": "R-JUDGE-16"
+   },
+   {
+    "id": "WH-74S49602S42825639-6AP26194UX867215W",
+    "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+    "resource_id": "0GX50713GR7567731",
+    "status": "VOIDED",
+    "verified": true,
+    "received_at": "2026-10-14T21:28:16+00:00",
+    "custom_id": "R-JUDGE-16"
+   }
+  ],
+  "verify_page_webhooks_at_take": {
+   "note": "the 'Webhooks received' table on /integrations/verify (now /app/integrations/verify) exactly as the app returned it during the take: the most recent PayPal webhook events for every sandbox rental, not only this one; times are UTC (the page prints them as MM-DD HH:MM:SS)",
+   "rows": [
+    {
+     "id": "WH-71450852446935524-0H425627439098636",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "4LC39246T0823745J",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T19:31:48+00:00",
+     "custom_id": "R-JUDGE-1"
+    },
+    {
+     "id": "WH-0D46684089456704V-96V92468WF049434U",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "4ES448153C288644F",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T19:31:50+00:00",
+     "custom_id": "R-JUDGE-1"
+    },
+    {
+     "id": "WH-9L100564R8781661E-4N575084TG977071M",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "06Y77741J8015112C",
+     "status": "CAPTURED",
+     "verified": true,
+     "received_at": "2026-10-14T19:32:00+00:00",
+     "custom_id": "R-JUDGE-1"
+    },
+    {
+     "id": "WH-8M422491LB475873F-16P04854X8711183W",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "3GM545597R9537122",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T19:32:07+00:00",
+     "custom_id": "R-JUDGE-1"
+    },
+    {
+     "id": "WH-1233084845865543W-00K38791AG835523H",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "2K79983540749460R",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T19:32:08+00:00",
+     "custom_id": "R-JUDGE-1"
+    },
+    {
+     "id": "WH-7EX840500R1012236-5AK790393V099234C",
+     "event_type": "PAYMENT.AUTHORIZATION.VOIDED",
+     "resource_id": "17T04758N7223804E",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T19:32:14+00:00",
+     "custom_id": "R-JUDGE-1"
+    },
+    {
+     "id": "WH-1EC29930HR604941P-5Y06835139556962B",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "38A63407RK779012C",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T19:32:16+00:00",
+     "custom_id": "R-JUDGE-1"
+    },
+    {
+     "id": "WH-7E236696JC7314104-1XY168772J166680S",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "17T04758N7223804E",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T19:32:17+00:00",
+     "custom_id": "R-JUDGE-1"
+    },
+    {
+     "id": "WH-7MJ54674813897630-7BE10609XR2452830",
+     "event_type": "CHECKOUT.ORDER.APPROVED",
+     "resource_id": "76U602459U840523L",
+     "status": "APPROVED",
+     "verified": true,
+     "received_at": "2026-10-14T19:32:28+00:00",
+     "custom_id": null
+    },
+    {
+     "id": "WH-5RL81421MV646802A-3D542758YB772161P",
+     "event_type": "INVOICING.INVOICE.CREATED",
+     "resource_id": null,
+     "status": null,
+     "verified": true,
+     "received_at": "2026-10-14T19:32:36+00:00",
+     "custom_id": null
+    },
+    {
+     "id": "WH-2EH2147097263010D-7K360849MF936261R",
+     "event_type": "VAULT.PAYMENT-TOKEN.CREATED",
+     "resource_id": "3ug34380pw497712d",
+     "status": null,
+     "verified": true,
+     "received_at": "2026-10-14T19:32:37+00:00",
+     "custom_id": null
+    },
+    {
+     "id": "WH-97V30914U45832611-8HS37010R2985945B",
+     "event_type": "PAYMENT.AUTHORIZATION.VOIDED",
+     "resource_id": "6H733471PA545781L",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T19:32:41+00:00",
+     "custom_id": "R-1014-670B2B89"
+    },
+    {
+     "id": "WH-3A167951VV6305834-837918998A5110134",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "6H733471PA545781L",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T19:32:47+00:00",
+     "custom_id": "R-1014-670B2B89"
+    },
+    {
+     "id": "WH-85167363ET545633G-4M405624T7609721X",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "9YU673347S440273T",
+     "status": "CAPTURED",
+     "verified": true,
+     "received_at": "2026-10-14T19:32:50+00:00",
+     "custom_id": "T-821bc237ef"
+    },
+    {
+     "id": "WH-4AK19420FD570650E-2P275513T89983011",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "9WH17144MC515491J",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T19:32:52+00:00",
+     "custom_id": "T-821bc237ef"
+    },
+    {
+     "id": "WH-8CS57415BX6425608-8VY12696FU2085325",
+     "event_type": "PAYMENT.AUTHORIZATION.VOIDED",
+     "resource_id": "0BK26283M1932130P",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T19:32:56+00:00",
+     "custom_id": "T-a7b38aba77"
+    },
+    {
+     "id": "WH-9PC75000W1140732K-5LS17070GA5099825",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "1TM98786HT4389019",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T19:32:56+00:00",
+     "custom_id": "T-821bc237ef"
+    },
+    {
+     "id": "WH-0TD39534VS741194V-14T144525G617013H",
+     "event_type": "PAYMENT.AUTHORIZATION.VOIDED",
+     "resource_id": "6EA86533EH145383X",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T19:33:03+00:00",
+     "custom_id": "T-368e45850e"
+    },
+    {
+     "id": "WH-3C5169496F8452452-7Y613122H6851300R",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "6EA86533EH145383X",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T19:33:05+00:00",
+     "custom_id": "T-368e45850e"
+    },
+    {
+     "id": "WH-02T73679AP5513227-93K064741L002203V",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "0BK26283M1932130P",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T19:33:06+00:00",
+     "custom_id": "T-a7b38aba77"
+    },
+    {
+     "id": "WH-7P866729FL9253259-37C22993YX610084R",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "6CG29179V19978811",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T19:33:07+00:00",
+     "custom_id": "T-a7b38aba77"
+    },
+    {
+     "id": "WH-4RG990554M4446114-4SL03167PY7388452",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "4LN84117XW960082L",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T19:33:17+00:00",
+     "custom_id": "T-368e45850e"
+    },
+    {
+     "id": "WH-4US65862YE5331355-6T190043K0107683A",
+     "event_type": "CHECKOUT.ORDER.APPROVED",
+     "resource_id": "3K533906GR076321Y",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T20:09:22+00:00",
+     "custom_id": null
+    },
+    {
+     "id": "WH-8SJ85331CF233790E-9TY54774EA918232U",
+     "event_type": "VAULT.PAYMENT-TOKEN.CREATED",
+     "resource_id": "3ug34380pw497712d",
+     "status": null,
+     "verified": true,
+     "received_at": "2026-10-14T20:09:27+00:00",
+     "custom_id": null
+    },
+    {
+     "id": "WH-50B23265PV213643M-2AG45174SR9339246",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "8WC79521HD3590050",
+     "status": "CREATED",
+     "verified": true,
+     "received_at": "2026-10-14T20:09:46+00:00",
+     "custom_id": "R-1014-0A223013"
+    },
+    {
+     "id": "WH-90K28213DX051901G-78V58191X73337406",
+     "event_type": "PAYMENT.AUTHORIZATION.VOIDED",
+     "resource_id": "36F443567D8533349",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T20:15:02+00:00",
+     "custom_id": "R-JUDGE-14"
+    },
+    {
+     "id": "WH-0XU06254LR719464M-19F360025L0266726",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "36F443567D8533349",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T20:15:07+00:00",
+     "custom_id": "R-JUDGE-14"
+    },
+    {
+     "id": "WH-054778620F147842L-7GL07899NX541730A",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "76P70547E2187750K",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T20:15:08+00:00",
+     "custom_id": "R-JUDGE-14"
+    },
+    {
+     "id": "WH-9T7000152S3842914-4N735503BD841893T",
+     "event_type": "CHECKOUT.ORDER.APPROVED",
+     "resource_id": "6YK43199MP415945X",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T20:16:43+00:00",
+     "custom_id": null
+    },
+    {
+     "id": "WH-4XK405795K494023C-92705450K91685520",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "7D821002D3901394T",
+     "status": "CREATED",
+     "verified": true,
+     "received_at": "2026-10-14T20:16:45+00:00",
+     "custom_id": "R-1014-3B46D97A"
+    },
+    {
+     "id": "WH-3DK61413DB049570D-7P992481RY2349517",
+     "event_type": "VAULT.PAYMENT-TOKEN.CREATED",
+     "resource_id": "3ug34380pw497712d",
+     "status": null,
+     "verified": true,
+     "received_at": "2026-10-14T20:16:46+00:00",
+     "custom_id": null
+    },
+    {
+     "id": "WH-30009040NV816594D-3L144543PF667920G",
+     "event_type": "PAYMENT.AUTHORIZATION.VOIDED",
+     "resource_id": "9GE52000F9380421H",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T20:18:18+00:00",
+     "custom_id": "R-JUDGE-1"
+    },
+    {
+     "id": "WH-1SH82700752723029-2WD51640Y3430683D",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "9GE52000F9380421H",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T20:18:19+00:00",
+     "custom_id": "R-JUDGE-1"
+    },
+    {
+     "id": "WH-9G234197RV617884A-4VD66997WW286031V",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "4GD86179XA2796333",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T20:18:26+00:00",
+     "custom_id": "R-JUDGE-1"
+    },
+    {
+     "id": "WH-4FP19320BK966124W-61D500699B8933407",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "75820595SE0479123",
+     "status": "CAPTURED",
+     "verified": true,
+     "received_at": "2026-10-14T20:18:31+00:00",
+     "custom_id": "R-JUDGE-1"
+    },
+    {
+     "id": "WH-81N0543301114651D-5J896313987024149",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "58P56180883600928",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T20:18:37+00:00",
+     "custom_id": "R-JUDGE-1"
+    },
+    {
+     "id": "WH-7HU56908985789605-3RC03608LL008693J",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "2PD52709FV931354H",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T20:18:38+00:00",
+     "custom_id": "R-JUDGE-1"
+    },
+    {
+     "id": "WH-9JV151309D906602F-68066177G7418011S",
+     "event_type": "PAYMENT.AUTHORIZATION.VOIDED",
+     "resource_id": "1E009633TK3666929",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T20:18:41+00:00",
+     "custom_id": "R-JUDGE-1"
+    },
+    {
+     "id": "WH-0XF39321C58235310-5G8813888K115613E",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "3F058173H8837653E",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T20:18:46+00:00",
+     "custom_id": "R-JUDGE-1"
+    },
+    {
+     "id": "WH-2SC68866NC8645824-7SS16979MS620745D",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "1E009633TK3666929",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T20:18:46+00:00",
+     "custom_id": "R-JUDGE-1"
+    },
+    {
+     "id": "WH-6RA144044M0610649-2U3128297A551450C",
+     "event_type": "INVOICING.INVOICE.CREATED",
+     "resource_id": null,
+     "status": null,
+     "verified": true,
+     "received_at": "2026-10-14T20:18:56+00:00",
+     "custom_id": null
+    },
+    {
+     "id": "WH-34K297036M033422U-1V585078D05548452",
+     "event_type": "PAYMENT.AUTHORIZATION.VOIDED",
+     "resource_id": "9G197244KA787023W",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T20:19:01+00:00",
+     "custom_id": "R-1014-22955A2D"
+    },
+    {
+     "id": "WH-4WE26032RB2299439-99B34008CB926871F",
+     "event_type": "CHECKOUT.ORDER.APPROVED",
+     "resource_id": "8CJ56846J1379550K",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T20:19:03+00:00",
+     "custom_id": null
+    },
+    {
+     "id": "WH-4UW123804R175513N-6J200943F8734261E",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "9G197244KA787023W",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T20:19:04+00:00",
+     "custom_id": "R-1014-22955A2D"
+    },
+    {
+     "id": "WH-9YU14901SP065830V-73C95570819170620",
+     "event_type": "VAULT.PAYMENT-TOKEN.CREATED",
+     "resource_id": "3ug34380pw497712d",
+     "status": null,
+     "verified": true,
+     "received_at": "2026-10-14T20:19:08+00:00",
+     "custom_id": null
+    },
+    {
+     "id": "WH-0CB067868H762341V-3PP61691X1201283Y",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "61941211HX041551A",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T20:19:16+00:00",
+     "custom_id": "T-a0516963a8"
+    },
+    {
+     "id": "WH-1RG90844MT461372F-1PY4600871590011F",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "6ND11035XB8011924",
+     "status": "CAPTURED",
+     "verified": true,
+     "received_at": "2026-10-14T20:19:17+00:00",
+     "custom_id": "T-a0516963a8"
+    },
+    {
+     "id": "WH-8DV92542VB2227613-7YR48436XL458824T",
+     "event_type": "PAYMENT.AUTHORIZATION.VOIDED",
+     "resource_id": "61783943KH729653N",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T20:19:18+00:00",
+     "custom_id": "T-2528e720c7"
+    },
+    {
+     "id": "WH-3CW2271515283783W-7GA22646A64442453",
+     "event_type": "PAYMENT.AUTHORIZATION.VOIDED",
+     "resource_id": "7CU04435CG660202V",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T20:19:23+00:00",
+     "custom_id": "T-27de5d3b52"
+    },
+    {
+     "id": "WH-7L84952168209751J-0DE15929AA600535K",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "7CU04435CG660202V",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T20:19:26+00:00",
+     "custom_id": "T-27de5d3b52"
+    },
+    {
+     "id": "WH-4FW91146H6644584J-3MR0692280876292E",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "61783943KH729653N",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T20:19:27+00:00",
+     "custom_id": "T-2528e720c7"
+    },
+    {
+     "id": "WH-2GA12165LP681881L-3N704656XL251124M",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "66D48451AE977912V",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T20:19:27+00:00",
+     "custom_id": "T-a0516963a8"
+    },
+    {
+     "id": "WH-9B6567869W269953V-30S27611KU606373Y",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "33B181064J6970043",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T20:19:28+00:00",
+     "custom_id": "T-2528e720c7"
+    },
+    {
+     "id": "WH-5CX399268T637492A-0AA30094DA200320A",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "38N871027T523060R",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T20:19:36+00:00",
+     "custom_id": "T-27de5d3b52"
+    },
+    {
+     "id": "WH-48E42207ML676433M-4RY588347Y588714E",
+     "event_type": "PAYMENT.AUTHORIZATION.VOIDED",
+     "resource_id": "08X12524S55311337",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T21:24:21+00:00",
+     "custom_id": "R-JUDGE-15"
+    },
+    {
+     "id": "WH-9CR01147JE0085617-6VR87936NM740124T",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "7CN932267A707215T",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T21:24:26+00:00",
+     "custom_id": "R-JUDGE-15"
+    },
+    {
+     "id": "WH-64E346367U1959318-4NG271049B5917622",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "08X12524S55311337",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T21:24:27+00:00",
+     "custom_id": "R-JUDGE-15"
+    },
+    {
+     "id": "WH-6D325325WF755182L-16V97362UH112942F",
+     "event_type": "PAYMENT.AUTHORIZATION.VOIDED",
+     "resource_id": "0GX50713GR7567731",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T21:28:08+00:00",
+     "custom_id": "R-JUDGE-16"
+    },
+    {
+     "id": "WH-74S49602S42825639-6AP26194UX867215W",
+     "event_type": "PAYMENT.AUTHORIZATION.CREATED",
+     "resource_id": "0GX50713GR7567731",
+     "status": "VOIDED",
+     "verified": true,
+     "received_at": "2026-10-14T21:28:16+00:00",
+     "custom_id": "R-JUDGE-16"
+    },
+    {
+     "id": "WH-52M29713J5730845E-4U136969UW372792T",
+     "event_type": "PAYMENT.CAPTURE.COMPLETED",
+     "resource_id": "2CA57820KM7107133",
+     "status": "COMPLETED",
+     "verified": true,
+     "received_at": "2026-10-14T21:28:16+00:00",
+     "custom_id": "R-JUDGE-16"
+    }
+   ]
+  }
+ },
+ "pytest": {
+  "recorded_at": "2026-10-14T20:18:02+00:00",
+  "command": "python -m pytest -v",
+  "machine": {
+   "python": "Python 3.12.13",
+   "git": "git version 2.50.1 (Apple Git-155)",
+   "platform": "Darwin arm64"
+  },
+  "wall_seconds": 86.0466,
+  "summary": "102 passed, 1 warning in 85.47s (0:01:25)",
+  "passed": [
+   "tests/test_api_verify.py::test_read_back_after_release_is_never_the_cached_status_from_before_it",
+   "tests/test_flow_sandbox.py::test_judge_pool_failover_then_clean_release_reads_back_voided",
+   "tests/test_flow_sandbox.py::test_accepted_line_is_one_final_capture_and_paypal_refuses_a_second",
+   "tests/test_flow_sandbox.py::test_contested_line_is_invoiced_sent_and_qr_coded_and_the_hold_voided",
+   "tests/test_flow_sandbox.py::test_one_real_buyer_approval_authorizes_and_vaults",
+   "tests/test_gate.py::test_sharp_frame_passes_and_is_normalized_to_1280_and_150kb",
+   "tests/test_gate.py::test_blurred_frame_is_rejected_before_any_model_call",
+   "tests/test_gate.py::test_glared_frame_is_rejected",
+   "tests/test_gate.py::test_local_glare_patch_passes_the_frame_but_flags_its_tiles",
+   "tests/test_gate.py::test_small_frames_are_resized_to_the_fixed_width_first",
+   "tests/test_gate.py::test_crop_and_map_back_round_trip",
+   "tests/test_invariants.py::test_no_input_ever_charges_a_mark_that_the_baseline_or_the_gate_can_explain",
+   "tests/test_invariants.py::test_the_hold_pays_exactly_the_accepted_chargeable_lines_and_blocks_exactly_when_it_should",
+   "tests/test_invariants.py::test_settle_property_inputs_include_clean_returns_and_real_captures",
+   "tests/test_paypal_sandbox.py::test_fee_capture_keeps_hold_open_then_final_capture_closes_it",
+   "tests/test_paypal_sandbox.py::test_void_after_fee_capture_releases_the_hold",
+   "tests/test_paypal_sandbox.py::test_replayed_capture_is_idempotent",
+   "tests/test_paypal_sandbox.py::test_every_call_is_logged_with_a_debug_id",
+   "tests/test_rules.py::test_clearly_new_mark_is_priced_from_the_tariff_only",
+   "tests/test_rules.py::test_answer_never_carries_a_price_into_the_line",
+   "tests/test_rules.py::test_disposition_order[None-qwen-bench-pinned-comparison_unavailable]",
+   "tests/test_rules.py::test_disposition_order[answer1-qwen3.8-max-comparison_unavailable]",
+   "tests/test_rules.py::test_disposition_order[answer2-None-comparison_unavailable]",
+   "tests/test_rules.py::test_disposition_order[answer3-qwen-bench-pinned-comparison_unavailable]",
+   "tests/test_rules.py::test_disposition_order[answer4-qwen-bench-pinned-retake]",
+   "tests/test_rules.py::test_disposition_order[answer5-qwen-bench-pinned-no_mark]",
+   "tests/test_rules.py::test_disposition_order[answer6-qwen-bench-pinned-excluded_baseline]",
+   "tests/test_rules.py::test_disposition_order[answer7-qwen-bench-pinned-not_comparable]",
+   "tests/test_rules.py::test_disposition_order[answer8-qwen-bench-pinned-class_mismatch]",
+   "tests/test_rules.py::test_disposition_order[answer9-qwen-bench-pinned-evidence_only]",
+   "tests/test_rules.py::test_disposition_order[answer10-qwen-bench-pinned-evidence_only]",
+   "tests/test_rules.py::test_no_benchmarked_model_pinned_means_nothing_is_chargeable",
+   "tests/test_rules.py::test_retake_beats_no_mark_and_no_mark_beats_baseline",
+   "tests/test_rules.py::test_scuff_is_evidence_only_until_the_bench_enables_it",
+   "tests/test_rules.py::test_class_with_no_tariff_line_is_never_priced",
+   "tests/test_rules.py::test_low_comparability_boundary_is_half_the_tap_box",
+   "tests/test_rules.py::test_a_baseline_mark_of_another_part_or_class_does_not_exclude_the_tap",
+   "tests/test_rules.py::test_confidence_exactly_at_the_floor_is_enough_and_just_under_is_not",
+   "tests/test_rules.py::test_confirmed_baseline_mark_is_excluded_even_if_the_model_says_new",
+   "tests/test_rules.py::test_tap_inside_a_low_comparability_region_cannot_be_charged",
+   "tests/test_rules.py::test_clean_return_voids",
+   "tests/test_rules.py::test_accepted_line_is_one_final_capture_of_exactly_its_tariff_price",
+   "tests/test_rules.py::test_contested_line_leaves_the_hold_as_an_invoice_at_its_tariff_price",
+   "tests/test_rules.py::test_all_contested_voids_the_hold_and_invoices",
+   "tests/test_rules.py::test_accepted_above_the_deposit_captures_the_deposit_and_invoices_the_overage",
+   "tests/test_rules.py::test_undecided_lines_block_settle_unless_the_expiry_guard_forces_it",
+   "tests/test_rules.py::test_a_tampered_line_price_blocks_settle",
+   "tests/test_rules.py::test_non_chargeable_lines_are_never_paid_even_if_marked_accepted",
+   "tests/test_rules.py::test_captures_never_exceed_the_authorization",
+   "tests/test_rules.py::test_happy_path_transitions",
+   "tests/test_rules.py::test_illegal_transitions[DRAFT-SETTLED]",
+   "tests/test_rules.py::test_illegal_transitions[OUT-SETTLED]",
+   "tests/test_rules.py::test_illegal_transitions[SETTLED-SETTLED]",
+   "tests/test_rules.py::test_illegal_transitions[RELEASED-SETTLED]",
+   "tests/test_rules.py::test_illegal_transitions[CLOSED-OUT]",
+   "tests/test_rules.py::test_illegal_transitions[HELD-PROPOSED]",
+   "tests/test_rules.py::test_reauth_once_from_day_four",
+   "tests/test_rules.py::test_expiry_guard_releases_before_the_hold_expires",
+   "tests/test_rules.py::test_fine_matches_plate_and_window_and_is_capped_by_the_article_ceiling",
+   "tests/test_rules.py::test_fine_not_chargeable[kw0]",
+   "tests/test_rules.py::test_fine_not_chargeable[kw1]",
+   "tests/test_rules.py::test_fine_not_chargeable[kw2]",
+   "tests/test_rules.py::test_fine_not_chargeable[kw3]",
+   "tests/test_rules.py::test_tariff_hash_is_stable_and_public_view_has_no_admin_line",
+   "tests/test_rules.py::test_fine_window_compares_real_instants_across_offsets",
+   "tests/test_rules.py::test_fine_time_without_an_offset_is_refused",
+   "tests/test_service_flow.py::test_one_approval_then_fee_capture_and_tracking_at_handover",
+   "tests/test_service_flow.py::test_the_devastating_query",
+   "tests/test_service_flow.py::test_clean_return_is_one_tap_release",
+   "tests/test_service_flow.py::test_contested_line_becomes_an_itemized_invoice_and_the_hold_is_released",
+   "tests/test_service_flow.py::test_off_bench_model_can_never_charge",
+   "tests/test_service_flow.py::test_model_timeout_charges_nothing",
+   "tests/test_service_flow.py::test_without_a_pinned_benchmark_nothing_is_chargeable",
+   "tests/test_service_flow.py::test_roles_are_enforced",
+   "tests/test_service_flow.py::test_claims_must_come_from_the_tariff_list",
+   "tests/test_service_flow.py::test_only_the_renter_removes_model_premarks_and_the_shop_only_adds",
+   "tests/test_service_flow.py::test_baseline_needs_all_angles_both_parties_and_no_pending_retake",
+   "tests/test_service_flow.py::test_blurry_frame_is_rejected_and_not_stored",
+   "tests/test_service_flow.py::test_expiry_guard_releases_an_unsettled_return",
+   "tests/test_service_flow.py::test_reauthorize_refused_falls_back_to_mit_resecure_and_voids_the_old_hold",
+   "tests/test_service_flow.py::test_judge_rental_fails_over_across_the_pool_and_never_deletes_a_pool_wallet",
+   "tests/test_service_flow.py::test_judge_rate_limit",
+   "tests/test_service_flow.py::test_fine_is_quoted_then_captured_on_the_saved_wallet_after_the_contest_window",
+   "tests/test_service_flow.py::test_paypal_5xx_is_retried_with_the_same_request_id",
+   "tests/test_service_flow.py::test_a_full_path_approval_that_returns_a_pool_wallet_is_never_deleted",
+   "tests/test_service_flow.py::test_daily_close_falls_back_to_read_back_when_transaction_search_is_refused",
+   "tests/test_service_flow.py::test_the_renter_cannot_release_and_a_spot_cannot_be_claimed_twice",
+   "tests/test_service_flow.py::test_fine_after_the_renter_removed_saved_paypal_arrives_as_an_invoice",
+   "tests/test_service_flow.py::test_evidence_pack_needs_a_key_or_its_link_token",
+   "tests/test_service_flow.py::test_a_lock_is_only_released_by_its_owner",
+   "tests/test_service_flow.py::test_capability_keys_are_role_scoped_and_other_rentals_keys_are_refused",
+   "tests/test_service_flow.py::test_a_claim_on_an_expired_stored_photo_is_a_410_not_a_crash",
+   "tests/test_vision_contract.py::test_claim_answer_parses_and_normalizes_the_0_1000_grid",
+   "tests/test_vision_contract.py::test_array_wrapped_answer_is_unwrapped",
+   "tests/test_vision_contract.py::test_schema_failures_yield_no_answer[not json]",
+   "tests/test_vision_contract.py::test_schema_failures_yield_no_answer[{\"mark_at_return\": true, \"class_consistent\": true, \"visible_at_pickup\": false, \"pickup_comparable\": true, \"same_view\": \"maybe\", \"pickup_bbox\": [400, 380, 120, 90], \"closeup_located\": null, \"confidence\": 0.91, \"rationale\": \"crack on the mirror housing is not in the pickup photo\"}]",
+   "tests/test_vision_contract.py::test_schema_failures_yield_no_answer[{\"class_consistent\": true, \"visible_at_pickup\": false, \"pickup_comparable\": true, \"same_view\": true, \"pickup_bbox\": [400, 380, 120, 90], \"closeup_located\": null, \"confidence\": 0.91, \"rationale\": \"crack on the mirror housing is not in the pickup photo\"}]",
+   "tests/test_vision_contract.py::test_schema_failures_yield_no_answer[{\"mark_at_return\": true, \"class_consistent\": true, \"visible_at_pickup\": false, \"pickup_comparable\": true, \"same_view\": true, \"pickup_bbox\": [400, 380, 120, 90], \"closeup_located\": null, \"confidence\": 3, \"rationale\": \"crack on the mirror housing is not in the pickup photo\"}]",
+   "tests/test_vision_contract.py::test_http_error_and_timeout_yield_no_answer",
+   "tests/test_vision_contract.py::test_mark_list_rejects_unknown_classes_and_maps_unknown_parts",
+   "tests/test_vision_contract.py::test_claim_schema_has_exactly_the_published_fields",
+   "tests/test_vision_contract.py::test_live_qwen_returns_a_schema_valid_claim_answer"
+  ]
+ }
+}
