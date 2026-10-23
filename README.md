@@ -127,7 +127,7 @@ The APIMatic Context Plugin was used once, to write a Transaction Search call th
 3. **Wallet path only.** The card-path authorize answered 422 on 2026-10-14 without a stated reason (we believe advanced card processing is not enabled for this Indonesia-region sandbox merchant), so cards are out of scope.
 4. **Non-return is out of scope.** Jaminan covers damage and fines, not a scooter that never comes back.
 5. **No vision accuracy claim yet.** Until the benchmark runs, no finding from a non-benchmarked model is chargeable.
-6. **Reauthorize success is pending.** PayPal only allows it from Day 4; only the refusal fallback (re-authorize on the vaulted wallet, then void the old hold) is unit-tested; the sandbox run is scheduled for 2026-10-18 or later.
+6. **Reauthorize is proven on the sandbox, not yet through the rental flow.** On 2026-10-23 (day 9) PayPal accepted `reauthorize` on a plain hold and on a hold that already had its fee captured (201 both), and refused a second one on the same hold (422 `REAUTHORIZATION_TOO_SOON`, "only allowed once"): [`evidence/paypal-reauthorize.jsonl`](evidence/paypal-reauthorize.jsonl). The day-4 sweep in the service and its refusal fallback (re-authorize on the vaulted wallet, then void the old hold) are unit-tested; no rental has yet reached day 4 through the app.
 
 ## 🚀 Getting Started
 
@@ -174,7 +174,7 @@ tests/      unit, contract, invariant and real-sandbox tests
 - [x] Pointed-claim rules in code, tariff-priced
 - [x] Judge route with a fresh sandbox rental
 - [ ] Vision benchmark on a staged scooter set
-- [ ] Reauthorize sandbox run (on/after 2026-10-18)
+- [x] Reauthorize sandbox run (2026-10-23: 201 on two holds, second attempt 422)
 - [ ] MCP rental tool for booking agents
 
 ## 📽️ Demo Materials
