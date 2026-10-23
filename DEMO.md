@@ -58,5 +58,5 @@ python scripts/e2e_live.py https://jaminan.edycu.dev/app --shots /tmp/jaminan-e2
 ## 4. Not shown, on purpose
 
 - **Vision accuracy.** There is no accuracy number anywhere in this repository because the benchmark on the staged scooter photo set has not run.
-- **Reauthorize inside a rental.** PayPal allows it once, Day 4 to Day 29. The call itself is recorded on the sandbox ([`evidence/paypal-reauthorize.jsonl`](evidence/paypal-reauthorize.jsonl): 201 on two holds, 422 on a second attempt); no rental in the app has reached day 4, so the in-flow sweep is unit-tested only.
+- **Reauthorize inside a rental.** PayPal allows it once, Day 4 to Day 29. The call itself is recorded on the sandbox ([`evidence/paypal-reauthorize.jsonl`](evidence/paypal-reauthorize.jsonl): 201 on two holds, 422 on a second attempt); no rental in the app has reached day 4, so only the sweep's day-4 trigger rule and its refusal fallback are unit-tested (the daily cron that runs them is not).
 - **Live money.** Sandbox only.
