@@ -161,6 +161,7 @@ Recorded on 2026-10-24: Claude Code and Codex each booked through `quote_rental 
 5. **No vision accuracy claim yet.** Until the benchmark runs, no finding from a non-benchmarked model is chargeable.
 6. **Reauthorize is proven on the sandbox, not yet through the rental flow.** On 2026-10-23 (day 9) PayPal accepted `reauthorize` on a plain hold and on a hold that already had its fee captured (201 both), and refused a second one on the same hold (422 `REAUTHORIZATION_TOO_SOON`, "only allowed once"): [`evidence/paypal-reauthorize.jsonl`](evidence/paypal-reauthorize.jsonl). The sweep's day-4 trigger rule and its refusal fallback (re-authorize on the vaulted wallet, then void the old hold) are unit-tested, including through `cron_daily()`; the `/api/cron/daily` route and Vercel's schedule have not run on a rental, and no rental has yet reached day 4 through the app.
 7. **The model has been shown only on AI-generated test images (not photographs) so far.** Its recorded answers on that pair ([`evidence/generated-pair/`](evidence/generated-pair/README.md)) are not a benchmark and say nothing about real photos.
+8. **An agent booking stops at the hold.** The shop phone opens only the rentals it created, because it holds their key, and no shop login exists yet. So nobody can hand over or release a hold an agent booked. It lapses at PayPal after 29 days, sandbox only.
 
 ## 🚀 Getting Started
 
