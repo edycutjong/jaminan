@@ -225,13 +225,14 @@ def test_status_reads_paypal_without_changing_anything_and_has_a_budget(monkeypa
     assert code(svc.agent_status, r["id"], None) == "FORBIDDEN"
     assert svc.agent_status(r["id"], t)["paypal"] is None  # no order yet: nothing to read back
     svc.approve(r["id"])
-    before = svc.get(r["id"])
+    before, ledger = svc.get(r["id"]), len(svc.calls(r["id"]))
     assert svc.agent_status(r["id"], t)["paypal"]["status"] == "APPROVED"
+    assert len(svc.calls(r["id"])) == ledger  # a polling agent never grows the rental's PayPal ledger
     monkeypatch.setattr(svc.pp, "get_order", lambda *a, **k: Resp(503, {"name": "SERVICE_UNAVAILABLE"}, "d", "x"))
     down = svc.agent_status(r["id"], t)["paypal"]
     assert down["object"] == "order" and down["status"] is None and down["error"] == "SERVICE_UNAVAILABLE"
     assert svc.get(r["id"]) == before and before["state"] == "DRAFT"  # reads write nothing to the rental
-    svc.db.incr(f"budget:{r['id']}:status", by=600)
+    svc.db.incr(f"budget:{r['id']}:status", by=120)
     assert code(svc.agent_status, r["id"], t) == "BUDGET"
 
 

@@ -153,8 +153,9 @@ class PayPal:
         return self.call("POST", "/v2/checkout/orders", "order.create", body,
                          rid=request_id(rental_id, nonce, "order.create", amount_cents), rental_id=rental_id)
 
-    def get_order(self, order_id: str, rental_id: str | None = None) -> Resp:
-        return self.call("GET", f"/v2/checkout/orders/{order_id}", "order.get", rental_id=rental_id, object_id=order_id)
+    def get_order(self, order_id: str, rental_id: str | None = None, quiet: bool = False) -> Resp:
+        return self.call("GET", f"/v2/checkout/orders/{order_id}", "order.get", rental_id=rental_id, object_id=order_id,
+                         quiet=quiet)
 
     def authorize_order(self, order_id: str, rental_id: str | None = None) -> Resp:
         return self.call("POST", f"/v2/checkout/orders/{order_id}/authorize", "order.authorize",

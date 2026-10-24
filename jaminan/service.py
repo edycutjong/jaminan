@@ -32,7 +32,7 @@ JUDGE_VOID_AFTER_S = 2 * 3600
 LOCK_TTL_S = 130
 # Per rental: 8 pickup + 8 return angles, retakes, close-ups and a few taps fit far inside these. A key holder
 # scripting more cannot fill Redis (frames live until FRAME_EXPIRY) or spend the model balance.
-BUDGETS = {"upload": 64, "model": 120, "fine": 5, "status": 600}
+BUDGETS = {"upload": 64, "model": 120, "fine": 5, "status": 120}
 # An agent booking's renter: a plain shape check; PayPal is the one that knows whether the account exists.
 EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,190}\.[A-Za-z]{2,24}$")
 # A void refused with these issues has nothing left to release (PayPal sandbox, read 2026-10-24).
@@ -1118,12 +1118,12 @@ class Service:
         r = self.get(rid)
         if not (token and same_secret(token, r["evidence_token"])):
             raise ServiceError(403, "FORBIDDEN", "reading a rental needs the status_token start_rental returned")
-        self._spend(rid, "status")
+        self._spend(rid, "status")  # 120 reads a rental; quiet, so a polling agent never grows the rental's ledger
         out = self.agent_view(r)
         if r.get("authorization_id"):
-            res, obj = self.pp.get_authorization(r["authorization_id"], rid), "authorization"
+            res, obj = self.pp.get_authorization(r["authorization_id"], rid, quiet=True), "authorization"
         elif r.get("order_id"):
-            res, obj = self.pp.get_order(r["order_id"], rid), "order"
+            res, obj = self.pp.get_order(r["order_id"], rid, quiet=True), "order"
         else:
             return {**out, "paypal": None}
         b = res.body if res.ok else {}
