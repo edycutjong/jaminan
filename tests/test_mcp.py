@@ -238,10 +238,33 @@ def test_bad_input_spends_no_budget_and_the_13th_booking_an_hour_is_refused():
     assert all(code(svc.agent_book, "9.9.9.9", "veh-01", 1, e) == "BAD_EMAIL" for e in emails)
     assert svc.db.zrangebyscore("shop:shop-demo:rentals", 0, 1e12) == []  # no rental was created for any of them
     assert svc.agent_book("8.8.8.8", "veh-01", 1, "first.last+jaminan@mail.example.co.id")["state"] == "DRAFT"
-    for _ in range(12):
-        svc.agent_book("9.9.9.9", "veh-01", 1, "a@example.com")
+    for i in range(12):
+        svc.agent_book("9.9.9.9", "veh-01", 1, f"a{i}@example.com")
     assert code(svc.agent_book, "9.9.9.9", "veh-01", 1, "a@example.com") == "RATE_LIMITED"
     assert code(svc.agent_book, "9.9.9.9", "veh-01", 1, "") == "BAD_EMAIL"
+
+
+def test_a_retried_booking_gets_the_first_one_back_and_spends_nothing(monkeypatch):
+    """start_rental's client may give up at 60 s while the server finishes; "try again" must not book twice."""
+    svc = make()
+    orders = []
+    orig = svc.pp.create_authorize_order
+    monkeypatch.setattr(svc.pp, "create_authorize_order", lambda *a, **k: (orders.append(a[0]), orig(*a, **k))[1])
+    a = svc.agent_book("9.9.9.9", "veh-01", 1, "Renter@example.com")
+    b = svc.agent_book("9.9.9.9", "veh-01", 1, "renter@example.com")
+    assert (b["rental_id"], b["approve_url"], b["status_token"]) == (a["rental_id"], a["approve_url"], a["status_token"])
+    assert orders == [a["rental_id"]] and len(svc.shop_rentals("shop-demo")) == 1
+    assert svc.agent_book("9.9.9.9", "veh-01", 2, "renter@example.com")["rental_id"] != a["rental_id"]  # another booking
+    # the first PayPal call failed: the retry finishes the same rental, on the budget it already spent
+    monkeypatch.setattr(svc.pp, "create_authorize_order", lambda *a, **k: Resp(503, {"name": "SERVICE_UNAVAILABLE"}, "d", "x"))
+    assert code(svc.agent_book, "9.9.9.9", "veh-02", 1, "renter@example.com") == "PAYPAL_ORDER_FAILED"
+    monkeypatch.setattr(svc.pp, "create_authorize_order", orig)
+    c = svc.agent_book("9.9.9.9", "veh-02", 1, "renter@example.com")
+    assert c["approve_url"] and c["state"] == "DRAFT" and len(svc.shop_rentals("shop-demo")) == 3
+    assert svc.db.incr(f"rl:agent:all:{now():%Y%m%d}", by=0) == 3  # three bookings counted, not five calls
+    # two identical requests at once: the one that loses the reservation is told to call again
+    monkeypatch.setattr(svc.db, "set_json", lambda *a, **k: False if a[0].startswith("agent:booking:") else True)
+    assert code(svc.agent_book, "9.9.9.9", "veh-01", 3, "renter@example.com") == "BOOKING_IN_PROGRESS"
 
 
 def test_status_reads_paypal_without_changing_anything_and_has_a_budget(monkeypatch):

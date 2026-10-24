@@ -1111,8 +1111,20 @@ class Service:
         if not EMAIL.match(email):
             raise ServiceError(422, "BAD_EMAIL", "renter_email must look like name@example.com")
         q = self.quote(vehicle_id, days)  # bad input is refused before it spends the address's budget
+        # A retry within 10 minutes (same address, renter, vehicle, days) gets the first booking back: an MCP client
+        # gives up after 60 s, one PayPal write may take 3 × 30 s, and the tool says "try again". The order is the
+        # same one too, because approve() reuses the rental's PayPal request id.
+        dk = "agent:booking:" + hashlib.sha256(f"{ip}|{email.lower()}|{vehicle_id}|{q['days']}".encode()).hexdigest()[:24]
+        first = self.db.get_json(dk)
+        if first:
+            prev = self.get(first)
+            url = prev.get("approve_url") or self.approve(first)["approve_url"]
+            return {**self.agent_view(self.get(first)), "approve_url": url, "status_token": prev["agent_token"]}
         self.rate_limit_judge(ip, "agent", "agent bookings")  # each booking opens a real PayPal order, as /judge does
-        r = self.create_rental(q["shop_id"], vehicle_id, q["days"], kind="agent")
+        rid = f"R-{now().strftime('%m%d')}-{secrets.token_hex(4).upper()}"
+        if not self.db.set_json(dk, rid, ex=600, nx=True):
+            raise ServiceError(409, "BOOKING_IN_PROGRESS", "the same booking is being made right now; call it again")
+        r = self.create_rental(q["shop_id"], vehicle_id, q["days"], kind="agent", rid=rid)
         # its own token: the evidence token also opens the evidence pack (photos, findings), which agent_view leaves out
         r.update(booked_by="agent", renter_email=email, agent_token=secrets.token_urlsafe(12))
         self._save(r)
