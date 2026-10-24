@@ -1,5 +1,5 @@
 {
- "what": "The live PayPal sandbox rentals shown in the demo video (recorded 2026-10-14 UTC) and the test run its proof scene replays (recorded 2026-10-24 19:02 UTC; the same run is test-run.txt). The ids, statuses and figures the video's live scenes show come from these records (the sandbox buyer login the judge page prints and the shop phone's list of earlier rentals are not repeated here); the priced settlement in the video replays evidence/paypal-sandbox-run.json (claim answers scripted there). No claim was pointed in these live rentals.",
+ "what": "The live PayPal sandbox rentals shown in the demo video (recorded 2026-10-14 UTC) and the test run its proof scene replays (recorded 2026-10-24 19:02 UTC; the same run is test-run-2026-10-24.txt). The ids, statuses and figures the video's live scenes show come from these records (the sandbox buyer login the judge page prints and the shop phone's list of earlier rentals are not repeated here); the priced settlement in the video replays evidence/paypal-sandbox-run.json (claim answers scripted there). No claim was pointed in these live rentals.",
  "environment": "https://api-m.sandbox.paypal.com",
  "app": "https://jaminan.edycu.dev",
  "tariff_shown": {

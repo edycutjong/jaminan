@@ -8,27 +8,24 @@ jaminan/gate.py            96      0     22      0   100%
 jaminan/mcp_server.py      61      0     12      0   100%
 jaminan/paypal.py         167      0     20      0   100%
 jaminan/rules.py          137      0     54      0   100%
-jaminan/service.py        811      0    288      0   100%
+jaminan/service.py        827      0    296      0   100%
 jaminan/store.py          170      0     62      0   100%
 jaminan/tariff.py          57      0      8      0   100%
-jaminan/vision.py         133      0     16      0   100%
+jaminan/vision.py         134      0     16      0   100%
 ---------------------------------------------------------
-TOTAL                    1675      0    492      0   100%
-================ 226 passed, 9 deselected in 32.13s =================
+TOTAL                    1692      0    500      0   100%
+230 passed, 9 deselected in 32.57s
 
 # Web unit tests (npm run test:unit, Vitest + v8, thresholds 100 on lib/)
+      Coverage enabled with v8
  Test Files  4 passed (4)
       Tests  31 passed (31)
-   Start at  01:30:25
-   Duration  1.21s (environment 84%, tests 6%, import 5%, worker 3%, transform 2%)
-
+   Start at  04:30:55
+   Duration  1.28s (environment 87%, tests 5%, import 4%, worker 3%, transform 1%)
  % Coverage report from v8
-No files with missing coverage.
-4 files fully covered.
-
 =============================== Coverage summary ===============================
-Statements   : 100% ( 95/95 )
-Branches     : 100% ( 67/67 )
+Statements   : 100% ( 96/96 )
+Branches     : 100% ( 69/69 )
 Functions    : 100% ( 27/27 )
-Lines        : 100% ( 68/68 )
+Lines        : 100% ( 69/69 )
 ================================================================================
