@@ -1,0 +1,360 @@
+{
+  "kind": "AI-generated test images (not photographs) — recorded model answers, not a benchmark",
+  "recorded_at": "2026-10-24T18:22:10+00:00",
+  "requested_model": "qwen3-vl-plus",
+  "benchmarked_model": null,
+  "confidence_floor": 0.7,
+  "chargeable_classes": [
+    "missing_part",
+    "broken_part",
+    "crack",
+    "dent"
+  ],
+  "generation": "GENERATION.json",
+  "frames": {
+    "pickup": {
+      "file": "pickup-front-left.png",
+      "gate": {
+        "ok": true,
+        "reason": null,
+        "blur_var": 259.5,
+        "glare_frac": 0.0109,
+        "width": 1280,
+        "height": 714,
+        "low_tiles": [],
+        "sha256": "b215c36b460af2ecb7f65ebc2d5deeb9dad80de2688d32f8d7f0fada6b792300"
+      }
+    },
+    "return": {
+      "file": "return-front-left.png",
+      "gate": {
+        "ok": true,
+        "reason": null,
+        "blur_var": 225.0,
+        "glare_frac": 0.0086,
+        "width": 1280,
+        "height": 714,
+        "low_tiles": [],
+        "sha256": "1b5d624f29d637fbfa1d987c37c79727922499714cf6719501431ba0869cd730"
+      }
+    }
+  },
+  "claims": [
+    {
+      "id": "C1",
+      "expected": "old",
+      "part": "front_fairing",
+      "damage_class": "dent",
+      "bbox": [
+        0.435,
+        0.425,
+        0.075,
+        0.135
+      ],
+      "note": "the grey scuff on the front-left fairing, visible in both images. The tariff has no front_fairing/scuff line, so the shop taps the nearest priced line on that part (dent): an over-claim on an old mark.",
+      "angle": 2,
+      "return_region": [
+        0.3975,
+        0.3575,
+        0.15,
+        0.27
+      ],
+      "pickup_region": [
+        0.3225,
+        0.2225,
+        0.3,
+        0.54
+      ],
+      "tariff_price_cents": 4500,
+      "runs": [
+        {
+          "repeat": 1,
+          "at": "2026-10-24T18:21:52+00:00",
+          "model": "qwen3-vl-plus",
+          "request_id": "chatcmpl-660db9a4-73d2-9626-b2f0-01753f89f468",
+          "ms": 2687,
+          "error": null,
+          "usage": {
+            "prompt_tokens": 842,
+            "completion_tokens": 131,
+            "total_tokens": 973,
+            "prompt_tokens_details": {
+              "image_tokens": 220,
+              "text_tokens": 622
+            },
+            "completion_tokens_details": {
+              "text_tokens": 131
+            }
+          },
+          "answer": {
+            "mark_at_return": true,
+            "class_consistent": true,
+            "visible_at_pickup": false,
+            "pickup_comparable": true,
+            "same_view": true,
+            "pickup_bbox": [
+              0.38,
+              0.38,
+              0.58,
+              0.62
+            ],
+            "closeup_located": null,
+            "confidence": 0.85,
+            "rationale": "The mark in the return photo is a distinct irregular indentation consistent with a dent on the fairing; the same location in the pickup photo shows no such mark and is clear enough to assess."
+          },
+          "disposition": "comparison_unavailable",
+          "reason": "served by qwen3-vl-plus, not the benchmarked model (none pinned yet)",
+          "answer_text": "comparison unavailable — nothing charged from the hold",
+          "price_cents": null,
+          "model_reading": "new",
+          "reading_disposition": "chargeable",
+          "matches_expected": false
+        },
+        {
+          "repeat": 2,
+          "at": "2026-10-24T18:21:55+00:00",
+          "model": "qwen3-vl-plus",
+          "request_id": "chatcmpl-b597099a-01bc-9fdc-b924-54e3744b59da",
+          "ms": 2738,
+          "error": null,
+          "usage": {
+            "prompt_tokens": 842,
+            "completion_tokens": 131,
+            "total_tokens": 973,
+            "prompt_tokens_details": {
+              "image_tokens": 220,
+              "text_tokens": 622
+            },
+            "completion_tokens_details": {
+              "text_tokens": 131
+            }
+          },
+          "answer": {
+            "mark_at_return": true,
+            "class_consistent": true,
+            "visible_at_pickup": false,
+            "pickup_comparable": true,
+            "same_view": true,
+            "pickup_bbox": [
+              0.38,
+              0.38,
+              0.58,
+              0.62
+            ],
+            "closeup_located": null,
+            "confidence": 0.85,
+            "rationale": "The mark in the return photo is a distinct irregular indentation consistent with a dent on the fairing; the same location in the pickup photo shows no such mark and is clear enough to assess."
+          },
+          "disposition": "comparison_unavailable",
+          "reason": "served by qwen3-vl-plus, not the benchmarked model (none pinned yet)",
+          "answer_text": "comparison unavailable — nothing charged from the hold",
+          "price_cents": null,
+          "model_reading": "new",
+          "reading_disposition": "chargeable",
+          "matches_expected": false
+        },
+        {
+          "repeat": 3,
+          "at": "2026-10-24T18:21:58+00:00",
+          "model": "qwen3-vl-plus",
+          "request_id": "chatcmpl-86cd4fac-da2e-966a-9ed3-af736944e6c7",
+          "ms": 2841,
+          "error": null,
+          "usage": {
+            "prompt_tokens": 842,
+            "completion_tokens": 133,
+            "total_tokens": 975,
+            "prompt_tokens_details": {
+              "image_tokens": 220,
+              "text_tokens": 622
+            },
+            "completion_tokens_details": {
+              "text_tokens": 133
+            }
+          },
+          "answer": {
+            "mark_at_return": true,
+            "class_consistent": true,
+            "visible_at_pickup": false,
+            "pickup_comparable": true,
+            "same_view": true,
+            "pickup_bbox": [
+              0.38,
+              0.38,
+              0.58,
+              0.62
+            ],
+            "closeup_located": null,
+            "confidence": 0.85,
+            "rationale": "The mark in the return photo is a distinct irregular indentation on the white fairing; the same location in the pickup photo shows no such deformation, and the pickup image is clear enough to confirm absence."
+          },
+          "disposition": "comparison_unavailable",
+          "reason": "served by qwen3-vl-plus, not the benchmarked model (none pinned yet)",
+          "answer_text": "comparison unavailable — nothing charged from the hold",
+          "price_cents": null,
+          "model_reading": "new",
+          "reading_disposition": "chargeable",
+          "matches_expected": false
+        }
+      ]
+    },
+    {
+      "id": "C2",
+      "expected": "new",
+      "part": "mirror",
+      "damage_class": "missing_part",
+      "bbox": [
+        0.36,
+        0.0,
+        0.36,
+        0.24
+      ],
+      "note": "both rear-view mirrors missing at return; the box covers both mirror mounts and where the mirrors stood.",
+      "angle": 2,
+      "return_region": [
+        0.18,
+        0.0,
+        0.72,
+        0.36
+      ],
+      "pickup_region": [
+        0.0,
+        0.0,
+        1.0,
+        0.6
+      ],
+      "tariff_price_cents": 2250,
+      "runs": [
+        {
+          "repeat": 1,
+          "at": "2026-10-24T18:22:01+00:00",
+          "model": "qwen3-vl-plus",
+          "request_id": "chatcmpl-f89f55d0-a949-94b8-8f2a-de0726601333",
+          "ms": 2829,
+          "error": null,
+          "usage": {
+            "prompt_tokens": 1376,
+            "completion_tokens": 131,
+            "total_tokens": 1507,
+            "prompt_tokens_details": {
+              "image_tokens": 756,
+              "text_tokens": 620
+            },
+            "completion_tokens_details": {
+              "text_tokens": 131
+            }
+          },
+          "answer": {
+            "mark_at_return": true,
+            "class_consistent": false,
+            "visible_at_pickup": false,
+            "pickup_comparable": true,
+            "same_view": true,
+            "pickup_bbox": [
+              0.43,
+              0.72,
+              0.51,
+              0.28
+            ],
+            "closeup_located": null,
+            "confidence": 0.3,
+            "rationale": "The mark in the return photo is a dark smudge on the front fairing near the headlight, not on or near the mirror; it does not resemble a missing part of the mirror."
+          },
+          "disposition": "comparison_unavailable",
+          "reason": "served by qwen3-vl-plus, not the benchmarked model (none pinned yet)",
+          "answer_text": "comparison unavailable — nothing charged from the hold",
+          "price_cents": null,
+          "model_reading": "new, other class",
+          "reading_disposition": "class_mismatch",
+          "matches_expected": false
+        },
+        {
+          "repeat": 2,
+          "at": "2026-10-24T18:22:03+00:00",
+          "model": "qwen3-vl-plus",
+          "request_id": "chatcmpl-114ffc18-b169-9155-b6d3-aea91467b826",
+          "ms": 3040,
+          "error": null,
+          "usage": {
+            "prompt_tokens": 1376,
+            "completion_tokens": 135,
+            "total_tokens": 1511,
+            "prompt_tokens_details": {
+              "image_tokens": 756,
+              "text_tokens": 620
+            },
+            "completion_tokens_details": {
+              "text_tokens": 135
+            }
+          },
+          "answer": {
+            "mark_at_return": true,
+            "class_consistent": false,
+            "visible_at_pickup": false,
+            "pickup_comparable": true,
+            "same_view": true,
+            "pickup_bbox": [
+              0.43,
+              0.7,
+              0.52,
+              0.3
+            ],
+            "closeup_located": null,
+            "confidence": 0.3,
+            "rationale": "The mark in the return photo is a dark smudge on the front fairing near the headlight—not on the mirror—and does not resemble a missing part; the pickup image shows no such mark at that location."
+          },
+          "disposition": "comparison_unavailable",
+          "reason": "served by qwen3-vl-plus, not the benchmarked model (none pinned yet)",
+          "answer_text": "comparison unavailable — nothing charged from the hold",
+          "price_cents": null,
+          "model_reading": "new, other class",
+          "reading_disposition": "class_mismatch",
+          "matches_expected": false
+        },
+        {
+          "repeat": 3,
+          "at": "2026-10-24T18:22:06+00:00",
+          "model": "qwen3-vl-plus",
+          "request_id": "chatcmpl-f1781f27-05ff-97ad-9214-52c160d94cb9",
+          "ms": 3184,
+          "error": null,
+          "usage": {
+            "prompt_tokens": 1376,
+            "completion_tokens": 142,
+            "total_tokens": 1518,
+            "prompt_tokens_details": {
+              "image_tokens": 756,
+              "text_tokens": 620
+            },
+            "completion_tokens_details": {
+              "text_tokens": 142
+            }
+          },
+          "answer": {
+            "mark_at_return": true,
+            "class_consistent": false,
+            "visible_at_pickup": false,
+            "pickup_comparable": true,
+            "same_view": true,
+            "pickup_bbox": [
+              0.43,
+              0.72,
+              0.51,
+              0.28
+            ],
+            "closeup_located": null,
+            "confidence": 0.3,
+            "rationale": "The mark in the return photo is a dark smudge on the front fairing, not on the mirror, and does not resemble a missing part; the pickup image shows the same area without that smudge, but the shop misidentified the location."
+          },
+          "disposition": "comparison_unavailable",
+          "reason": "served by qwen3-vl-plus, not the benchmarked model (none pinned yet)",
+          "answer_text": "comparison unavailable — nothing charged from the hold",
+          "price_cents": null,
+          "model_reading": "new, other class",
+          "reading_disposition": "class_mismatch",
+          "matches_expected": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "kind": "AI-GENERATED TEST IMAGES — not photographs",
+  "decided": "2026-10-25 01:2x WIB, human: '#1 use generated one' (instead of the 1-hour real shoot)",
+  "pickup": {"file": "pickup/p-front-left.png", "model": "qwen-image-2.0 (DashScope intl)", "request_id": "36790f33-09ae-9952-82d2-a4500947b9af", "size": "1664x928",
+    "prompt": "Smartphone photo, landscape, taken from about 2 metres away at chest height, of a parked white Honda-style automatic scooter (like a Honda Vario) in a Jakarta street-side rental lot, 45-degree front-left view, whole scooter in frame, concrete ground visible. Both rear-view mirrors attached. A small, clearly visible old grey scuff mark on the front-left fairing panel. Natural midday light, slightly imperfect phone photo, realistic, no people, no text."},
+  "return": {"file": "return/r-front-left.png", "model": "wan2.6-image (DashScope intl), edit of the pickup image", "size": "1712x944 resized to 1664x928 (Lanczos)",
+    "prompt": "Remove the black rear-view mirror on the right side of the picture (above the right handlebar) including its stalk; nothing else changes.",
+    "result_note": "the model removed BOTH mirrors (stalk stubs remain); scuff, angle, light and background kept. Four earlier edit attempts (qwen-image-2.0) either removed both mirrors and re-textured the whole frame, or changed nothing; discarded."},
+  "ground_truth": {"old": "grey scuff, front-left fairing, visible in both images", "new": "both rear-view mirrors missing at return (missing_part)"}
+}
