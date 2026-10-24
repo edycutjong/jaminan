@@ -366,3 +366,16 @@ def test_a_refused_void_during_the_resecure_is_kept_and_retried_by_the_daily_job
     svc.pp._route = orig
     assert svc.cron_daily()["stale_void"] == ["voided"]
     assert svc.pp.auths[old]["status"] == "VOIDED" and "stale_hold" not in svc.get(rid)
+
+
+def test_daily_close_reads_a_final_status_back_from_paypal_once():
+    svc = make()
+    rid, k = to_returned(svc)
+    svc.release(rid, k["shop"])
+    orig = svc.pp._route
+    svc.pp._route = lambda m, p, b: (403, {"name": "NOT_AUTHORIZED"}) if p == "/v1/reporting/transactions" else orig(m, p, b)
+    reads = lambda: len([c for c in svc.calls(rid) if c["action"] in ("auth.get", "capture.get")])  # noqa: E731
+    first = svc.daily_close()
+    n = reads()
+    second = svc.daily_close()
+    assert reads() == n and first["rows"] == second["rows"] and second["summary"]["mismatch"] == 0

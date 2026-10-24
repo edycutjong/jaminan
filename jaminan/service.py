@@ -764,6 +764,19 @@ class Service:
         ids = self.db.zrange(f"shop:{shop_id}:rentals", 0, limit - 1, rev=True)
         return [x for x in self.db.mget_json([f"rental:{i}" for i in ids]) if x]
 
+    def _final_status(self, kind: str, obj_id: str, rid: str) -> str | None:
+        """Read a capture or authorization back from PayPal. COMPLETED and VOIDED never change again, so those are
+        read once and kept: the public close page cannot turn every visit into one PayPal GET per rental."""
+        key = f"rb:final:{obj_id}"
+        hit = self.db.get_json(key)
+        if hit:
+            return str(hit)
+        res = self.pp.get_capture(obj_id, rid) if kind == "capture" else self.pp.get_authorization(obj_id, rid)
+        status = res.body.get("status")
+        if status in ("COMPLETED", "VOIDED"):
+            self.db.set_json(key, status, ex=30 * 86400)
+        return status
+
     def daily_close(self, date: str | None = None, shop_id: str = "shop-demo") -> dict:
         """Ledger vs PayPal: captures matched in Transaction Search (it can lag — unmatched = pending);
         voids re-read per authorization, since Transaction Search may not list them."""
@@ -783,14 +796,14 @@ class Service:
                 elif ts.ok:
                     rows.append({"rental": r["id"], "kind": kind, "id": cid, "match": "pending", "via": "transaction_search"})
                 else:  # Transaction Search unavailable on this app: read the capture back instead
-                    c = self.pp.get_capture(cid, r["id"])
                     rows.append({"rental": r["id"], "kind": kind, "id": cid, "via": "read_back",
-                                 "match": "match" if c.body.get("status") == "COMPLETED" else "mismatch"})
+                                 "match": "match" if self._final_status("capture", cid, r["id"]) == "COMPLETED"
+                                 else "mismatch"})
             st = r.get("settlement") or {}
             if st.get("void"):
-                rb = self.pp.get_authorization(r["authorization_id"], r["id"])
                 rows.append({"rental": r["id"], "kind": "void", "id": r["authorization_id"], "via": "read_back",
-                             "match": "match" if rb.body.get("status") == "VOIDED" else "mismatch"})
+                             "match": "match" if self._final_status("auth", r["authorization_id"], r["id"]) == "VOIDED"
+                             else "mismatch"})
         return {"date": day, "transaction_search_status": ts.status, "transaction_search_issue": ts.issue,
                 "listed": len(listed), "rows": rows,
                 "summary": {k: sum(1 for x in rows if x["match"] == k) for k in ("match", "pending", "mismatch")}}
