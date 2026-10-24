@@ -94,7 +94,7 @@ authorization reads `EXPIRED`). Reads are limited to
 
 48 real photographs from Wikimedia Commons (26 damaged, 37 labelled marks; 22 clean motor scooters), labels drawn by the
 builder's agent (Claude) and committed before any model call. Each photo is used as both the pickup and the return, so
-the only right answers are "old" for a labelled mark and "not new" for a clean spot.
+the only right answers are "old" for a labelled mark and "not new" for a clean spot. One photo, with 2 marks, failed the blur gate and was not scored, so 35 marks × 3 = 105.
 
 | | Answers | Bar | `qwen3-vl-plus` |
 |---|---|---|---|
@@ -108,6 +108,6 @@ benchmark and cannot test new damage between two photos. Report and reproduce:
 
 ## 6. Not shown, on purpose
 
-- **Vision accuracy.** There is no accuracy number anywhere in this repository because the benchmark on the staged scooter photo set has not run. The model has been shown on AI-generated test images (not photographs, §1) and failed the partial check on public photos (§5).
+- **Vision accuracy.** There is no benchmark accuracy number in this repository, because the benchmark on the staged scooter photo set has not run. The only real-photo numbers are the failed partial check in §5. The model has been shown on AI-generated test images (not photographs, §1) and failed the partial check on public photos (§5).
 - **Reauthorize inside a rental.** PayPal allows it once, Day 4 to Day 29. The call itself is recorded on the sandbox ([`evidence/paypal-reauthorize.jsonl`](evidence/paypal-reauthorize.jsonl): 201 on two holds, 422 on a second attempt); no rental in the app has reached day 4, so only the sweep's day-4 trigger rule and its refusal fallback are unit-tested, as is `cron_daily()` (the cron route and Vercel's schedule have not fired on a real rental).
 - **Live money.** Sandbox only.

@@ -151,7 +151,7 @@ Recorded on 2026-10-24: Claude Code and Codex each booked through `quote_rental 
 | Live acceptance script | `scripts/e2e_live.py` (375 px viewport) |
 | Evidence pack | [`evidence/`](evidence): three recorded PayPal sandbox settlements call by call (`scripts/record_paypal_evidence.py`), the full test run, offline coverage and the live e2e log |
 | Vision accuracy | **Not yet measured.** The benchmark on a staged scooter set is pending. So far the model has been shown on AI-generated test images (not photographs) ([recorded answers](evidence/generated-pair/README.md)) and in the partial check on public photos below, which it failed |
-| Vision (partial, public single photos) | **FAIL.** 48 Wikimedia Commons photos, the same photo as pickup and return: `qwen3-vl-plus` called an old mark "new" in 71 of 105 answers and a clean spot "new" in 66 of 66 (bar: 0 for both). The damage class matched the label in 36 of 105 readings. p50 2,703 ms, p95 8,601 ms. Labels drawn by the builder's agent (Claude), not an independent annotator. Not the staged-set benchmark ([report](evidence/public-photo-bench/README.md)) |
+| Vision (partial, public single photos) | **FAIL.** 48 Wikimedia Commons photos, the same photo as pickup and return: `qwen3-vl-plus` called an old mark "new" in 71 of 105 answers and a clean spot "new" in 66 of 66 (bar: 0 for both). One photo with 2 marks failed the blur gate and was not scored, so 35 marks × 3 = 105. The damage class matched the label in 36 of 105 readings. p50 2,703 ms, p95 8,601 ms. Labels drawn by the builder's agent (Claude), not an independent annotator. Not the staged-set benchmark ([report](evidence/public-photo-bench/README.md)) |
 
 ### Honest limits (9)
 
