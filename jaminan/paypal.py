@@ -134,18 +134,21 @@ class PayPal:
 
     # -- Orders v2 -----------------------------------------------------------------------------
     def create_authorize_order(self, rental_id: str, amount_cents: int, description: str, return_url: str,
-                               cancel_url: str, brand: str = "Jaminan", nonce: str = "") -> Resp:
-        """S1: ONE renter approval → AUTHORIZE fee + deposit, with vault consent for later MIT charges."""
+                               cancel_url: str, brand: str = "Jaminan", nonce: str = "", email: str | None = None) -> Resp:
+        """S1: ONE renter approval → AUTHORIZE fee + deposit, with vault consent for later MIT charges.
+        `email` (an agent booking) only pre-fills the PayPal login; the renter still logs in and approves."""
+        wallet: dict[str, Any] = {
+            "experience_context": {"return_url": return_url, "cancel_url": cancel_url, "user_action": "CONTINUE",
+                                   "shipping_preference": "NO_SHIPPING", "brand_name": brand, "landing_page": "LOGIN"},
+            "attributes": {"vault": {"store_in_vault": "ON_SUCCESS", "usage_type": "MERCHANT",
+                                     "customer_type": "CONSUMER"}}}
+        if email:
+            wallet["email_address"] = email
         body = {
             "intent": "AUTHORIZE",
             "purchase_units": [{"reference_id": rental_id, "custom_id": rental_id, "description": description[:127],
                                 "amount": money(amount_cents)}],
-            "payment_source": {"paypal": {
-                "experience_context": {"return_url": return_url, "cancel_url": cancel_url, "user_action": "CONTINUE",
-                                       "shipping_preference": "NO_SHIPPING", "brand_name": brand,
-                                       "landing_page": "LOGIN"},
-                "attributes": {"vault": {"store_in_vault": "ON_SUCCESS", "usage_type": "MERCHANT",
-                                         "customer_type": "CONSUMER"}}}},
+            "payment_source": {"paypal": wallet},
         }
         return self.call("POST", "/v2/checkout/orders", "order.create", body,
                          rid=request_id(rental_id, nonce, "order.create", amount_cents), rental_id=rental_id)

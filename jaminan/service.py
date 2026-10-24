@@ -10,6 +10,7 @@ import dataclasses
 import hashlib
 import json
 import math
+import re
 import secrets
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -31,7 +32,9 @@ JUDGE_VOID_AFTER_S = 2 * 3600
 LOCK_TTL_S = 130
 # Per rental: 8 pickup + 8 return angles, retakes, close-ups and a few taps fit far inside these. A key holder
 # scripting more cannot fill Redis (frames live until FRAME_EXPIRY) or spend the model balance.
-BUDGETS = {"upload": 64, "model": 120, "fine": 5}
+BUDGETS = {"upload": 64, "model": 120, "fine": 5, "status": 600}
+# An agent booking's renter: a plain shape check; PayPal is the one that knows whether the account exists.
+EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,190}\.[A-Za-z]{2,24}$")
 # A void refused with these issues has nothing left to release (PayPal sandbox, read 2026-10-24).
 VOID_DONE = ("PREVIOUSLY_VOIDED", "PREVIOUSLY_CAPTURED")
 STAGED = Path(__file__).resolve().parents[1] / "fixtures" / "staged"
@@ -156,17 +159,12 @@ class Service:
     # ------------------------------------------------------------------------------------------
     def create_rental(self, shop_id: str, vehicle_id: str, days: int, kind: str = "standard",
                       rid: str | None = None) -> dict:
-        shop, veh = tariff.shops().get(shop_id), tariff.vehicles().get(vehicle_id)
-        if not shop or not veh or veh["shop_id"] != shop_id:
-            raise ServiceError(404, "UNKNOWN_VEHICLE", "unknown shop or vehicle")
-        if not 1 <= int(days) <= 28:
-            raise ServiceError(422, "BAD_DAYS", "a rental is 1–28 days (a PayPal hold lives 29 days)")
-        tv = tariff.load("tv1")
+        q = self.quote(vehicle_id, days, shop_id)
         rid = rid or f"R-{now().strftime('%m%d')}-{secrets.token_hex(4).upper()}"
-        fee = veh["daily_fee_cents"] * int(days)
-        r = {"id": rid, "kind": kind, "shop_id": shop_id, "vehicle_id": vehicle_id, "plate": veh["plate"],
-             "vehicle_label": veh["label"], "days": int(days), "fee_cents": fee, "deposit_cents": veh["deposit_cents"],
-             "authorized_cents": fee + veh["deposit_cents"], "tariff_version_id": tv.id, "tariff_sha256": tv.sha256,
+        r = {"id": rid, "kind": kind, "shop_id": shop_id, "vehicle_id": vehicle_id,
+             "plate": tariff.vehicles()[vehicle_id]["plate"], "vehicle_label": q["vehicle_label"], "days": q["days"],
+             "fee_cents": q["fee_cents"], "deposit_cents": q["deposit_cents"], "authorized_cents": q["authorized_cents"],
+             "tariff_version_id": q["tariff_version_id"], "tariff_sha256": q["tariff_sha256"],
              "state": "DRAFT", "created_at": iso(), "history": [{"state": "DRAFT", "at": iso()}],
              "keys": {"shop": secrets.token_urlsafe(18), "renter": secrets.token_urlsafe(18)},
              "photos": {"pickup": {}, "return": {}}, "closeups": [], "baseline_marks": [], "retake_requests": [],
@@ -180,6 +178,19 @@ class Service:
         self.db.zadd(f"shop:{shop_id}:rentals", time.time(), rid)
         return r
 
+    def quote(self, vehicle_id: str, days: int, shop_id: str | None = None) -> dict:
+        """The price before a rental exists. The counter and a booking agent are quoted by this one function."""
+        veh = tariff.vehicles().get(vehicle_id)
+        shop_id = shop_id or (veh or {}).get("shop_id", "")
+        if not tariff.shops().get(shop_id) or not veh or veh["shop_id"] != shop_id:
+            raise ServiceError(404, "UNKNOWN_VEHICLE", "unknown shop or vehicle")
+        if not 1 <= int(days) <= 28:
+            raise ServiceError(422, "BAD_DAYS", "a rental is 1–28 days (a PayPal hold lives 29 days)")
+        tv, fee = tariff.load("tv1"), veh["daily_fee_cents"] * int(days)
+        return {"shop_id": shop_id, "vehicle_id": vehicle_id, "vehicle_label": veh["label"], "days": int(days),
+                "currency": "USD", "fee_cents": fee, "deposit_cents": veh["deposit_cents"],
+                "authorized_cents": fee + veh["deposit_cents"], "tariff_version_id": tv.id, "tariff_sha256": tv.sha256}
+
     def approve(self, rid: str) -> dict:
         with self.lock(rid):
             r = self.get(rid)
@@ -189,7 +200,7 @@ class Service:
             res = self.pp.create_authorize_order(rid, r["authorized_cents"],
                                                  f"Scooter rental {rid}: fee + refundable damage deposit hold",
                                                  return_url=back, cancel_url=f"{self.s.app_url}/r/{rid}?k={r['keys']['renter']}",
-                                                 nonce=r["nonce"])
+                                                 nonce=r["nonce"], email=r.get("renter_email"))
             if not res.ok:
                 raise ServiceError(502, "PAYPAL_ORDER_FAILED", str(PayPalError(res)), debug_id=res.debug_id)
             r["order_id"], r["approve_url"] = res.body["id"], approve_link(res.body)
@@ -1009,12 +1020,12 @@ class Service:
             self.db.zrem("judge:open", rid)
         return done
 
-    def rate_limit_judge(self, ip: str) -> None:
+    def rate_limit_judge(self, ip: str, kind: str = "judge", what: str = "judge rentals") -> None:
         """12 per address per hour and 300 per day: 12 × 24 = 288, so one address cannot use up a judging day."""
         hour = now().strftime("%Y%m%d%H")
-        if self.db.incr(f"rl:judge:{hashlib.sha256(ip.encode()).hexdigest()[:16]}:{hour}", ex=3600) > 12 or \
-                self.db.incr(f"rl:judge:all:{now().strftime('%Y%m%d')}", ex=86400) > 300:
-            raise ServiceError(429, "RATE_LIMITED", "too many judge rentals from here this hour; try again later")
+        if self.db.incr(f"rl:{kind}:{hashlib.sha256(ip.encode()).hexdigest()[:16]}:{hour}", ex=3600) > 12 or \
+                self.db.incr(f"rl:{kind}:all:{now().strftime('%Y%m%d')}", ex=86400) > 300:
+            raise ServiceError(429, "RATE_LIMITED", f"too many {what} from here this hour; try again later")
 
     def mint_judge(self, ip: str) -> dict:
         """A FRESH rental per visit: merchant-initiated AUTHORIZE on a pool wallet (failover on any 4xx),
@@ -1071,3 +1082,51 @@ class Service:
                 r["photos"]["return"] = man["return"]
                 self._to(r, "RETURNED", returned_at=iso())
             return self._save(r)
+
+    # ------------------------------------------------------------------------------------------
+    # 7. booking agents (jaminan/mcp_server.py): look, price, ask — only the renter pays
+    # ------------------------------------------------------------------------------------------
+    @staticmethod
+    def agent_view(r: dict) -> dict:
+        """What a booking agent sees: amounts, state and PayPal ids. Never a key, a plate, a photo or a payer email."""
+        return {"rental_id": r["id"], "state": r["state"], "booked_by": r.get("booked_by"),
+                "vehicle_id": r["vehicle_id"], "vehicle_label": r["vehicle_label"], "days": r["days"],
+                "currency": "USD", "fee_cents": r["fee_cents"], "deposit_cents": r["deposit_cents"],
+                "authorized_cents": r["authorized_cents"], "tariff_version_id": r["tariff_version_id"],
+                "tariff_sha256": r["tariff_sha256"], "order_id": r.get("order_id"),
+                "authorization_id": r.get("authorization_id"), "auth_expires_at": r.get("auth_expires_at"),
+                "created_at": r["created_at"]}
+
+    def agent_book(self, ip: str, vehicle_id: str, days: int, renter_email: str) -> dict:
+        """A booking agent's only write: a DRAFT rental and the renter's PayPal approval link. No key leaves here —
+        the renter's key reaches the renter through PayPal's return redirect, after THEY approve; the shop's stays
+        server-side. So the agent can never authorize, accept or contest a line, capture, void or refund."""
+        email = (renter_email or "").strip()
+        if not EMAIL.match(email):
+            raise ServiceError(422, "BAD_EMAIL", "renter_email must look like name@example.com")
+        q = self.quote(vehicle_id, days)  # bad input is refused before it spends the address's budget
+        self.rate_limit_judge(ip, "agent", "agent bookings")  # each booking opens a real PayPal order, as /judge does
+        r = self.create_rental(q["shop_id"], vehicle_id, q["days"], kind="agent")
+        r.update(booked_by="agent", renter_email=email)
+        self._save(r)
+        out = self.approve(r["id"])
+        return {**self.agent_view(self.get(r["id"])), "approve_url": out["approve_url"],
+                "status_token": r["evidence_token"]}
+
+    def agent_status(self, rid: str, token: str | None) -> dict:
+        """Read-only: the rental's state plus PayPal's own record of it (the order before approval, the hold after)."""
+        r = self.get(rid)
+        if not (token and same_secret(token, r["evidence_token"])):
+            raise ServiceError(403, "FORBIDDEN", "reading a rental needs the status_token start_rental returned")
+        self._spend(rid, "status")
+        out = self.agent_view(r)
+        if r.get("authorization_id"):
+            res, obj = self.pp.get_authorization(r["authorization_id"], rid), "authorization"
+        elif r.get("order_id"):
+            res, obj = self.pp.get_order(r["order_id"], rid), "order"
+        else:
+            return {**out, "paypal": None}
+        b = res.body if res.ok else {}
+        return {**out, "paypal": {"object": obj, "id": b.get("id"), "status": b.get("status"),
+                                  "amount": b.get("amount"), "expiration_time": b.get("expiration_time"),
+                                  "error": None if res.ok else res.issue}}

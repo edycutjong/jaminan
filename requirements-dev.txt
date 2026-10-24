@@ -7,3 +7,5 @@ uvicorn>=0.30
 ruff>=0.6
 mypy>=1.11
 pip-audit>=2.7
+# the MCP server for booking agents (jaminan/mcp_server.py); kept out of requirements.txt so the Vercel function stays lean
+mcp>=2.3,<3

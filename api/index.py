@@ -383,6 +383,31 @@ def judge_full(req: Request):
     return {"id": r["id"], **out, "shop_key": r["keys"]["shop"], "renter_key": r["keys"]["renter"]}
 
 
+# ---------------------------------------------------------------------------------------------
+# booking agents (jaminan/mcp_server.py): quote, one booking that returns the renter's PayPal link, a read-only
+# status. None of these routes takes or returns a shop or renter key.
+# ---------------------------------------------------------------------------------------------
+class AgentBooking(BaseModel):
+    vehicle_id: str
+    days: int = 1
+    renter_email: str
+
+
+@app.get("/api/agent/quote")
+def agent_quote(vehicle_id: str, days: int = 1):
+    return svc().quote(vehicle_id, days)
+
+
+@app.post("/api/agent/rentals")
+def agent_book(body: AgentBooking, req: Request):
+    return svc().agent_book(client_ip(req), body.vehicle_id, body.days, body.renter_email)
+
+
+@app.get("/api/agent/rentals/{rid}")
+def agent_status(rid: str, t: str | None = None):
+    return svc().agent_status(rid, t)
+
+
 @app.get("/api/health/judge")
 def health_judge(req: Request):
     """One logged-out judge run end to end; non-200 on failure (hit daily 12-01 → 12-15)."""
