@@ -31,7 +31,7 @@ The side-panel dent in the `accepted` run is the "already there" case: it was vi
 ## 3. Reproduce
 
 ```bash
-# offline suite (210 tests, no credentials)
+# offline suite (226 tests, no credentials)
 .venv/bin/python -m pytest -m "not sandbox and not live_model and not slow" --cov=jaminan --cov-branch
 
 # the claim-decision sweep (23,040 combinations) and the settle property test
@@ -49,13 +49,27 @@ python scripts/e2e_live.py https://jaminan.edycu.dev/app --shots /tmp/jaminan-e2
 
 | Number | Where it comes from |
 |---|---|
-| 219 tests (210 offline, 8 real-sandbox, 1 live Qwen) | [`evidence/test-run.txt`](evidence/test-run.txt) |
+| 235 tests (226 offline, 8 real-sandbox, 1 live Qwen) | [`evidence/test-run.txt`](evidence/test-run.txt) |
 | 100% offline line and branch coverage of `jaminan/` | [`evidence/coverage.txt`](evidence/coverage.txt) |
 | 18/18 live acceptance checks at 375 px (2026-10-24) | [`evidence/e2e-live.txt`](evidence/e2e-live.txt) |
 | 23,040-case claim sweep | [`tests/test_invariants.py`](tests/test_invariants.py) |
 | 19 PayPal REST endpoints in the hand-written client | [`evidence/README.md`](evidence/README.md), [`jaminan/paypal.py`](jaminan/paypal.py) |
 
-## 4. Not shown, on purpose
+## 4. An agent books, the renter approves in PayPal
+
+A booking agent sees four MCP tools: `list_vehicles`, `quote_rental`, `start_rental` and `get_rental`
+([`jaminan/mcp_server.py`](jaminan/mcp_server.py)). On 2026-10-24 Claude Code booked R-1024-FA0400AA and Codex
+booked R-1024-B54EE295. Each agent got back a PayPal `approve_url`. The sandbox renter opened it and approved, and a
+new session of each agent called `get_rental`. PayPal reported authorization `8S39497205940830X` (`CREATED`, USD
+130.00) and `4V462197H4984864E` (`CREATED`, USD 145.00). An agent cannot approve, answer a damage line, capture, void
+or refund: no tool does it, and the agent never holds a key that would. Transcripts and the live 403s are in
+[`evidence/mcp/`](evidence/mcp/README.md). To read one back yourself:
+
+```bash
+curl -s "https://jaminan.edycu.dev/api/agent/rentals/R-1024-FA0400AA?t=vG8cd6f18tPt"
+```
+
+## 5. Not shown, on purpose
 
 - **Vision accuracy.** There is no accuracy number anywhere in this repository because the benchmark on the staged scooter photo set has not run.
 - **Reauthorize inside a rental.** PayPal allows it once, Day 4 to Day 29. The call itself is recorded on the sandbox ([`evidence/paypal-reauthorize.jsonl`](evidence/paypal-reauthorize.jsonl): 201 on two holds, 422 on a second attempt); no rental in the app has reached day 4, so only the sweep's day-4 trigger rule and its refusal fallback are unit-tested, as is `cron_daily()` (the cron route and Vercel's schedule have not fired on a real rental).

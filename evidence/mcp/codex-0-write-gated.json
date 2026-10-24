@@ -1,0 +1,75 @@
+{
+  "command": "codex exec --json -s read-only -c approval_policy=\"never\" -c mcp_servers.jaminan.command=\".venv/bin/python\" -c mcp_servers.jaminan.args=[\"-m\",\"jaminan.mcp_server\"] \"<booking prompt>\"  (no tool approved: Codex refuses start_rental, annotated as a write)",
+  "client": "Codex (codex exec --json)",
+  "thread_id": "01a16e5d-5cd6-7de0-adca-8bd9ee6d801d",
+  "steps": [
+    {
+      "tool": "list_vehicles",
+      "arguments": {
+        "shop_id": "shop-demo"
+      },
+      "status": "completed",
+      "result": {
+        "shop": {
+          "id": "shop-demo",
+          "name": "Demo shop (partner shop name pending the shop conversations)",
+          "city": "Jakarta"
+        },
+        "vehicles": [
+          {
+            "id": "veh-01",
+            "label": "Demo scooter 1",
+            "kind": "scooter",
+            "daily_fee_cents": 1500,
+            "deposit_cents": 10000
+          },
+          {
+            "id": "veh-02",
+            "label": "Demo scooter 2",
+            "kind": "scooter",
+            "daily_fee_cents": 1500,
+            "deposit_cents": 10000
+          }
+        ],
+        "tariff": {
+          "id": "tv1",
+          "sha256": "14adea8e891c43229cf94278a29ccdafcd9c2aa5ab87755f307f8b2e16d2687b"
+        }
+      }
+    },
+    {
+      "tool": "quote_rental",
+      "arguments": {
+        "days": 3,
+        "vehicle_id": "veh-02"
+      },
+      "status": "completed",
+      "result": {
+        "shop_id": "shop-demo",
+        "vehicle_id": "veh-02",
+        "vehicle_label": "Demo scooter 2",
+        "days": 3,
+        "currency": "USD",
+        "fee_cents": 4500,
+        "deposit_cents": 10000,
+        "authorized_cents": 14500,
+        "tariff_version_id": "tv1",
+        "tariff_sha256": "14adea8e891c43229cf94278a29ccdafcd9c2aa5ab87755f307f8b2e16d2687b"
+      }
+    },
+    {
+      "tool": "start_rental",
+      "arguments": {
+        "days": 3,
+        "renter_email": "<sandbox-buyer-email>",
+        "vehicle_id": "veh-02"
+      },
+      "status": "failed",
+      "error": {
+        "message": "MCP tool call requires approval, but approval policy is never"
+      }
+    }
+  ],
+  "final_message": "Quote for **veh-02 at shop-demo, 3 days**:\n\n- Rental fee: **USD 45.00**\n- Refundable deposit: **USD 100.00**\n- Total authorization: **USD 145.00**\n\n`start_rental` was blocked because the tool requires approval and this session’s approval policy is `never`. No rental_id, PayPal approve_url, or status_token was returned, so I couldn’t call `get_rental`.",
+  "condensed_from": "the client's own JSON event stream; only jaminan tool calls, results and the final message kept"
+}

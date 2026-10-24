@@ -1,0 +1,46 @@
+{
+  "command": "codex exec --json -s read-only -c approval_policy=\"never\" -c mcp_servers.jaminan.command=\".venv/bin/python\" -c mcp_servers.jaminan.args=[\"-m\",\"jaminan.mcp_server\"] \"<get_rental prompt>\"",
+  "client": "Codex (codex exec --json)",
+  "thread_id": "01a16e5e-c087-7773-a089-eddba110806e",
+  "steps": [
+    {
+      "tool": "get_rental",
+      "arguments": {
+        "rental_id": "R-1024-B54EE295",
+        "status_token": "hL9kz24zyJ36"
+      },
+      "status": "completed",
+      "result": {
+        "rental_id": "R-1024-B54EE295",
+        "state": "APPROVED",
+        "booked_by": "agent",
+        "vehicle_id": "veh-02",
+        "vehicle_label": "Demo scooter 2",
+        "days": 3,
+        "currency": "USD",
+        "fee_cents": 4500,
+        "deposit_cents": 10000,
+        "authorized_cents": 14500,
+        "tariff_version_id": "tv1",
+        "tariff_sha256": "14adea8e891c43229cf94278a29ccdafcd9c2aa5ab87755f307f8b2e16d2687b",
+        "order_id": "77H944659E772632G",
+        "authorization_id": "4V462197H4984864E",
+        "auth_expires_at": "2026-11-22T14:44:15Z",
+        "created_at": "2026-10-24T14:43:50+00:00",
+        "paypal": {
+          "object": "authorization",
+          "id": "4V462197H4984864E",
+          "status": "CREATED",
+          "amount": {
+            "currency_code": "USD",
+            "value": "145.00"
+          },
+          "expiration_time": "2026-11-22T14:44:15Z",
+          "error": null
+        }
+      }
+    }
+  ],
+  "final_message": "Rental **R-1024-B54EE295** is **APPROVED**.\n\nPayPal holds **USD 145.00** under an authorization with status **CREATED**:\n\n- Rental fee: **$45.00**\n- Refundable deposit: **$100.00**\n- Hold expires: **November 22, 2026, at 14:44:15 UTC**\n\nThis is an authorization hold, not a captured payment.",
+  "condensed_from": "the client's own JSON event stream; only jaminan tool calls, results and the final message kept"
+}

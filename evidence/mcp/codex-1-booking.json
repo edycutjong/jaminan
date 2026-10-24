@@ -1,0 +1,93 @@
+{
+  "command": "codex exec --json -s read-only -c approval_policy=\"never\" -c mcp_servers.jaminan.command=\".venv/bin/python\" -c mcp_servers.jaminan.args=[\"-m\",\"jaminan.mcp_server\"] -c mcp_servers.jaminan.tools.start_rental.approval_mode=\"approve\" \"<booking prompt>\"",
+  "client": "Codex (codex exec --json)",
+  "thread_id": "01a16e5e-105b-7e50-b000-7ed8d8c8d80c",
+  "steps": [
+    {
+      "tool": "quote_rental",
+      "arguments": {
+        "days": 3,
+        "vehicle_id": "veh-02"
+      },
+      "status": "completed",
+      "result": {
+        "shop_id": "shop-demo",
+        "vehicle_id": "veh-02",
+        "vehicle_label": "Demo scooter 2",
+        "days": 3,
+        "currency": "USD",
+        "fee_cents": 4500,
+        "deposit_cents": 10000,
+        "authorized_cents": 14500,
+        "tariff_version_id": "tv1",
+        "tariff_sha256": "14adea8e891c43229cf94278a29ccdafcd9c2aa5ab87755f307f8b2e16d2687b"
+      }
+    },
+    {
+      "tool": "start_rental",
+      "arguments": {
+        "days": 3,
+        "renter_email": "<sandbox-buyer-email>",
+        "vehicle_id": "veh-02"
+      },
+      "status": "completed",
+      "result": {
+        "rental_id": "R-1024-B54EE295",
+        "state": "DRAFT",
+        "booked_by": "agent",
+        "vehicle_id": "veh-02",
+        "vehicle_label": "Demo scooter 2",
+        "days": 3,
+        "currency": "USD",
+        "fee_cents": 4500,
+        "deposit_cents": 10000,
+        "authorized_cents": 14500,
+        "tariff_version_id": "tv1",
+        "tariff_sha256": "14adea8e891c43229cf94278a29ccdafcd9c2aa5ab87755f307f8b2e16d2687b",
+        "order_id": "77H944659E772632G",
+        "authorization_id": null,
+        "auth_expires_at": null,
+        "created_at": "2026-10-24T14:43:50+00:00",
+        "approve_url": "https://www.sandbox.paypal.com/checkoutnow?token=77H944659E772632G",
+        "status_token": "hL9kz24zyJ36",
+        "next": "Send approve_url to the renter. Only they can approve the hold, in PayPal. Then get_rental shows the authorization PayPal holds."
+      }
+    },
+    {
+      "tool": "get_rental",
+      "arguments": {
+        "rental_id": "R-1024-B54EE295",
+        "status_token": "hL9kz24zyJ36"
+      },
+      "status": "completed",
+      "result": {
+        "rental_id": "R-1024-B54EE295",
+        "state": "DRAFT",
+        "booked_by": "agent",
+        "vehicle_id": "veh-02",
+        "vehicle_label": "Demo scooter 2",
+        "days": 3,
+        "currency": "USD",
+        "fee_cents": 4500,
+        "deposit_cents": 10000,
+        "authorized_cents": 14500,
+        "tariff_version_id": "tv1",
+        "tariff_sha256": "14adea8e891c43229cf94278a29ccdafcd9c2aa5ab87755f307f8b2e16d2687b",
+        "order_id": "77H944659E772632G",
+        "authorization_id": null,
+        "auth_expires_at": null,
+        "created_at": "2026-10-24T14:43:50+00:00",
+        "paypal": {
+          "object": "order",
+          "id": "77H944659E772632G",
+          "status": "PAYER_ACTION_REQUIRED",
+          "amount": null,
+          "expiration_time": null,
+          "error": null
+        }
+      }
+    }
+  ],
+  "final_message": "- **Rental ID:** `R-1024-B54EE295`\n- **Vehicle:** `veh-02` at `shop-demo`, 3 days\n- **Rental fee:** USD $45.00\n- **Refundable deposit:** USD $100.00\n- **Total PayPal hold:** USD $145.00\n- **Status:** DRAFT — awaiting renter approval; no money held yet.\n- **PayPal approve_url:** [Renter must open this link](https://www.sandbox.paypal.com/checkoutnow?token=77H944659E772632G)\n- **status_token:** `hL9kz24zyJ36`",
+  "condensed_from": "the client's own JSON event stream; only jaminan tool calls, results and the final message kept"
+}

@@ -1,0 +1,9 @@
+# Live, 2026-10-24T14:45:41Z: the status_token an agent holds, sent as X-Jaminan-Key to every money/answer route of an APPROVED agent booking (R-1024-FA0400AA).
+POST /api/rentals/R-1024-FA0400AA/authorize -> 403 {"error":"FORBIDDEN","message":"this action needs the renter's key for R-1024-FA0400AA"}
+POST /api/rentals/R-1024-FA0400AA/lines/L1/decision -> 403 {"error":"FORBIDDEN","message":"this action needs the renter's key for R-1024-FA0400AA"}
+POST /api/rentals/R-1024-FA0400AA/claims -> 403 {"error":"FORBIDDEN","message":"this action needs the shop's key for R-1024-FA0400AA"}
+POST /api/rentals/R-1024-FA0400AA/propose -> 403 {"error":"FORBIDDEN","message":"this action needs the shop's key for R-1024-FA0400AA"}
+POST /api/rentals/R-1024-FA0400AA/settle -> 403 {"error":"FORBIDDEN","message":"this action needs the renter's key for R-1024-FA0400AA"}
+POST /api/rentals/R-1024-FA0400AA/release -> 403 {"error":"FORBIDDEN","message":"this action needs the shop's key for R-1024-FA0400AA"}
+DELETE /api/rentals/R-1024-FA0400AA/vault -> 403 {"error":"FORBIDDEN","message":"this action needs the renter's key for R-1024-FA0400AA"}
+POST /api/rentals/R-1024-FA0400AA/fines/F1/contest -> 403 {"error":"FORBIDDEN","message":"this action needs the renter's key for R-1024-FA0400AA"}

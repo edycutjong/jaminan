@@ -1,0 +1,47 @@
+{
+  "command": "claude -p \"<get_rental prompt>\" --mcp-config mcp.json --strict-mcp-config --model sonnet --allowedTools mcp__jaminan__list_vehicles,mcp__jaminan__quote_rental,mcp__jaminan__start_rental,mcp__jaminan__get_rental --output-format stream-json --verbose",
+  "client": "Claude Code (claude -p, stream-json)",
+  "model": "claude-sonnet-5-5",
+  "session_id": "aa292167-b6d9-421f-8e24-78f62a7544d6",
+  "steps": [
+    {
+      "tool": "get_rental",
+      "arguments": {
+        "rental_id": "R-1024-FA0400AA",
+        "status_token": "vG8cd6f18tPt"
+      },
+      "result": {
+        "rental_id": "R-1024-FA0400AA",
+        "state": "APPROVED",
+        "booked_by": "agent",
+        "vehicle_id": "veh-01",
+        "vehicle_label": "Demo scooter 1",
+        "days": 2,
+        "currency": "USD",
+        "fee_cents": 3000,
+        "deposit_cents": 10000,
+        "authorized_cents": 13000,
+        "tariff_version_id": "tv1",
+        "tariff_sha256": "14adea8e891c43229cf94278a29ccdafcd9c2aa5ab87755f307f8b2e16d2687b",
+        "order_id": "2AM99761A5518700K",
+        "authorization_id": "8S39497205940830X",
+        "auth_expires_at": "2026-11-22T14:42:20Z",
+        "created_at": "2026-10-24T14:41:48+00:00",
+        "paypal": {
+          "object": "authorization",
+          "id": "8S39497205940830X",
+          "status": "CREATED",
+          "amount": {
+            "currency_code": "USD",
+            "value": "130.00"
+          },
+          "expiration_time": "2026-11-22T14:42:20Z",
+          "error": null
+        }
+      },
+      "is_error": false
+    }
+  ],
+  "final_message": "Rental R-1024-FA0400AA is in state **APPROVED**. The renter has approved it in PayPal.\n\n**Rental**\n- Vehicle: Demo scooter 1 (veh-01), rented for 2 days.\n- Booked by: the agent.\n- Fee: $30.00 USD.\n- Refundable deposit: $100.00 USD.\n- Total authorized: $130.00 USD.\n- Tariff: version tv1, SHA-256 `14adea8e…2d2687b`.\n- Created: 2026-10-24 14:41:48 UTC.\n\n**What PayPal holds**\n- PayPal holds an **authorization**, not a completed charge. Its ID is `8S39497205940830X`.\n- The authorization status is `CREATED`, and the amount is $130.00 USD, which is the fee plus the deposit.\n- It expires on 2026-11-22 at 14:42:20 UTC.\n- PayPal reported no error.\n- The related PayPal order ID is `2AM99761A5518700K`.\n\nThe $130.00 is on hold only. Nothing in this record shows it has been captured, voided or refunded.",
+  "condensed_from": "the client's own JSON event stream; only jaminan tool calls, results and the final message kept"
+}

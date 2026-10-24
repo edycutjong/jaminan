@@ -115,14 +115,36 @@ The APIMatic Context Plugin was used once, to write a Transaction Search call th
 | Turo-style photo check-in | Both sides photograph the car on a marketplace | Tie the photos to an authorization that only accepted lines can capture, as far as we found |
 | A phone video before you ride | The renter's own record | Carry a co-signature, or get the passport back |
 
+## 🤖 For booking agents (MCP)
+
+[`jaminan/mcp_server.py`](jaminan/mcp_server.py) is a stdio MCP server that lets an agent book a scooter for a person. The agent can look up vehicles, get a price and ask for a booking. Only the renter can pay. The server calls the same service as the app through the live API (`/api/shops/{id}` and `/api/agent/*`). It needs `mcp` and `httpx`, and no secrets. It runs on the PayPal sandbox.
+
+| Tool | What it does |
+|---|---|
+| `list_vehicles(shop_id)` | Lists the shop's scooters, each with its daily fee and refundable deposit |
+| `quote_rental(vehicle_id, days)` | Returns the fee and deposit, which together make the PayPal hold, plus the tariff version and its SHA-256. The counter uses the same `Service.quote()` |
+| `start_rental(vehicle_id, days, renter_email)` | Creates the rental and returns a PayPal `approve_url` for the renter. The rental stays DRAFT, with no hold, until the renter approves |
+| `get_rental(rental_id)` | Read-only. Returns the rental's state and PayPal's own record of it: the order before approval, the authorization after |
+
+**What an agent cannot do:** approve the hold, accept or contest a damage line, capture, void or refund. None of these is a tool. The agent routes also never return the shop or renter key that those actions need. The renter's key reaches the renter only through PayPal's redirect, after they approve. Bookings use the judge route's budget of 12 per address per hour and 300 per day. Bad input gets a one-line error, never a stack trace.
+
+```bash
+# from the repo root, after the install below
+claude mcp add jaminan -e PYTHONPATH="$PWD" -- "$PWD/.venv/bin/python" -m jaminan.mcp_server          # Claude Code
+codex mcp add jaminan --env PYTHONPATH="$PWD" -- "$PWD/.venv/bin/python" -m jaminan.mcp_server       # Codex
+npx @modelcontextprotocol/inspector --cli -e PYTHONPATH="$PWD" "$PWD/.venv/bin/python" -m jaminan.mcp_server --method tools/list   # MCP Inspector
+```
+
+Recorded on 2026-10-24: Claude Code and Codex each booked through `quote_rental → start_rental → get_rental`. The sandbox renter approved in PayPal, and each agent then read back the authorization, `CREATED` for USD 130.00 and USD 145.00. Codex refused `start_rental` until the operator approved that one tool, because it is the only tool not marked read-only. Live, the agent's token gets 403 on 8 money and answer routes. Transcripts and PayPal ids: [`evidence/mcp/`](evidence/mcp/README.md).
+
 ## 📊 Engineering Rigor
 
 | Metric | Value |
 |---|---|
-| Tests collected | 219 (`pytest`): 210 offline unit, contract and invariant tests, 8 against the real PayPal sandbox (including `CAPTURED` and second-capture `422` read-backs), 1 live Qwen schema check; plus 26 Vitest unit tests for the web `lib/` |
+| Tests collected | 235 (`pytest`): 226 offline unit, contract and invariant tests, 8 against the real PayPal sandbox (including `CAPTURED` and second-capture `422` read-backs), 1 live Qwen schema check; plus 26 Vitest unit tests for the web `lib/` |
 | Claim-decision sweep | `decide_claim` run over 23,040 combinations of the five yes/no answers, serving model (pinned, other, none), confidence, a confirmed baseline mark, a low-comparability tile, three parts and five damage classes: every chargeable result satisfies every "new since pickup" condition and carries a tariff price ([`tests/test_invariants.py`](tests/test_invariants.py)) |
 | Settle property test | up to 3,000 generated settlements (Hypothesis): the hold pays exactly the accepted chargeable lines at their tariff price, blocks exactly when a line is mispriced, or unanswered and the settle is not forced; invoices only contested lines plus any accepted amount above the deposit; and never captures more than the authorization |
-| Offline coverage | 100% of `jaminan/`, line and branch (`pytest --cov --cov-branch`, 1,579 statements, 470 branches), enforced in CI with `--cov-fail-under=100`; 100% of the web `lib/` under Vitest (`npm run test:unit`). Two `# pragma: no cover`: a defensive re-check in `rules.settle_plan` (`rules.py:186`) that the line list makes unreachable, and the abstract `Store._cmd` stub (`store.py:18`) |
+| Offline coverage | 100% of `jaminan/`, line and branch (`pytest --cov --cov-branch`, 1,675 statements, 492 branches), enforced in CI with `--cov-fail-under=100`; 100% of the web `lib/` under Vitest (`npm run test:unit`). Two `# pragma: no cover`: a defensive re-check in `rules.settle_plan` (`rules.py:186`) that the line list makes unreachable, and the abstract `Store._cmd` stub (`store.py:18`) |
 | CI | A six-stage GitHub Actions pipeline ([`ci.yml`](.github/workflows/ci.yml)): 1 Quality (ruff, mypy, offline tests with a 100% coverage gate; eslint, `tsc`, Vitest `lib/` tests with a 100% gate) and 2 Security (gitleaks over full history, pip-audit, npm audit, licence check) run in parallel, then 3 Build (`next build`, API boot smoke), 4 E2E (Playwright, no secrets), 5 Performance (Lighthouse CI on `/` and `/pitch`, every category ≥ 0.9, a11y ≥ 0.95) and 6 Deploy gate (every stage green; Vercel deploys only after it). Also gitleaks as its own workflow; CodeQL (Python and TypeScript); GitHub secret scanning with push protection; Dependabot monthly, grouped, no major bumps |
 | Live acceptance script | `scripts/e2e_live.py` (375 px viewport) |
 | Evidence pack | [`evidence/`](evidence): three recorded PayPal sandbox settlements call by call (`scripts/record_paypal_evidence.py`), the full test run, offline coverage and the live e2e log |
@@ -171,7 +193,7 @@ The sandbox, live-model and browser tests need credentials, so CI runs the offli
 ```
 app/        Next.js screens: renter (r/), shop (shop/), judge, integrations/verify
 api/        FastAPI entry (Vercel Python function)
-jaminan/    paypal.py · rules.py · gate.py · vision.py · service.py · tariff.py · store.py
+jaminan/    paypal.py · rules.py · gate.py · vision.py · service.py · tariff.py · store.py · mcp_server.py
 fixtures/   published tariff, fine ceilings, shop and vehicle seed
 tools/label labelling tool for the staged photo set
 tests/      unit, contract, invariant and real-sandbox tests
@@ -185,7 +207,7 @@ tests/      unit, contract, invariant and real-sandbox tests
 - [x] Judge route with a fresh sandbox rental
 - [ ] Vision benchmark on a staged scooter set
 - [x] Reauthorize sandbox run (2026-10-23: 201 on two holds, second attempt 422)
-- [ ] MCP rental tool for booking agents
+- [x] MCP rental tool for booking agents ([`evidence/mcp/`](evidence/mcp/README.md))
 
 ## 📽️ Demo Materials
 

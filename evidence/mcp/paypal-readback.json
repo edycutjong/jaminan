@@ -1,0 +1,64 @@
+{
+  "at": "2026-10-24T14:45:25+00:00",
+  "route": "GET https://jaminan.edycu.dev/api/agent/rentals/<id>?t=<status_token>",
+  "rentals": [
+    {
+      "rental_id": "R-1024-FA0400AA",
+      "state": "APPROVED",
+      "booked_by": "agent",
+      "vehicle_id": "veh-01",
+      "vehicle_label": "Demo scooter 1",
+      "days": 2,
+      "currency": "USD",
+      "fee_cents": 3000,
+      "deposit_cents": 10000,
+      "authorized_cents": 13000,
+      "tariff_version_id": "tv1",
+      "tariff_sha256": "14adea8e891c43229cf94278a29ccdafcd9c2aa5ab87755f307f8b2e16d2687b",
+      "order_id": "2AM99761A5518700K",
+      "authorization_id": "8S39497205940830X",
+      "auth_expires_at": "2026-11-22T14:42:20Z",
+      "created_at": "2026-10-24T14:41:48+00:00",
+      "paypal": {
+        "object": "authorization",
+        "id": "8S39497205940830X",
+        "status": "CREATED",
+        "amount": {
+          "currency_code": "USD",
+          "value": "130.00"
+        },
+        "expiration_time": "2026-11-22T14:42:20Z",
+        "error": null
+      }
+    },
+    {
+      "rental_id": "R-1024-B54EE295",
+      "state": "APPROVED",
+      "booked_by": "agent",
+      "vehicle_id": "veh-02",
+      "vehicle_label": "Demo scooter 2",
+      "days": 3,
+      "currency": "USD",
+      "fee_cents": 4500,
+      "deposit_cents": 10000,
+      "authorized_cents": 14500,
+      "tariff_version_id": "tv1",
+      "tariff_sha256": "14adea8e891c43229cf94278a29ccdafcd9c2aa5ab87755f307f8b2e16d2687b",
+      "order_id": "77H944659E772632G",
+      "authorization_id": "4V462197H4984864E",
+      "auth_expires_at": "2026-11-22T14:44:15Z",
+      "created_at": "2026-10-24T14:43:50+00:00",
+      "paypal": {
+        "object": "authorization",
+        "id": "4V462197H4984864E",
+        "status": "CREATED",
+        "amount": {
+          "currency_code": "USD",
+          "value": "145.00"
+        },
+        "expiration_time": "2026-11-22T14:44:15Z",
+        "error": null
+      }
+    }
+  ]
+}

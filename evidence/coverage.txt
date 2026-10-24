@@ -1,18 +1,20 @@
 ______________ coverage: platform darwin, python 3.12.13-final-0 _______________
-Name                  Stmts   Miss Branch BrPart  Cover
--------------------------------------------------------
-jaminan/__init__.py       0      0      0      0   100%
-jaminan/config.py        43      0     10      0   100%
-jaminan/gate.py          96      0     22      0   100%
-jaminan/paypal.py       164      0     18      0   100%
-jaminan/rules.py        137      0     54      0   100%
-jaminan/service.py      779      0    280      0   100%
-jaminan/store.py        170      0     62      0   100%
-jaminan/tariff.py        57      0      8      0   100%
-jaminan/vision.py       133      0     16      0   100%
--------------------------------------------------------
-TOTAL                  1579      0    470      0   100%
-================ 210 passed, 9 deselected, 1 warning in 31.30s =================
+
+Name                    Stmts   Miss Branch BrPart  Cover
+---------------------------------------------------------
+jaminan/__init__.py         0      0      0      0   100%
+jaminan/config.py          43      0     10      0   100%
+jaminan/gate.py            96      0     22      0   100%
+jaminan/mcp_server.py      61      0     12      0   100%
+jaminan/paypal.py         167      0     20      0   100%
+jaminan/rules.py          137      0     54      0   100%
+jaminan/service.py        811      0    288      0   100%
+jaminan/store.py          170      0     62      0   100%
+jaminan/tariff.py          57      0      8      0   100%
+jaminan/vision.py         133      0     16      0   100%
+---------------------------------------------------------
+TOTAL                    1675      0    492      0   100%
+================ 226 passed, 9 deselected in 32.13s =================
 
 # Web unit tests (npm run test:unit, Vitest + v8, thresholds 100 on lib/)
  Test Files  3 passed (3)

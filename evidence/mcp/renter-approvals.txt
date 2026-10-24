@@ -1,0 +1,11 @@
+# The human half: scripts/mcp_renter_approves.py <approve_url>, as the PayPal SANDBOX buyer (2026-10-24, WIB = UTC+7).
+# It logs in on sandbox.paypal.com, approves, and waits for Jaminan's return page to call /authorize with the
+# renter key PayPal's redirect carries back. The agent never sees that key.
+
+$ .venv/bin/python scripts/mcp_renter_approves.py 'https://www.sandbox.paypal.com/checkoutnow?token=2AM99761A5518700K'
+return page: https://jaminan.edycu.dev/app/r/R-1024-FA0400AA/approved?k=<renter-key>&token=2AM99761A5518700K&PayerID=76MS92EXY3LYG&ba_token=BA-43371630A64349250
+authorize: HTTP 200
+
+$ .venv/bin/python scripts/mcp_renter_approves.py 'https://www.sandbox.paypal.com/checkoutnow?token=77H944659E772632G'
+return page: https://jaminan.edycu.dev/app/r/R-1024-B54EE295/approved?token=77H944659E772632G&PayerID=76MS92EXY3LYG&ba_token=BA-8TP87335RK258325J
+authorize: HTTP 200

@@ -1,0 +1,128 @@
+{
+  "command": "claude -p \"<booking prompt>\" --mcp-config mcp.json --strict-mcp-config --model sonnet --allowedTools mcp__jaminan__list_vehicles,mcp__jaminan__quote_rental,mcp__jaminan__start_rental,mcp__jaminan__get_rental --output-format stream-json --verbose",
+  "client": "Claude Code (claude -p, stream-json)",
+  "model": "claude-sonnet-5-5",
+  "session_id": "5b96500c-339d-4795-9ee4-fb2468c3cc0f",
+  "steps": [
+    {
+      "tool": "list_vehicles",
+      "arguments": {
+        "shop_id": "shop-demo"
+      },
+      "result": {
+        "shop": {
+          "id": "shop-demo",
+          "name": "Demo shop (partner shop name pending the shop conversations)",
+          "city": "Jakarta"
+        },
+        "vehicles": [
+          {
+            "id": "veh-01",
+            "label": "Demo scooter 1",
+            "kind": "scooter",
+            "daily_fee_cents": 1500,
+            "deposit_cents": 10000
+          },
+          {
+            "id": "veh-02",
+            "label": "Demo scooter 2",
+            "kind": "scooter",
+            "daily_fee_cents": 1500,
+            "deposit_cents": 10000
+          }
+        ],
+        "tariff": {
+          "id": "tv1",
+          "sha256": "14adea8e891c43229cf94278a29ccdafcd9c2aa5ab87755f307f8b2e16d2687b"
+        }
+      },
+      "is_error": false
+    },
+    {
+      "tool": "quote_rental",
+      "arguments": {
+        "vehicle_id": "veh-01",
+        "days": 2
+      },
+      "result": {
+        "shop_id": "shop-demo",
+        "vehicle_id": "veh-01",
+        "vehicle_label": "Demo scooter 1",
+        "days": 2,
+        "currency": "USD",
+        "fee_cents": 3000,
+        "deposit_cents": 10000,
+        "authorized_cents": 13000,
+        "tariff_version_id": "tv1",
+        "tariff_sha256": "14adea8e891c43229cf94278a29ccdafcd9c2aa5ab87755f307f8b2e16d2687b"
+      },
+      "is_error": false
+    },
+    {
+      "tool": "start_rental",
+      "arguments": {
+        "vehicle_id": "veh-01",
+        "days": 2,
+        "renter_email": "<sandbox-buyer-email>"
+      },
+      "result": {
+        "rental_id": "R-1024-FA0400AA",
+        "state": "DRAFT",
+        "booked_by": "agent",
+        "vehicle_id": "veh-01",
+        "vehicle_label": "Demo scooter 1",
+        "days": 2,
+        "currency": "USD",
+        "fee_cents": 3000,
+        "deposit_cents": 10000,
+        "authorized_cents": 13000,
+        "tariff_version_id": "tv1",
+        "tariff_sha256": "14adea8e891c43229cf94278a29ccdafcd9c2aa5ab87755f307f8b2e16d2687b",
+        "order_id": "2AM99761A5518700K",
+        "authorization_id": null,
+        "auth_expires_at": null,
+        "created_at": "2026-10-24T14:41:48+00:00",
+        "approve_url": "https://www.sandbox.paypal.com/checkoutnow?token=2AM99761A5518700K",
+        "status_token": "vG8cd6f18tPt",
+        "next": "Send approve_url to the renter. Only they can approve the hold, in PayPal. Then get_rental shows the authorization PayPal holds."
+      },
+      "is_error": false
+    },
+    {
+      "tool": "get_rental",
+      "arguments": {
+        "rental_id": "R-1024-FA0400AA",
+        "status_token": "vG8cd6f18tPt"
+      },
+      "result": {
+        "rental_id": "R-1024-FA0400AA",
+        "state": "DRAFT",
+        "booked_by": "agent",
+        "vehicle_id": "veh-01",
+        "vehicle_label": "Demo scooter 1",
+        "days": 2,
+        "currency": "USD",
+        "fee_cents": 3000,
+        "deposit_cents": 10000,
+        "authorized_cents": 13000,
+        "tariff_version_id": "tv1",
+        "tariff_sha256": "14adea8e891c43229cf94278a29ccdafcd9c2aa5ab87755f307f8b2e16d2687b",
+        "order_id": "2AM99761A5518700K",
+        "authorization_id": null,
+        "auth_expires_at": null,
+        "created_at": "2026-10-24T14:41:48+00:00",
+        "paypal": {
+          "object": "order",
+          "id": "2AM99761A5518700K",
+          "status": "PAYER_ACTION_REQUIRED",
+          "amount": null,
+          "expiration_time": null,
+          "error": null
+        }
+      },
+      "is_error": false
+    }
+  ],
+  "final_message": "The rental is booked but still in DRAFT. No money is held until the renter approves it in PayPal.\n\n- **Vehicles at shop-demo (Jakarta):** veh-01 and veh-02 are both scooters at $15.00/day with a $100.00 deposit.\n- **Quote for veh-01, 2 days:** the fee is $30.00 and the refundable deposit is $100.00. The total PayPal hold is $130.00.\n- **rental_id:** `R-1024-FA0400AA`\n- **Amounts (USD):** the fee is 3000 cents, the deposit is 10000 cents, and the authorized amount is 13000 cents.\n- **approve_url (the renter must open this):** https://www.sandbox.paypal.com/checkoutnow?token=2AM99761A5518700K\n- **status_token:** `vG8cd6f18tPt`\n- **get_rental result:** PayPal's order `2AM99761A5518700K` has status `PAYER_ACTION_REQUIRED`. There is no authorization yet.\n\nSend the approve_url to <sandbox-buyer-email>. I can't approve it for them. Once they do, `get_rental` will show the authorization hold.",
+  "condensed_from": "the client's own JSON event stream; only jaminan tool calls, results and the final message kept"
+}

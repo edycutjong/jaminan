@@ -1,0 +1,125 @@
+{
+  "at": "2026-10-24T14:35:14+00:00",
+  "transport": "stdio",
+  "command": "python -m jaminan.mcp_server",
+  "count": 4,
+  "tools": [
+    {
+      "name": "list_vehicles",
+      "description": "The scooters a shop rents, with the daily fee and the refundable deposit (USD cents).",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "shop_id": {
+            "default": "shop-demo",
+            "title": "Shop Id",
+            "type": "string"
+          }
+        },
+        "title": "list_vehiclesArguments"
+      },
+      "annotations": {
+        "read_only_hint": true,
+        "destructive_hint": false,
+        "idempotent_hint": true,
+        "open_world_hint": true
+      }
+    },
+    {
+      "name": "quote_rental",
+      "description": "Price a rental before booking: fee + deposit = the PayPal hold, with the tariff version and its SHA-256.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "vehicle_id": {
+            "title": "Vehicle Id",
+            "type": "string"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "vehicle_id",
+          "days"
+        ],
+        "title": "quote_rentalArguments"
+      },
+      "annotations": {
+        "read_only_hint": true,
+        "destructive_hint": false,
+        "idempotent_hint": true,
+        "open_world_hint": true
+      }
+    },
+    {
+      "name": "start_rental",
+      "description": "Book for a human renter. Returns approve_url, a PayPal link for THE RENTER to open and approve; the rental\n    stays DRAFT, and no money is held, until they do. Send them the link; you cannot approve it yourself.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "vehicle_id": {
+            "title": "Vehicle Id",
+            "type": "string"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "renter_email": {
+            "title": "Renter Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vehicle_id",
+          "days",
+          "renter_email"
+        ],
+        "title": "start_rentalArguments"
+      },
+      "annotations": {
+        "read_only_hint": false,
+        "destructive_hint": false,
+        "idempotent_hint": false,
+        "open_world_hint": true
+      }
+    },
+    {
+      "name": "get_rental",
+      "description": "Read a rental this agent booked: its state and PayPal's own record (the order before the renter approves,\n    the authorization hold after). status_token is only needed in a new session (start_rental returned it).",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "rental_id": {
+            "title": "Rental Id",
+            "type": "string"
+          },
+          "status_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Status Token"
+          }
+        },
+        "required": [
+          "rental_id"
+        ],
+        "title": "get_rentalArguments"
+      },
+      "annotations": {
+        "read_only_hint": true,
+        "destructive_hint": false,
+        "idempotent_hint": true,
+        "open_world_hint": true
+      }
+    }
+  ]
+}
