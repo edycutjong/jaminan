@@ -2,7 +2,8 @@
 
 Every test, PayPal and coverage number on the landing page, the pitch deck and the README comes from a file in this
 folder or from the test files it names. Recorded 2026-10-14 (UTC times inside each file), except
-`paypal-reauthorize.jsonl` (2026-10-23, local WIB times, UTC+7).
+`paypal-reauthorize.jsonl` (2026-10-23, local WIB times, UTC+7) and `test-run.txt`, `coverage.txt` and `e2e-live.txt`
+(re-recorded 2026-10-24).
 
 | File | What it is | Reproduce |
 |---|---|---|
