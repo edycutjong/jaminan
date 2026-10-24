@@ -677,7 +677,9 @@ class Service:
             res = self.pp.reauthorize(old, r["deposit_cents"], rid)
             if res.ok:
                 self._record_auth(r, res.body, replaces=old)
-                r.update(authorization_id=res.body["id"], reauthorized_at=iso(), reauth_method="reauthorize")
+                # same hold lineage: auth_created_at stays the original's; the new expiry is PayPal's own value
+                r.update(authorization_id=res.body["id"], reauthorized_at=iso(), reauth_method="reauthorize",
+                         auth_expires_at=res.body.get("expiration_time") or r.get("auth_expires_at"))
             elif r.get("vault_id"):
                 mit = self.pp.create_vault_order(f"{rid}-resecure", r["vault_id"], r["deposit_cents"], "AUTHORIZE",
                                                  f"Deposit hold renewed for rental {rid} (past 3 days)", rental_id=rid,
@@ -691,7 +693,9 @@ class Service:
                     # the new hold stands; the old one is still open on PayPal, so the daily job retries the void
                     r["stale_hold"] = {"authorization_id": old, "issue": v.issue, "debug_id": v.debug_id, "at": iso()}
                 self._record_auth(r, auth, replaces=old)
+                # a brand-new hold: its own 29 days, so the expiry guard counts from now, not from the voided one
                 r.update(authorization_id=auth["id"], reauthorized_at=iso(), reauth_method="mit_resecure",
+                         auth_created_at=iso(), auth_expires_at=auth.get("expiration_time"),
                          reauth_refusal=res.issue, fee_captured_cents=0, authorized_cents=r["deposit_cents"])
             else:
                 r["reauth_error"] = {"reauthorize": res.issue, "at": iso()}

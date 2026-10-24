@@ -4,7 +4,7 @@ import pytest
 
 from jaminan import gate
 from jaminan.config import Settings
-from jaminan.service import Service, ServiceError
+from jaminan.service import Service, ServiceError, age_s
 from jaminan.store import MemoryStore
 from tests.fakes import FakePayPal, ScriptedVision, frame_bytes
 
@@ -218,10 +218,12 @@ def test_reauthorize_refused_falls_back_to_mit_resecure_and_voids_the_old_hold()
     svc = make()
     rid, k = to_out(svc)
     old = svc.get(rid)["authorization_id"]
+    svc.db.set_json(f"rental:{rid}", {**svc.get(rid), "auth_created_at": "2026-01-01T00:00:00+00:00"})
     r = svc.reauthorize(rid)
     assert r["reauth_method"] == "mit_resecure" and r["authorization_id"] != old
     assert r["authorizations"][-1]["replaces"] == old
     assert svc.pp.auths[old]["status"] == "VOIDED"
+    assert age_s(r["auth_created_at"]) < 60     # a new hold: the expiry guard counts from now, not from the voided one
 
 
 def test_judge_rental_fails_over_across_the_pool_and_never_deletes_a_pool_wallet():
