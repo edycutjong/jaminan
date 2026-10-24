@@ -61,6 +61,8 @@ export default function Judge() {
           <p>One tap mints a fresh rental on the PayPal sandbox: a merchant-initiated <span className="data">AUTHORIZE</span> of fee + deposit on a saved sandbox wallet, the fee captured from the hold at handover. Then you play the shop at the return counter, and the renter at settle.</p>
           {info && !info.staged_set ? (
             <div className="note small">The staged walkaround (real photos of a real scooter, labelled by hand) is not in this deploy yet, and no vision model is pinned by the accuracy bench yet. Until both land, a judge rental shows the real PayPal hold and lets you <strong>release</strong> it; the tap-to-claim screen opens once the staged set ships.</div>
+          ) : info && !info.benchmarked_model ? (
+            <div className="note small">No vision model is pinned by the accuracy bench yet, so no line you tap can be priced: each one ends <strong>excluded</strong> (it is in the shared baseline) or <strong>comparison unavailable</strong>, and nothing is charged. The model still answers; only a benchmarked model can price a line.</div>
           ) : null}
           <div className="stack" style={{ marginTop: 18 }}>
             <button className="btn" onClick={mint} disabled={!!busy || (info && info.pool === 0)}>{busy === "mint" ? <><span className="spin" /> creating the hold on PayPal…</> : "Start a judge rental"}</button>
@@ -90,7 +92,10 @@ export default function Judge() {
               <>
                 <h1>{r.settlement ? "Settled" : "Hold is live"}</h1>
                 <Stub r={r} />
-                {!r.settlement && ["OUT", "HELD", "RETURNED", "CLAIMED"].includes(r.state) ? (
+                {!r.settlement && ["OUT", "HELD", "RETURNED", "CLAIMED"].includes(r.state) && view === "renter" ? (
+                  <p className="small">Only the shop can release the hold. Switch to the shop phone.</p>
+                ) : null}
+                {!r.settlement && ["OUT", "HELD", "RETURNED", "CLAIMED"].includes(r.state) && view === "shop" ? (
                   <button className="btn release" disabled={!!busy} onClick={async () => {
                     setBusy("release");
                     try { merge(await api(`/rentals/${r.id}/release`, { method: "POST", key: r.shop_key })); } catch (e) { setErr(e instanceof ApiError ? e.message : String(e)); } finally { setBusy(null); }
