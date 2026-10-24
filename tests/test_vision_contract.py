@@ -18,7 +18,7 @@ def reply(content, model="qwen3-vl-plus", status=200):
 
 
 GOOD = {"mark_at_return": True, "class_consistent": True, "visible_at_pickup": False, "pickup_comparable": True,
-        "same_view": True, "pickup_bbox": [400, 380, 120, 90], "closeup_located": None, "confidence": 0.91,
+        "same_view": True, "pickup_bbox": [400, 380, 520, 470], "closeup_located": None, "confidence": 0.91,
         "rationale": "crack on the mirror housing is not in the pickup photo"}
 
 
@@ -67,7 +67,7 @@ def test_http_error_and_timeout_yield_no_answer():
 def test_mark_list_rejects_unknown_classes_and_maps_unknown_parts():
     with pytest.raises(Exception):
         MarkList.model_validate({"marks": [{"part": "mirror", "damage_class": "rust", "bbox": [1, 2, 3, 4]}]})
-    m = MarkList.model_validate({"marks": [{"part": "spoiler", "damage_class": "dent", "bbox": [100, 100, 50, 50],
+    m = MarkList.model_validate({"marks": [{"part": "spoiler", "damage_class": "dent", "bbox": [100, 100, 150, 150],
                                             "confidence": .8}]})
     assert m.marks[0].part == "other" and m.marks[0].bbox == [0.1, 0.1, 0.05, 0.05]
 

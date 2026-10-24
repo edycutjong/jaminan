@@ -3,7 +3,8 @@
 The model answers narrow yes/no questions in a scooter's part vocabulary; it never sees a price and
 never returns an amount (I1). Every answer records the model id PayPal-style: the `model` field of
 the response is the serving model, and only the benchmarked id can make a line chargeable.
-Boxes travel as Qwen's native 0–1000 integer grid and are normalized to 0–1 here.
+Boxes travel as Qwen-VL's native grounding format, corners [x1, y1, x2, y2] on a 0–1000 integer grid, and are
+normalized to the app's [x, y, w, h] in 0–1 here.
 """
 from __future__ import annotations
 
@@ -25,14 +26,18 @@ ANGLES = {1: "front", 2: "front-left three-quarter", 3: "left side", 4: "rear-le
 
 
 def _box(v: Any) -> list[float] | None:
+    """Corners in, [x, y, w, h] out. Asked for [x, y, w, h], qwen3-vl-plus answered in corners anyway: in all 12
+    recorded generated-pair calls its pickup box read as corners lands on the pointed spot at about its size, and read
+    as [x, y, w, h] covers half the image (evidence/generated-pair/run-2026-10-25*.json, before this parser)."""
     if v is None:
         return None
     if not isinstance(v, (list, tuple)) or len(v) != 4:
-        raise ValueError("bbox must be [x, y, w, h]")
+        raise ValueError("bbox must be [x1, y1, x2, y2]")
     nums = [float(x) for x in v]
     scale = 1000.0 if max(nums) > 1.5 else 1.0
-    x, y, w, h = [min(max(n / scale, 0.0), 1.0) for n in nums]
-    return [round(x, 4), round(y, 4), round(min(w, 1 - x), 4), round(min(h, 1 - y), 4)]
+    x1, y1, x2, y2 = [min(max(n / scale, 0.0), 1.0) for n in nums]
+    (x1, x2), (y1, y2) = sorted((x1, x2)), sorted((y1, y2))
+    return [round(x1, 4), round(y1, 4), round(x2 - x1, 4), round(y2 - y1, 4)]
 
 
 class ClaimAnswer(BaseModel):
@@ -115,7 +120,8 @@ SCHEMAS = {
 SYSTEM = (
     "You inspect photos of a rental scooter for a deposit settlement between a renter and a shop. "
     "You only answer the question asked, as JSON. You never estimate prices or amounts. "
-    "Boxes are [x, y, w, h] on a 0-1000 integer grid of the image they refer to. "
+    "Boxes are [x1, y1, x2, y2], the top-left and bottom-right corners, on a 0-1000 integer grid of the image "
+    "they refer to. "
     "Ignore reflections, shadows, dirt, water drops and lighting changes: they are not damage. "
     "When unsure, say so with a low confidence rather than guessing."
 )

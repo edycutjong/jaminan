@@ -37,3 +37,10 @@ shop over-claiming an old mark. Had `qwen3-vl-plus` been pinned without the benc
 at **$45.00** for a mark that was there at pickup. That is the failure the bench gate exists to stop. C2 shows a
 second weakness: the claim prompt asks about a "mark" at the tap, which fits a missing part badly. The prompt was not
 changed here, because tuning it on the only test pair would make the next result meaningless. Both findings feed the bench.
+
+**Boxes in these two run files (corrected 2026-10-25, a2a round 8).** The model's `pickup_bbox` values above were
+parsed as `[x, y, w, h]`, as the prompt then asked. Read that way, C1's box covers about half the search area. Read as
+corners `[x1, y1, x2, y2]`, the format Qwen-VL grounds in, it is a 200 × 240 box around the tapped scuff, and C2's is a
+small box low on the fairing. The model was answering in corners, so the parser (`jaminan/vision.py` `_box`) and the
+prompt now use corners. The readings, dispositions and prices in the table do not use the box, so none of them changes.
+The files are kept as recorded.

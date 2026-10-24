@@ -22,9 +22,17 @@ def test_a_box_that_is_not_four_numbers_is_rejected(bad):
         CloseupLocation(located=True, bbox=bad)
 
 
-def test_a_missing_box_stays_missing_and_pixel_boxes_are_scaled_from_a_1000_grid():
+def test_a_missing_box_stays_missing_and_corner_boxes_are_scaled_from_a_1000_grid():
     assert CloseupLocation(located=False, bbox=None).bbox is None
-    assert CloseupLocation(located=True, bbox=[100, 200, 300, 400]).bbox == [0.1, 0.2, 0.3, 0.4]
+    assert CloseupLocation(located=True, bbox=[100, 200, 300, 400]).bbox == [0.1, 0.2, 0.2, 0.2]
+    assert CloseupLocation(located=True, bbox=[300, 400, 100, 200]).bbox == [0.1, 0.2, 0.2, 0.2]  # corners swapped
+
+
+def test_the_recorded_c1_box_is_read_as_corners_on_the_pointed_scuff():
+    """qwen3-vl-plus's pickup box for C1 in all 6 recorded calls was [380, 380, 580, >=620] on the pickup search area,
+    whose centre (500, 500) is the builder's tap. As corners it is a 200 x 240 box around that centre."""
+    x, y, w, h = CloseupLocation(located=True, bbox=[380, 380, 580, 620]).bbox
+    assert (x, y, w, h) == (0.38, 0.38, 0.2, 0.24) and x < 0.5 < x + w and y < 0.5 < y + h
 
 
 @respx.mock

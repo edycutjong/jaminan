@@ -133,7 +133,7 @@ class ScriptedVision:
         self.calls.append(("claim", angle, part, damage_class, len(closeups)))
         a = self.claims.get((angle, part, damage_class), {})
         base = {"mark_at_return": True, "class_consistent": True, "visible_at_pickup": False, "pickup_comparable": True,
-                "same_view": True, "pickup_bbox": [400, 400, 100, 100], "closeup_located": None, "confidence": 0.9,
+                "same_view": True, "pickup_bbox": [400, 400, 500, 500], "closeup_located": None, "confidence": 0.9,
                 "rationale": "scripted"}
         return self._call(ClaimAnswer.model_validate({**base, **a}))
 
@@ -146,7 +146,7 @@ class ScriptedVision:
         return self._call(MarkList.model_validate({"marks": self.premarks.get(angle, [])}))
 
     def locate_closeup(self, frame, closeup, angle):
-        return self._call(CloseupLocation(located=True, bbox=[300, 300, 200, 200], confidence=0.8))
+        return self._call(CloseupLocation(located=True, bbox=[300, 300, 500, 500], confidence=0.8))
 
     def read_ticket(self, image, keys):
         return self._call(TicketRead(plate="B 0000 JMN", time="2099-01-01T00:00:00+07:00", violation=keys[0],
