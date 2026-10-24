@@ -18,7 +18,8 @@ sandbox renter approved in PayPal, and the agent then read back the authorizatio
 The transcripts are condensed from each client's own JSON event stream. Only the jaminan tool calls, their results
 and the final message are kept. The client's start-up event, which lists local paths and tooling, is dropped. The
 sandbox buyer's email is replaced with `<sandbox-buyer-email>`. The status tokens are left in on purpose. They are
-read-only, so anyone can repeat the read-back:
+read-only and open only this status read, not the rental's evidence pack (a token of their own since 2026-10-25;
+until then the status token was the evidence link's token), so anyone can repeat the read-back:
 
 ```bash
 curl -s "https://jaminan.edycu.dev/api/agent/rentals/R-1024-FA0400AA?t=vG8cd6f18tPt"

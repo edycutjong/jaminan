@@ -140,6 +140,7 @@ def test_the_status_token_opens_no_write_route(api_client):
             r = getattr(tc, meth)(path, **creds, **kw)
             assert r.status_code == 403 and r.json()["error"] == "FORBIDDEN", (path, creds, r.status_code, r.text)
     assert tc.get(f"/api/rentals/{rid}", headers=h).status_code == 403  # nor the parties' full view
+    assert tc.get(f"/api/rentals/{rid}/evidence", params={"t": t}).status_code == 403  # nor the evidence pack
     assert svc.get(rid)["state"] == before == "APPROVED"
 
 
@@ -240,8 +241,12 @@ def test_bad_input_spends_no_budget_and_the_13th_booking_an_hour_is_refused():
 def test_status_reads_paypal_without_changing_anything_and_has_a_budget(monkeypatch):
     svc = make()
     r = svc.create_rental("shop-demo", "veh-01", 1, kind="agent")
-    t = r["evidence_token"]
+    t = r["agent_token"] = "agent-status-token"
+    svc.db.set_json(f"rental:{r['id']}", r)
     assert code(svc.agent_status, r["id"], None) == "FORBIDDEN"
+    assert code(svc.agent_status, r["id"], r["evidence_token"]) == "FORBIDDEN"  # the evidence link's token is not it
+    counter = svc.create_rental("shop-demo", "veh-01", 1)  # booked at the counter: no agent token to read it with
+    assert code(svc.agent_status, counter["id"], counter["evidence_token"]) == "FORBIDDEN"
     assert svc.agent_status(r["id"], t)["paypal"] is None  # no order yet: nothing to read back
     svc.approve(r["id"])
     before, ledger = svc.get(r["id"]), len(svc.calls(r["id"]))

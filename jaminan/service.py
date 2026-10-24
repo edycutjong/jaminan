@@ -1110,16 +1110,17 @@ class Service:
         q = self.quote(vehicle_id, days)  # bad input is refused before it spends the address's budget
         self.rate_limit_judge(ip, "agent", "agent bookings")  # each booking opens a real PayPal order, as /judge does
         r = self.create_rental(q["shop_id"], vehicle_id, q["days"], kind="agent")
-        r.update(booked_by="agent", renter_email=email)
+        # its own token: the evidence token also opens the evidence pack (photos, findings), which agent_view leaves out
+        r.update(booked_by="agent", renter_email=email, agent_token=secrets.token_urlsafe(12))
         self._save(r)
         out = self.approve(r["id"])
         return {**self.agent_view(self.get(r["id"])), "approve_url": out["approve_url"],
-                "status_token": r["evidence_token"]}
+                "status_token": r["agent_token"]}
 
     def agent_status(self, rid: str, token: str | None) -> dict:
         """Read-only: the rental's state plus PayPal's own record of it (the order before approval, the hold after)."""
         r = self.get(rid)
-        if not (token and same_secret(token, r["evidence_token"])):
+        if not (token and r.get("agent_token") and same_secret(token, r["agent_token"])):
             raise ServiceError(403, "FORBIDDEN", "reading a rental needs the status_token start_rental returned")
         self._spend(rid, "status")  # 120 reads a rental; quiet, so a polling agent never grows the rental's ledger
         out = self.agent_view(r)
