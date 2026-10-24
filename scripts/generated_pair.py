@@ -86,7 +86,10 @@ def main() -> None:
            "requested_model": s.vision_model, "benchmarked_model": s.benchmarked_model or None,
            "confidence_floor": s.confidence_floor, "chargeable_classes": list(s.chargeable_classes),
            "generation": "GENERATION.json", "frames": frames, "claims": claims}
-    path = DIR / f"run-{datetime.now():%Y-%m-%d}.json"  # local (WIB) date; times inside are UTC
+    day = f"{datetime.now():%Y-%m-%d}"  # local (WIB) date; times inside are UTC
+    path, n = DIR / f"run-{day}.json", 1
+    while path.exists():  # a recorded run is evidence: another run that day gets its own file, never overwrites one
+        path, n = DIR / f"run-{day}-{n}.json", n + 1
     path.write_text(json.dumps(out, indent=2, ensure_ascii=False) + "\n")
     print("wrote", path.relative_to(ROOT))
 
