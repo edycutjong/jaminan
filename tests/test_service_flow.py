@@ -1,5 +1,6 @@
 """The whole rental through the service with an in-memory PayPal and a scripted model: approval →
 baseline → return → claims → settle, plus every refusal on the way."""
+import time
 from datetime import timedelta
 
 import pytest
@@ -550,3 +551,21 @@ def test_the_invoice_qr_is_the_png_inside_paypals_multipart_answer():
     raw = ('--b22b\r\nContent-Disposition: form-data; name="image"\r\nContent-Type: text/plain\r\n\r\n'
            'iVBORw0KGgoAAAA\r\nNSUhEUg==\r\n--b22b--')
     assert qr_png_b64(raw) == "iVBORw0KGgoAAAANSUhEUg==" and qr_png_b64('{"name": "x"}') is None
+
+
+def test_the_daily_job_reaches_an_open_hold_past_the_newest_200_rentals():
+    svc = make()
+    rid, _ = to_out(svc)
+    five_days = time.time() - 5 * 86400
+    svc.db.set_json(f"rental:{rid}", {**svc.get(rid), "auth_created_at": iso(now() - timedelta(days=5))})
+    svc.db.zadd("holds:open", five_days, rid)
+    svc.shop_rentals = lambda shop_id, limit=60: []          # 200 newer rentals pushed it out of the window
+    assert svc.cron_daily()["reauth"] == ["mit_resecure"]
+
+
+def test_a_released_hold_leaves_the_open_hold_index():
+    svc = make()
+    rid, k = to_returned(svc)
+    assert rid in svc.db.zrangebyscore("holds:open", 0, time.time() + 1)
+    svc.release(rid, k["shop"])
+    assert rid not in svc.db.zrangebyscore("holds:open", 0, time.time() + 1)

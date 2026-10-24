@@ -89,6 +89,11 @@ class Service:
         rules.check_transition(r["state"], state)
         r.update(fields)
         r["state"] = state
+        # every live hold is indexed by when it opened, so the daily job reaches it however many rentals came after
+        if state == "APPROVED" and r.get("authorization_id"):
+            self.db.zadd("holds:open", time.time(), r["id"])
+        elif state not in rules.OPEN_HOLD_STATES:
+            self.db.zrem("holds:open", r["id"])
         r.setdefault("history", []).append({"state": state, "at": iso()})
         return r
 
@@ -877,15 +882,18 @@ class Service:
             self.settle(rid, None, force=True)
             return rid
 
-        for shop_id in tariff.shops():
-            for r in self.shop_rentals(shop_id, 200):
-                if r.get("stale_hold"):
-                    guarded("stale_void", r["id"], self.retry_stale_void, r["id"])
-                age_days = age_s(r.get("auth_created_at")) / 86400
-                if rules.needs_reauth(r["state"], age_days, bool(r.get("reauthorized_at"))):
-                    guarded("reauth", r["id"], lambda rid: self.reauthorize(rid).get("reauth_method"), r["id"])
-                elif rules.expiry_guard_due(r["state"], age_days) and not r.get("settlement"):
-                    guarded("expiry_void", r["id"], expiry_void, r["id"])
+        rentals = [r for shop_id in tariff.shops() for r in self.shop_rentals(shop_id, 200)]
+        seen = {r["id"] for r in rentals}
+        older = [i for i in self.db.zrangebyscore("holds:open", 0, time.time() - rules.HONOR_DAYS * 86400) if i not in seen]
+        rentals += [x for x in self.db.mget_json([f"rental:{i}" for i in older]) if x]
+        for r in rentals:
+            if r.get("stale_hold"):
+                guarded("stale_void", r["id"], self.retry_stale_void, r["id"])
+            age_days = age_s(r.get("auth_created_at")) / 86400
+            if rules.needs_reauth(r["state"], age_days, bool(r.get("reauthorized_at"))):
+                guarded("reauth", r["id"], lambda rid: self.reauthorize(rid).get("reauth_method"), r["id"])
+            elif rules.expiry_guard_due(r["state"], age_days) and not r.get("settlement"):
+                guarded("expiry_void", r["id"], expiry_void, r["id"])
         out["judge_void"] = self.judge_void_sweep()
         for fid in self.db.zrangebyscore("fines:due", 0, time.time()):
             guarded("fines", fid, lambda f: self.capture_fine(f).get("status"), fid)
