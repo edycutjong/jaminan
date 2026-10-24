@@ -5,12 +5,12 @@ Name                  Stmts   Miss  Cover
 jaminan/__init__.py       0      0   100%
 jaminan/config.py        43      3    93%
 jaminan/gate.py          96      1    99%
-jaminan/paypal.py       164     27    84%
+jaminan/paypal.py       164     24    85%
 jaminan/rules.py        139      4    97%
-jaminan/service.py      716     80    89%
+jaminan/service.py      779     81    90%
 jaminan/store.py        170     28    84%
 jaminan/tariff.py        57      1    98%
 jaminan/vision.py       133     13    90%
 -----------------------------------------
-TOTAL                  1518    157    90%
-================ 118 passed, 9 deselected, 1 warning in 18.35s =================
+TOTAL                  1581    155    90%
+================ 131 passed, 9 deselected, 1 warning in 23.96s =================

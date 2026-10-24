@@ -49,7 +49,7 @@ python scripts/e2e_live.py https://jaminan.edycu.dev/app --shots /tmp/jaminan-e2
 
 | Number | Where it comes from |
 |---|---|
-| 127 tests (118 offline, 8 real-sandbox, 1 live Qwen) | [`evidence/test-run.txt`](evidence/test-run.txt) |
+| 140 tests (131 offline, 8 real-sandbox, 1 live Qwen) | [`evidence/test-run.txt`](evidence/test-run.txt) |
 | 90% offline coverage of `jaminan/` | [`evidence/coverage.txt`](evidence/coverage.txt) |
 | 18/18 live acceptance checks at 375 px | [`evidence/e2e-live.txt`](evidence/e2e-live.txt) |
 | 23,040-case claim sweep | [`tests/test_invariants.py`](tests/test_invariants.py) |
