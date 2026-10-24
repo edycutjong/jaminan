@@ -1,6 +1,7 @@
 """Jaminan API — FastAPI, served as a Vercel Python function under /api/*."""
 from __future__ import annotations
 
+import math
 import os
 import sys
 from pathlib import Path
@@ -262,7 +263,13 @@ def frame(sha: str, bbox: str | None = None, scale: float = 1.0):
     if not data:
         raise ServiceError(404, "NO_FRAME", "frame expired or unknown")
     if bbox:
-        data, _ = gate.crop(data, [float(x) for x in bbox.split(",")][:4], scale=max(1.0, min(scale, 6.0)))
+        try:
+            box = [float(x) for x in bbox.split(",")]
+        except ValueError:
+            box = []
+        if len(box) != 4 or not all(math.isfinite(v) for v in box):
+            raise ServiceError(400, "BAD_BBOX", "bbox is four numbers: x,y,w,h")
+        data, _ = gate.crop(data, box, scale=max(1.0, min(scale, 6.0)))
     return Response(data, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=86400, immutable"})
 
 

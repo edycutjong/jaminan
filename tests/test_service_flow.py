@@ -379,3 +379,16 @@ def test_daily_close_reads_a_final_status_back_from_paypal_once():
     n = reads()
     second = svc.daily_close()
     assert reads() == n and first["rows"] == second["rows"] and second["summary"]["mismatch"] == 0
+
+
+def test_a_tap_box_must_be_four_finite_numbers_and_a_retake_a_real_angle():
+    svc = make()
+    rid, k = to_returned(svc)
+    with pytest.raises(ServiceError) as e:
+        svc.claim(rid, k["shop"], 1, [float("nan"), 0.4, 0.1, 0.1], "front_fairing", "dent")
+    assert e.value.code == "BAD_TAP"
+    r = svc.create_rental("shop-demo", "veh-01", 1)
+    svc.approve(r["id"]); svc.authorize(r["id"])
+    with pytest.raises(ServiceError) as e:
+        svc.request_retake(r["id"], r["keys"]["shop"], 9)
+    assert e.value.code == "BAD_ANGLE"

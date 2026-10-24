@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import secrets
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -318,6 +319,8 @@ class Service:
             self.auth(r, key, "shop")
             if r["state"] != "APPROVED":
                 raise ServiceError(409, "BASELINE_LOCKED", "the baseline is already confirmed")
+            if int(angle) not in ANGLES:
+                raise ServiceError(422, "BAD_ANGLE", "a retake names one of the angles 1–8")
             r["retake_requests"].append({"angle": int(angle), "reason": reason, "at": iso()})
             r["confirmations"] = {}
             return self._save(r)
@@ -436,7 +439,7 @@ class Service:
         if price is None:
             raise ServiceError(422, "NOT_IN_TARIFF", "part + class must come from the published tariff list")
         angle = int(angle)
-        if angle not in ANGLES or len(bbox) != 4:
+        if angle not in ANGLES or len(bbox) != 4 or not all(math.isfinite(v) for v in bbox):
             raise ServiceError(422, "BAD_TAP", "a tap needs angle 1–8 and a box [x, y, w, h]")
         bbox = [min(max(float(v), 0.0), 1.0) for v in bbox]
         self._no_duplicate(r, angle, bbox, part, damage_class)
