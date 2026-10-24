@@ -303,16 +303,21 @@ async def webhook(req: Request):
     return await run_in_threadpool(record_webhook, dict(req.headers), event)
 
 
+def obj(x: Any) -> dict:
+    return x if isinstance(x, dict) else {}
+
+
 def record_webhook(headers: dict, event: dict) -> dict:
     s = svc()
     verified = None
     if s.s.paypal_webhook_id:
         v = s.pp.verify_webhook(headers, event, s.s.paypal_webhook_id)
         verified = v.ok and v.body.get("verification_status") == "SUCCESS"
-    res = event.get("resource") or {}
+    res = obj(event.get("resource"))  # anyone can post here: every nested field is narrowed before .get
+    related = obj(obj(res.get("supplementary_data")).get("related_ids"))
     row = {"id": event.get("id"), "event_type": event.get("event_type"), "resource_id": res.get("id"),
            "status": res.get("status"), "verified": verified, "received_at": iso(),
-           "custom_id": res.get("custom_id") or (res.get("supplementary_data") or {}).get("related_ids", {}).get("order_id")}
+           "custom_id": res.get("custom_id") or related.get("order_id")}
     s.db.rpush_json("webhooks", row)
     s.db.ltrim("webhooks", -300, -1)
     return {"ok": True, "verified": verified}

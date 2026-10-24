@@ -100,3 +100,15 @@ def test_the_full_judge_path_shares_the_judge_rate_limit_and_photos_name_a_real_
         api_index._svc = None
     assert codes[:12] == [200] * 12 and codes[12] == 429
     assert p.status_code == 422 and p.json()["error"] == "BAD_ANGLE"
+
+
+def test_a_webhook_object_with_odd_nested_shapes_is_stored_not_a_500():
+    svc = make()
+    shapes = [{"resource": []}, {"resource": "x"}, {"resource": {"supplementary_data": []}},
+              {"resource": {"supplementary_data": {"related_ids": "x"}}}, {"resource": {"supplementary_data": {"related_ids": []}}}]
+    try:
+        c = client_for(svc)
+        codes = [c.post("/api/webhooks/paypal", json={"id": f"WH-{i}", **body}).status_code for i, body in enumerate(shapes)]
+    finally:
+        api_index._svc = None
+    assert codes == [200] * 5 and len(svc.db.lrange_json("webhooks", 0, -1)) == 5
