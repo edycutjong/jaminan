@@ -20,7 +20,7 @@ export default function RenterRental() {
   const [showTariff, setShowTariff] = useState(false);
   if (err) return <main className="wrap"><Bar who="Renter" /><div className="toast">{err}</div></main>;
   if (!r) return <main className="wrap"><Bar who="Renter" /><div className="skeleton" style={{ marginTop: 20 }} /></main>;
-  if (r.role !== "renter") return <main className="wrap"><Bar who="Renter" /><div className="toast">Open this rental from the shop&apos;s QR code — it carries your key.</div><Stub r={r} /></main>;
+  if (r.role !== "renter") return <main className="wrap"><Bar who="Renter" /><div className="toast">{r.state === "DRAFT" ? "Not approved in PayPal, so nothing is held. To approve, open the PayPal link you were sent, or the shop’s QR code." : "Open this rental from the shop’s QR code — it carries your key."}</div><Stub r={r} /></main>;
   const pay = async () => {
     setBusy(true); setPerr(null);
     try { const x = await api(`/rentals/${r.id}/approve`, { method: "POST", key: rkey }); window.location.href = x.approve_url; }

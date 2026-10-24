@@ -29,8 +29,10 @@ curl -s "https://jaminan.edycu.dev/api/agent/rentals/R-1024-FA0400AA?t=vG8cd6f18
 - **There are no tools for it.** The tool list is exactly `list_vehicles`, `quote_rental`, `start_rental` and
   `get_rental` (`tests/test_mcp.py::test_tools_list_is_exactly_the_four_and_only_start_rental_writes`).
 - **There is no key to do it with.** `/api/agent/*` never returns the shop or renter key
-  (`Service.agent_book`, `Service.agent_view`). The renter key reaches the renter only through PayPal's return (or
-  cancel) redirect, never through the agent. Every per-rental write route checks its caller's key. Offline, the status
+  (`Service.agent_book`, `Service.agent_view`). The renter key reaches the renter only through PayPal's return
+  redirect, after they log in and approve. PayPal's cancel link carries no key: its login page shows that link to
+  anyone holding the approval link (read on the sandbox 2026-10-25), so it may not
+  (`test_the_paypal_cancel_link_carries_no_key`; until 2026-10-25 it did carry the key). Every per-rental write route checks its caller's key. Offline, the status
   token is refused on all 18 write routes under `/api/rentals/{id}`, whether sent as a header, as a query parameter or not at all
   (`test_the_status_token_opens_no_write_route`). Live, it is refused on the 8 routes in `live-boundary.txt`.
 - **There is no PayPal hold until a human approves.** `start_rental` creates a PayPal order and nothing else. The

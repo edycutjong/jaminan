@@ -197,9 +197,12 @@ class Service:
             if r["state"] != "DRAFT":
                 raise ServiceError(409, "ALREADY_APPROVED", f"rental is {r['state']}")
             back = f"{self.s.app_url}/r/{rid}/approved?k={r['keys']['renter']}"
+            # PayPal shows the cancel link on its login page, to anyone holding approve_url (a booking agent too), so
+            # it carries no key. The return URL is only reached after the renter logs in and approves; a renter who
+            # cancels is back on a phone that already holds the key (the QR link or the judge page stored it).
             res = self.pp.create_authorize_order(rid, r["authorized_cents"],
                                                  f"Scooter rental {rid}: fee + refundable damage deposit hold",
-                                                 return_url=back, cancel_url=f"{self.s.app_url}/r/{rid}?k={r['keys']['renter']}",
+                                                 return_url=back, cancel_url=f"{self.s.app_url}/r/{rid}",
                                                  nonce=r["nonce"], email=r.get("renter_email"))
             if not res.ok:
                 raise ServiceError(502, "PAYPAL_ORDER_FAILED", str(PayPalError(res)), debug_id=res.debug_id)

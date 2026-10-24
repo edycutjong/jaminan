@@ -208,6 +208,25 @@ def test_agent_booking_prefills_paypal_with_the_renter_email_only_for_agents():
     assert "email_address" not in orders[1]["payment_source"]["paypal"]
 
 
+def test_the_paypal_cancel_link_carries_no_key():
+    """PayPal's login page shows the cancel link to anyone holding approve_url (read on the sandbox 2026-10-25), so an
+    agent could open the link it was given and read the renter's key off it. Only the return URL, which PayPal sends
+    the renter to after they log in and approve, may carry the key."""
+    svc = make()
+    bodies = []
+    orig = svc.pp._send
+    svc.pp._send = lambda meth, path, content, headers, params: (
+        bodies.append(json.loads(content) if content else {}), orig(meth, path, content, headers, params))[1]
+    rids = [svc.agent_book("1.2.3.4", "veh-01", 1, "renter@example.com")["rental_id"]]
+    rids.append(svc.create_rental("shop-demo", "veh-01", 1)["id"])
+    svc.approve(rids[1])
+    orders = [b["payment_source"]["paypal"]["experience_context"] for b in bodies if b.get("intent") == "AUTHORIZE"]
+    for rid, ctx in zip(rids, orders, strict=True):
+        key = svc.get(rid)["keys"]["renter"]
+        assert key not in ctx["cancel_url"] and "k=" not in ctx["cancel_url"]
+        assert ctx["return_url"].endswith(f"/r/{rid}/approved?k={key}")
+
+
 def test_bad_input_spends_no_budget_and_the_13th_booking_an_hour_is_refused():
     svc = make()
     for bad in [("veh-99", 1, "a@example.com"), ("veh-01", 0, "a@example.com"), ("veh-01", 1, "nope")]:
