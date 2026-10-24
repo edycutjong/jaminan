@@ -1,5 +1,7 @@
 name: CI
 
+# Six stages: 1 Quality and 2 Security run in parallel, then 3 Build, 4 E2E, 5 Performance, 6 Deploy gate.
+# deploy.yml runs after this workflow succeeds on main, so a deploy only follows a green pipeline.
 on:
   push:
     branches: [main]
@@ -14,26 +16,19 @@ permissions:
   contents: read
 
 jobs:
-  api:
-    name: API · lint, types, tests, audit
-    runs-on: ${{ github.event.repository.private && fromJSON('["self-hosted","macOS","jaminan"]') || 'ubuntu-latest' }}
+  # ── Stage 1 · Quality ─────────────────────────────────────
+  quality-api:
+    name: "Stage 1 · Quality · API (ruff, mypy, tests)"
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        if: ${{ !github.event.repository.private }}
         with:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: requirements-dev.txt
-      # setup-python's macOS installer writes to /Users/runner, which only exists on hosted runners
-      - name: Python 3.12 (self-hosted)
-        if: ${{ github.event.repository.private }}
-        run: |
-          uv venv --seed --python 3.12 .venv
-          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
-      - name: Install
-        run: python -m pip install --upgrade pip && pip install -r requirements-dev.txt
+      - run: python -m pip install --upgrade pip && pip install -r requirements-dev.txt
       - name: Lint (ruff)
         run: ruff check --output-format=github .
       - name: Types (mypy)
@@ -42,38 +37,154 @@ jobs:
       # (see README); this is the offline suite: unit, contract, state-machine and the 23,040-case claim-decision sweep.
       - name: Tests + coverage (offline)
         run: pytest -m "not sandbox and not live_model and not slow" --cov=jaminan --cov-report=term-missing --cov-report=xml --cov-fail-under=80
-      - name: Upload coverage
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: api-coverage
           path: coverage.xml
           retention-days: 7
-      - name: Dependency audit (pip-audit)
-        run: pip-audit --progress-spinner off
-      - name: API smoke (uvicorn boots, health + tariff answer)
-        run: |
-          uvicorn api.index:app --port 8011 & trap 'kill $!' EXIT
-          for i in $(seq 1 20); do curl -sf localhost:8011/api/health && break || sleep 1; done
-          health=$(curl -sf localhost:8011/api/health); echo "$health" | grep -q '"ok":true'
-          shop=$(curl -sf localhost:8011/api/shops/shop-demo); echo "$shop" | grep -q tariff
 
-  web:
-    name: Web · lint, types, build, audit
-    runs-on: ${{ github.event.repository.private && fromJSON('["self-hosted","macOS","jaminan"]') || 'ubuntu-latest' }}
+  quality-web:
+    name: "Stage 1 · Quality · Web (eslint, tsc)"
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          # self-hosted (private repo) keeps its own ~/.npm; uploading it to GitHub hangs
-          cache: ${{ !github.event.repository.private && 'npm' || '' }}
+          cache: npm
       - run: npm ci
-      - name: Lint
-        run: npm run lint
-      - name: Types
-        run: npm run typecheck
+      - run: npm run lint
+      - run: npm run typecheck
+
+  # ── Stage 2 · Security (parallel with Stage 1) ────────────
+  security:
+    name: "Stage 2 · Security (secrets, pip-audit, npm audit, licenses)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Secret scan (gitleaks, full history)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: python -m pip install --upgrade pip && pip install -r requirements-dev.txt pip-licenses
+      - name: Python dependency audit (pip-audit)
+        run: pip-audit --progress-spinner off
+      - name: Python licenses (no GPL/AGPL)
+        run: pip-licenses --from=mixed --fail-on="GNU General Public License v3 (GPLv3);GNU Affero General Public License v3 (AGPLv3)"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Node dependency audit (npm audit, production deps, high+)
+        run: npm run audit
+      - name: Node licenses (no GPL/AGPL in production deps)
+        run: npx --yes license-checker-rseidelsohn --production --excludePrivatePackages --failOn "GPL-2.0;GPL-3.0;AGPL-3.0"
+
+  # ── Stage 3 · Build ───────────────────────────────────────
+  build:
+    name: "Stage 3 · Build (next build, API boot)"
+    needs: [quality-api, quality-web, security]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
       - name: Production build
         run: npm run build
-      - name: Dependency audit (npm audit, production deps, high+)
-        run: npm run audit
+      - name: Package the build for the E2E and Performance stages
+        run: tar -czf build.tgz .next public
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: build.tgz
+          retention-days: 3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - run: pip install -r requirements.txt uvicorn
+      - name: API smoke (uvicorn boots, health + tariff answer)
+        run: |
+          uvicorn api.index:app --port 8011 & trap 'kill $!' EXIT
+          for _ in $(seq 1 20); do if curl -sf localhost:8011/api/health; then break; fi; sleep 1; done
+          health=$(curl -sf localhost:8011/api/health); echo "$health" | grep -q '"ok":true'
+          shop=$(curl -sf localhost:8011/api/shops/shop-demo); echo "$shop" | grep -q tariff
+
+  # ── Stage 4 · E2E (Playwright, no secrets) ────────────────
+  e2e:
+    name: "Stage 4 · E2E (Playwright)"
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-build
+      - run: tar -xzf build.tgz
+      - run: npx playwright install --with-deps chromium
+      - name: Playwright
+        run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
+
+  # ── Stage 5 · Performance (Lighthouse CI) ─────────────────
+  performance:
+    name: "Stage 5 · Performance (Lighthouse CI)"
+    needs: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-build
+      - run: tar -xzf build.tgz
+      - name: Lighthouse CI
+        run: npm run lighthouse
+
+  # ── Stage 6 · Deploy gate ─────────────────────────────────
+  # One required status for the whole pipeline; deploy.yml triggers on this workflow succeeding.
+  deploy-gate:
+    name: "Stage 6 · Deploy gate (all stages green)"
+    needs: [quality-api, quality-web, security, build, e2e, performance]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every stage to have succeeded
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "stage results: $RESULTS"
+          for r in $RESULTS; do [ "$r" = success ] || { echo "a stage did not succeed"; exit 1; }; done
+          echo "All 6 stages green — Deploy may follow on main."

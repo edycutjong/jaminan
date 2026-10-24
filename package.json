@@ -13,7 +13,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "audit": "npm audit --audit-level=high --omit=dev",
-    "ci": "npm run lint && npm run typecheck && npm run build"
+    "ci": "npm run lint && npm run typecheck && npm run build",
+    "e2e": "playwright test",
+    "lighthouse": "lhci autorun"
   },
   "dependencies": {
     "next": "16.4.2",
@@ -22,6 +24,8 @@
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.15.1",
+    "@playwright/test": "^1.64.1",
     "@types/node": "^22",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19",

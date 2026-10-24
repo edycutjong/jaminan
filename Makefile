@@ -1,7 +1,7 @@
 PY ?= .venv/bin/python
 BIN ?= .venv/bin
 
-.PHONY: help lint typecheck test test-coverage audit build ci sandbox-test
+.PHONY: help lint typecheck test test-coverage audit build ci e2e lighthouse sandbox-test
 
 help:
 	@echo "make ci            ruff, mypy, offline tests + coverage, pip-audit, eslint, tsc, build, npm audit"
@@ -29,6 +29,12 @@ build:
 	npm run build
 
 ci: lint typecheck test-coverage audit build
+
+e2e: build
+	npm run e2e
+
+lighthouse: build
+	npm run lighthouse
 
 sandbox-test:
 	$(PY) -m pytest -q

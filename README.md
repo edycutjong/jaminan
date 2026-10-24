@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/assets/icon.svg" alt="Jaminan icon — a red stamp on the one accepted line, a green stamp releasing the rest of the hold" width="144">
+  <img src="docs/assets/icon-animated.svg" alt="Jaminan icon — a red stamp on the one accepted line, a green stamp releasing the rest of the hold" width="144">
   <h1>Jaminan 🛵</h1>
   <p><em>A PayPal hold that replaces the passport at the scooter-rental counter. The shop points, the shared baseline answers, and PayPal moves only the money the renter accepted.</em></p>
   <img src="docs/assets/readme-hero-animated.svg" alt="Jaminan — a PayPal hold instead of your passport. One red stamp for the cracked mirror; one green stamp releases the rest of the hold." width="100%">
@@ -10,6 +10,7 @@
   [![Judge Path](https://img.shields.io/badge/⚖️_Judge-Path-f59e0b?style=for-the-badge)](https://jaminan.edycu.dev/app/judge)
   [![Landing Page](https://img.shields.io/badge/🧾_Landing-Page-1D7A4A?style=for-the-badge)](https://jaminan.edycu.dev)
   [![Pitch Deck](https://img.shields.io/badge/🗂️_Pitch-Deck-3346A6?style=for-the-badge)](https://jaminan.edycu.dev/pitch/)
+  [![CI](https://img.shields.io/github/actions/workflow/status/edycutjong/jaminan/ci.yml?branch=main&style=for-the-badge&label=CI%20%C2%B7%206%20stages)](https://github.com/edycutjong/jaminan/actions/workflows/ci.yml)
   [![Release](https://img.shields.io/github/v/release/edycutjong/jaminan?style=for-the-badge&color=1D7A4A)](https://github.com/edycutjong/jaminan/releases)
   [![Built for PayPal AI Hackathon](https://img.shields.io/badge/Devpost-PayPal_AI_Hackathon-8b5cf6?style=for-the-badge)](https://paypalaihackathon.devpost.com/)
 
@@ -124,7 +125,7 @@ The APIMatic Context Plugin was used once, to write a Transaction Search call th
 | Claim-decision sweep | `decide_claim` run over 23,040 combinations of the five yes/no answers, serving model (pinned, other, none), confidence, a confirmed baseline mark, a low-comparability tile, three parts and five damage classes: every chargeable result satisfies every "new since pickup" condition and carries a tariff price ([`tests/test_invariants.py`](tests/test_invariants.py)) |
 | Settle property test | up to 3,000 generated settlements (Hypothesis): the hold pays exactly the accepted chargeable lines at their tariff price, blocks exactly when a line is mispriced, or unanswered and the settle is not forced; invoices only contested lines plus any accepted amount above the deposit; and never captures more than the authorization |
 | Offline coverage | 90% of `jaminan/` (`pytest --cov`, 1,581 statements) |
-| CI | GitHub Actions: ruff, mypy, offline tests with coverage, pip-audit and an API boot smoke; eslint, `tsc`, production build and `npm audit`; gitleaks over full history; CodeQL (Python and TypeScript); GitHub secret scanning with push protection; Dependabot monthly, grouped, no major bumps |
+| CI | A six-stage GitHub Actions pipeline ([`ci.yml`](.github/workflows/ci.yml)): 1 Quality (ruff, mypy, offline tests with coverage; eslint, `tsc`) and 2 Security (gitleaks over full history, pip-audit, npm audit, licence check) run in parallel, then 3 Build (`next build`, API boot smoke), 4 E2E (Playwright, no secrets), 5 Performance (Lighthouse CI on `/` and `/pitch`, every category ≥ 0.9, a11y ≥ 0.95) and 6 Deploy gate (every stage green; Vercel deploys only after it). Also gitleaks as its own workflow; CodeQL (Python and TypeScript); GitHub secret scanning with push protection; Dependabot monthly, grouped, no major bumps |
 | Live acceptance script | `scripts/e2e_live.py` (375 px viewport) |
 | Evidence pack | [`evidence/`](evidence): three recorded PayPal sandbox settlements call by call (`scripts/record_paypal_evidence.py`), the full test run, offline coverage and the live e2e log |
 | Vision accuracy | **Not yet measured.** Benchmark on the staged scooter set is pending |
@@ -165,7 +166,7 @@ python scripts/e2e_live.py https://jaminan.edycu.dev/app --shots /tmp/jaminan-e2
 
 Commits use Angular prefixes (`feat:`, `fix:`, …); the `release` workflow derives the next semantic version from them — see [CONTRIBUTING](CONTRIBUTING.md).
 
-The sandbox, live-model and browser tests need credentials, so CI runs the offline suite only; run them yourself with the third command. Tests that pin a fixed defect are named for it. [`.env.example`](.env.example) lists every variable.
+The sandbox, live-model and browser tests need credentials, so CI runs the offline suite only (plus 8 Playwright checks on the built app with no credentials); run them yourself with the third command. Tests that pin a fixed defect are named for it. [`.env.example`](.env.example) lists every variable.
 
 ## 📁 Project Structure
 
