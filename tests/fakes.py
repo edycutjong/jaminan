@@ -84,7 +84,8 @@ class FakePayPal(PayPal):
                 return 200, dict(a)
             if tail == "/void":
                 if a["status"] in ("CAPTURED", "VOIDED"):
-                    return 422, {"name": "UNPROCESSABLE_ENTITY", "details": [{"issue": "AUTHORIZATION_ALREADY_" + a["status"]}]}
+                    # PayPal's own issue names for a void on a closed hold (sandbox, 2026-10-24)
+                    return 422, {"name": "UNPROCESSABLE_ENTITY", "details": [{"issue": "PREVIOUSLY_" + a["status"]}]}
                 a["status"] = "VOIDED"
                 return 200, dict(a)
             if tail == "/reauthorize":

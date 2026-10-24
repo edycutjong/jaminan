@@ -569,3 +569,14 @@ def test_a_released_hold_leaves_the_open_hold_index():
     assert rid in svc.db.zrangebyscore("holds:open", 0, time.time() + 1)
     svc.release(rid, k["shop"])
     assert rid not in svc.db.zrangebyscore("holds:open", 0, time.time() + 1)
+
+
+def test_a_release_whose_void_already_happened_elsewhere_still_settles():
+    svc = make()
+    rid, k = to_returned(svc)
+    before = svc.get(rid)
+    svc.release(rid, k["shop"])
+    svc.db.set_json(f"rental:{rid}", before)                   # the save after the void was lost
+    svc.pp.seen.clear()                                         # and PayPal no longer replays the first answer
+    r = svc.release(rid, k["shop"])
+    assert r["state"] == "RELEASED" and r["settlement"]["auth_read_back"] == "VOIDED"

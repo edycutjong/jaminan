@@ -28,8 +28,8 @@ JUDGE_VOID_AFTER_S = 2 * 3600
 # Longer than the function's maxDuration (vercel.json: 120 s): a held lock can only expire after its holder is gone,
 # never mid-capture (one PayPal write may take 3 × 30 s with retries).
 LOCK_TTL_S = 130
-# A void refused with these issues has nothing left to release.
-VOID_DONE = ("AUTHORIZATION_ALREADY_VOIDED", "AUTHORIZATION_ALREADY_CAPTURED")
+# A void refused with these issues has nothing left to release (PayPal sandbox, read 2026-10-24).
+VOID_DONE = ("PREVIOUSLY_VOIDED", "PREVIOUSLY_CAPTURED")
 STAGED = Path(__file__).resolve().parents[1] / "fixtures" / "staged"
 
 
@@ -579,7 +579,7 @@ class Service:
             t_tap = time.perf_counter()
             if plan.void:
                 res = self.pp.void(aid, rid)
-                if not res.ok and res.issue != "AUTHORIZATION_ALREADY_VOIDED":
+                if not res.ok and res.issue != "PREVIOUSLY_VOIDED":  # already voided (another path got there) = done
                     raise ServiceError(502, "PAYPAL_VOID_FAILED", str(PayPalError(res)), debug_id=res.debug_id)
                 capture_id = None
             else:
