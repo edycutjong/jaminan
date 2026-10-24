@@ -13,7 +13,13 @@ type Minted = Rental & { shop_key: string; renter_key: string };
 
 function ReadBack({ rid }: { rid: string }) {
   const [rb, setRb] = useState<any>(null);
-  useEffect(() => { api(`/integrations/verify?rental=${rid}`).then((x) => setRb(x.read_back)).catch(() => {}); }, [rid]);
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => {
+    api(`/integrations/verify?rental=${rid}`)
+      .then((x) => (x.read_back ? setRb(x.read_back) : setErr("this rental has no authorization to read back")))
+      .catch((e) => setErr(e instanceof ApiError ? e.message : String(e)));
+  }, [rid]);
+  if (err) return <p className="small muted" role="status">PayPal read-back did not load: {err}. The full call log below has every call this rental made.</p>;
   if (!rb) return <p className="small muted"><span className="spin" /> reading the authorization back from PayPal…</p>;
   return (
     <p className="small">PayPal read-back: authorization <span className="data">{rb.authorization_id}</span> is{" "}
