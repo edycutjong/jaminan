@@ -2,6 +2,7 @@
 baseline → return → claims → settle, plus every refusal on the way."""
 import pytest
 
+from jaminan import gate
 from jaminan.config import Settings
 from jaminan.service import Service, ServiceError
 from jaminan.store import MemoryStore
@@ -393,3 +394,38 @@ def test_a_tap_box_must_be_four_finite_numbers_and_a_retake_a_real_angle():
         svc.request_retake(r["id"], r["keys"]["shop"], 9)
     assert e.value.code == "BAD_ANGLE"
 
+
+def test_a_pickup_photo_that_lands_after_the_handover_is_refused(monkeypatch):
+    svc = make()
+    r = svc.create_rental("shop-demo", "veh-01", 1)
+    rid, k = r["id"], r["keys"]
+    svc.approve(rid); svc.authorize(rid)
+    real = gate.check
+
+    def slow_gate(data, thresholds=None):     # the handover completes while this upload is in the gate
+        out = real(data, thresholds)
+        svc.db.set_json(f"rental:{rid}", {**svc.get(rid), "state": "OUT"})
+        return out
+    monkeypatch.setattr(gate, "check", slow_gate)
+    with pytest.raises(ServiceError) as e:
+        svc.add_photo(rid, k["renter"], "pickup", 1, frame_bytes(1))
+    assert e.value.code == "BASELINE_LOCKED" and svc.get(rid)["photos"]["pickup"] == {}
+
+
+def test_premark_results_never_land_on_a_baseline_that_changed_during_the_model_call():
+    svc = make()
+    r = svc.create_rental("shop-demo", "veh-01", 1)
+    rid, k = r["id"], r["keys"]
+    svc.approve(rid); svc.authorize(rid)
+    for a in range(1, 9):
+        svc.add_photo(rid, k["renter"], "pickup", a, frame_bytes(a))
+    real = svc.vision.premark
+
+    def premark(pickup, angle):               # angle 1 is retaken while the model looks at the old frame
+        if angle == 8:
+            svc.add_photo(rid, k["renter"], "pickup", 1, frame_bytes(77))
+        return real(pickup, angle)
+    svc.vision.premark = premark
+    with pytest.raises(ServiceError) as e:
+        svc.premark(rid, k["renter"])
+    assert e.value.code == "PHOTOS_CHANGED" and not [m for m in svc.get(rid)["baseline_marks"] if m["source"] == "model"]

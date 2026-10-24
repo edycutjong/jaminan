@@ -230,6 +230,7 @@ class Service:
                  "blur_var": round(res.blur_var, 1), "glare_frac": round(res.glare_frac, 4), "low_tiles": res.low_tiles}
         with self.lock(rid):
             r = self.get(rid)
+            self._photo_phase_open(r, phase)  # again: a handover may have landed while the gate ran
             if phase == "pickup_closeup":
                 r["closeups"].append({**photo, "id": f"C{len(r['closeups']) + 1}", "located": None, "bbox": None})
             else:
@@ -255,6 +256,11 @@ class Service:
         except gate.NotAnImage as e:
             raise ServiceError(422, "NOT_AN_IMAGE", str(e)) from e
 
+    @staticmethod
+    def _premark_inputs(r: dict) -> tuple:
+        return (tuple(sorted((a, p["sha256"]) for a, p in r["photos"]["pickup"].items())),
+                tuple(c["id"] + c["sha256"] for c in r["closeups"]))
+
     def premark(self, rid: str, key: str | None) -> dict:
         """Model pre-marks visible existing damage per pickup angle and locates the renter's close-ups."""
         r = self.get(rid)
@@ -273,11 +279,17 @@ class Service:
             return c["id"], self.vision.locate_closeup(self.frame_required(r["photos"]["pickup"][str(angle)]["sha256"]),
                                                        self.frame_required(c["sha256"]), angle)
 
+        inspected = self._premark_inputs(r)
         with ThreadPoolExecutor(max_workers=8) as ex:
             marks = list(ex.map(mark_angle, ANGLES))
             located = list(ex.map(locate, r["closeups"]))
         with self.lock(rid):
             r = self.get(rid)
+            # the model ran without the lock: its marks only land on the baseline it actually looked at
+            if r["state"] != "APPROVED":
+                raise ServiceError(409, "BASELINE_LOCKED", "the baseline was confirmed while the model was marking")
+            if self._premark_inputs(r) != inspected:
+                raise ServiceError(409, "PHOTOS_CHANGED", "a pickup photo changed while the model was marking; run it again")
             keep = [m for m in r["baseline_marks"] if m["source"] != "model"]
             calls = []
             for a, call in marks:
