@@ -16,7 +16,7 @@ The settle screen only stamps after PayPal's read-back, not after our own call r
 
 **What the live route cannot do yet.** The staged scooter photo set is not in this deploy and no vision model is pinned as benchmarked, so on `/judge` you can release the hold but cannot tap a claim. On the ordinary shop flow a pointed claim ends `comparison_unavailable — nothing charged from the hold`. That is deliberate: only a benchmarked model can produce a chargeable line. The priced path is shown below as a recording and exercised by the test suite.
 
-### Below the button: AI-generated test images, recorded model answers
+### Below the button: AI-generated test images (not photographs), recorded model answers
 
 The same page shows a pickup/return pair of **AI-generated test images (not photographs)**: a white scooter made by
 `qwen-image-2.0`, and a `wan2.6-image` edit of it with both mirrors removed ([`GENERATION.json`](evidence/generated-pair/GENERATION.json)).
@@ -91,6 +91,6 @@ from its expiry on 2026-11-22 PayPal's answer is `EXPIRED`, not the `CREATED` re
 
 ## 5. Not shown, on purpose
 
-- **Vision accuracy.** There is no accuracy number anywhere in this repository because the benchmark on the staged scooter photo set has not run. The model has been shown only on AI-generated test images so far (§1).
+- **Vision accuracy.** There is no accuracy number anywhere in this repository because the benchmark on the staged scooter photo set has not run. The model has been shown only on AI-generated test images (not photographs) so far (§1).
 - **Reauthorize inside a rental.** PayPal allows it once, Day 4 to Day 29. The call itself is recorded on the sandbox ([`evidence/paypal-reauthorize.jsonl`](evidence/paypal-reauthorize.jsonl): 201 on two holds, 422 on a second attempt); no rental in the app has reached day 4, so only the sweep's day-4 trigger rule and its refusal fallback are unit-tested, as is `cron_daily()` (the cron route and Vercel's schedule have not fired on a real rental).
 - **Live money.** Sandbox only.

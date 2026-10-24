@@ -146,14 +146,16 @@ def test_the_status_token_opens_no_write_route(api_client):
 
 
 def test_input_errors_are_plain_tool_errors(api_client):
-    svc, _, _ = api_client
+    svc, _, sent = api_client
     cases = [(m.quote_rental, ("veh-01", 0)), (m.quote_rental, ("veh-01", 29)), (m.quote_rental, ("veh-01", True)),
              (m.quote_rental, ("veh-01", 2.5)), (m.quote_rental, ("../admin", 1)), (m.list_vehicles, ("shop/x",)),
              (m.start_rental, ("veh-01", 1, "not-an-email")), (m.start_rental, ("veh-01", 1, None)),
-             (m.get_rental, ("R-0000-NOPE",)), (m.get_rental, (123,))]
+             (m.get_rental, ("R-0000-NOPE",)), (m.get_rental, (123,)),
+             (m.quote_rental, ("veh-01\n", 1)), (m.list_vehicles, ("shop-demo\n",))]  # `$` alone let a newline in
     for fn, args in cases:
         with pytest.raises(ToolError):
             fn(*args)
+    assert not [r for r in sent if "\n" in r.url.path or "%0A" in str(r.url)]  # refused before any request
     with pytest.raises(ToolError, match="UNKNOWN_VEHICLE"):
         m.quote_rental("veh-99", 1)
     with pytest.raises(ToolError, match="NO_SHOP"):

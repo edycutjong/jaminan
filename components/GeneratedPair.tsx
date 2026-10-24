@@ -51,7 +51,7 @@ export default function GeneratedPair() {
         <p className="note small">Nothing was charged. Had this model been pinned without the bench, the rules would have priced C1 at the tariff&apos;s
           dent price, {usd(pinnedPrice)}, for a scuff that was there at pickup. That is why no model can price a line until it passes the bench on real photos.</p>
       ) : null}
-      <p className="small">Recorded {RUN.recorded_at} · <a href="/evidence/generated-pair/README.md">evidence and request ids</a> ·{" "}
+      <p className="small">Recorded {RUN.recorded_at} · <a href="https://github.com/edycutjong/jaminan/blob/main/evidence/generated-pair/README.md">evidence and request ids</a> ·{" "}
         <a href="/evidence/generated-pair/GENERATION.json">how the images were generated</a></p>
     </section>
   );

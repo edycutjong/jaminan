@@ -21,7 +21,7 @@ from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
 
 API = os.environ.get("JAMINAN_API_URL", "https://jaminan.edycu.dev").rstrip("/")
-ID = re.compile(r"^[A-Za-z0-9-]{1,40}$")  # shop, vehicle and rental ids: also keeps a path segment a path segment
+ID = re.compile(r"[A-Za-z0-9-]{1,40}")  # shop, vehicle and rental ids: also keeps a path segment a path segment
 READ = ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=True)
 BOOK = ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=False, open_world_hint=True)
 
@@ -36,7 +36,7 @@ _tokens: dict[str, str] = {}
 
 
 def _id(value: str, name: str) -> str:
-    if not isinstance(value, str) or not ID.match(value):
+    if not isinstance(value, str) or not ID.fullmatch(value):  # fullmatch: `$` would let a trailing newline in
         raise ToolError(f"{name} must be letters, digits and dashes (got {value!r})")
     return value
 

@@ -150,7 +150,7 @@ Recorded on 2026-10-24: Claude Code and Codex each booked through `quote_rental 
 | CI | A six-stage GitHub Actions pipeline ([`ci.yml`](.github/workflows/ci.yml)): 1 Quality (ruff, mypy, offline tests with a 100% coverage gate; eslint, `tsc`, Vitest `lib/` tests with a 100% gate) and 2 Security (gitleaks over full history, pip-audit, npm audit, licence check) run in parallel, then 3 Build (`next build`, API boot smoke), 4 E2E (Playwright, no secrets), 5 Performance (Lighthouse CI on `/` and `/pitch`, every category ≥ 0.9, a11y ≥ 0.95) and 6 Deploy gate (every stage green; Vercel deploys only after it). Also gitleaks as its own workflow; CodeQL (Python and TypeScript); GitHub secret scanning with push protection; Dependabot monthly, grouped, no major bumps |
 | Live acceptance script | `scripts/e2e_live.py` (375 px viewport) |
 | Evidence pack | [`evidence/`](evidence): three recorded PayPal sandbox settlements call by call (`scripts/record_paypal_evidence.py`), the full test run, offline coverage and the live e2e log |
-| Vision accuracy | **Not yet measured.** Benchmark on a real-photo scooter set is pending; the model has been shown only on AI-generated test images so far ([recorded answers](evidence/generated-pair/README.md)) |
+| Vision accuracy | **Not yet measured.** Benchmark on a real-photo scooter set is pending; the model has been shown only on AI-generated test images (not photographs) so far ([recorded answers](evidence/generated-pair/README.md)) |
 
 ### Honest limits (7)
 
@@ -160,7 +160,7 @@ Recorded on 2026-10-24: Claude Code and Codex each booked through `quote_rental 
 4. **Non-return is out of scope.** Jaminan covers damage and fines, not a scooter that never comes back.
 5. **No vision accuracy claim yet.** Until the benchmark runs, no finding from a non-benchmarked model is chargeable.
 6. **Reauthorize is proven on the sandbox, not yet through the rental flow.** On 2026-10-23 (day 9) PayPal accepted `reauthorize` on a plain hold and on a hold that already had its fee captured (201 both), and refused a second one on the same hold (422 `REAUTHORIZATION_TOO_SOON`, "only allowed once"): [`evidence/paypal-reauthorize.jsonl`](evidence/paypal-reauthorize.jsonl). The sweep's day-4 trigger rule and its refusal fallback (re-authorize on the vaulted wallet, then void the old hold) are unit-tested, including through `cron_daily()`; the `/api/cron/daily` route and Vercel's schedule have not run on a rental, and no rental has yet reached day 4 through the app.
-7. **The model has been shown only on AI-generated test images so far.** Its recorded answers on that pair ([`evidence/generated-pair/`](evidence/generated-pair/README.md)) are not a benchmark and say nothing about real photos.
+7. **The model has been shown only on AI-generated test images (not photographs) so far.** Its recorded answers on that pair ([`evidence/generated-pair/`](evidence/generated-pair/README.md)) are not a benchmark and say nothing about real photos.
 
 ## 🚀 Getting Started
 
