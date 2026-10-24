@@ -87,7 +87,7 @@ def test_contested_line_is_invoiced_sent_and_qr_coded_and_the_hold_voided(svc):
     got = svc.pp.get_invoice(inv["id"]).body
     assert got["amount"]["value"] == "45.00"
     assert inv["send_status"] in (200, 202) and got["status"] in ("SENT", "UNPAID"), got["status"]
-    assert inv["qr_status"] == 200
+    assert inv["qr_status"] == 200 and (inv["qr_png_b64"] or "").startswith("iVBOR")  # the PNG, not the multipart
 
 
 @pytest.mark.slow
