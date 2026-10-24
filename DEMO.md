@@ -62,7 +62,7 @@ A booking agent sees four MCP tools: `list_vehicles`, `quote_rental`, `start_ren
 booked R-1024-B54EE295. Each agent got back a PayPal `approve_url`. The sandbox renter opened it and approved, and a
 new session of each agent called `get_rental`. PayPal reported authorization `8S39497205940830X` (`CREATED`, USD
 130.00) and `4V462197H4984864E` (`CREATED`, USD 145.00). An agent cannot approve, answer a damage line, capture, void
-or refund: no tool does it, and the agent never holds a key that would. Transcripts and the live 403s are in
+or refund: no tool does it, and the agent never holds a key to the rental it booked that would. Transcripts and the live 403s are in
 [`evidence/mcp/`](evidence/mcp/README.md). To read one back yourself:
 
 ```bash

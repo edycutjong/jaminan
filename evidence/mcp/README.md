@@ -8,7 +8,7 @@ sandbox renter approved in PayPal, and the agent then read back the authorizatio
 |---|---|
 | `tools-list.json` | `tools/list` over stdio (`scripts/mcp_tools_list.py`) returns **4** tools. Only `start_rental` is annotated as a write (`read_only_hint: false`). |
 | `cc-1-booking.json` | Claude Code (`claude -p`, Sonnet 5.5) runs `list_vehicles → quote_rental → start_rental → get_rental`. It books **R-1024-FA0400AA** (veh-01, 2 days, $30 + $100 = $130). The read-back shows order `2AM99761A5518700K` as `PAYER_ACTION_REQUIRED`. |
-| `codex-0-write-gated.json` | Codex with no tool approved. It ran `list_vehicles` and `quote_rental`, then refused `start_rental` by itself ("requires approval"), because that tool is annotated as a write. |
+| `codex-0-write-gated.json` | Codex with no tool approved (`approval_policy=never`). It ran `list_vehicles` and `quote_rental`. Its policy then blocked `start_rental` ("MCP tool call requires approval, but approval policy is never"). `start_rental` is the only tool not annotated read-only. |
 | `codex-1-booking.json` | Codex (`codex exec`) after the operator approves that one tool. It runs `quote_rental → start_rental → get_rental` and books **R-1024-B54EE295** (veh-02, 3 days, $45 + $100 = $145), with order `77H944659E772632G`. |
 | `renter-approvals.txt` | The human step: the sandbox buyer opens each `approve_url`, approves, and Jaminan's return page answers `/authorize` with HTTP 200. |
 | `cc-2-readback.json`, `codex-2-readback.json` | A new session of each client calls `get_rental` and gets back `APPROVED`. PayPal's record shows authorization **8S39497205940830X** (CREATED, USD 130.00) and **4V462197H4984864E** (CREATED, USD 145.00). |
@@ -29,9 +29,9 @@ curl -s "https://jaminan.edycu.dev/api/agent/rentals/R-1024-FA0400AA?t=vG8cd6f18
 - **There are no tools for it.** The tool list is exactly `list_vehicles`, `quote_rental`, `start_rental` and
   `get_rental` (`tests/test_mcp.py::test_tools_list_is_exactly_the_four_and_only_start_rental_writes`).
 - **There is no key to do it with.** `/api/agent/*` never returns the shop or renter key
-  (`Service.agent_book`, `Service.agent_view`). The renter key reaches the renter only through PayPal's return
-  redirect, after they approve. Every write route checks its caller's key. Offline, the status token is refused
-  on all 18 write routes, whether sent as a header, as a query parameter or not at all
+  (`Service.agent_book`, `Service.agent_view`). The renter key reaches the renter only through PayPal's return (or
+  cancel) redirect, never through the agent. Every per-rental write route checks its caller's key. Offline, the status
+  token is refused on all 18 write routes under `/api/rentals/{id}`, whether sent as a header, as a query parameter or not at all
   (`test_the_status_token_opens_no_write_route`). Live, it is refused on the 8 routes in `live-boundary.txt`.
 - **There is no PayPal hold until a human approves.** `start_rental` creates a PayPal order and nothing else. The
   hold exists only after the renter logs in to PayPal and approves.

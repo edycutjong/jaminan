@@ -126,7 +126,7 @@ The APIMatic Context Plugin was used once, to write a Transaction Search call th
 | `start_rental(vehicle_id, days, renter_email)` | Creates the rental and returns a PayPal `approve_url` for the renter. The rental stays DRAFT, with no hold, until the renter approves |
 | `get_rental(rental_id)` | Read-only. Returns the rental's state and PayPal's own record of it: the order before approval, the authorization after |
 
-**What an agent cannot do:** approve the hold, accept or contest a damage line, capture, void or refund. None of these is a tool. The agent routes also never return the shop or renter key that those actions need. The renter's key reaches the renter only through PayPal's redirect, after they approve. Bookings use the judge route's budget of 12 per address per hour and 300 per day. Bad input gets a one-line error, never a stack trace.
+**What an agent cannot do:** approve the hold, accept or contest a damage line, capture, void or refund. None of these is a tool. The agent routes also never return the shop or renter key that those actions need. The renter's key reaches the renter only through PayPal's return or cancel redirect, never through the agent. `renter_email` only pre-fills the PayPal login, and it approves nothing. Bookings are limited to 12 per address per hour and 300 per day in all. These are the judge route's limits, counted separately. Bad input gets a one-line error, never a stack trace. All of this holds for any renter's PayPal account. The one deliberate exception is the sandbox `/judge` route, which holds the project's own pool wallet with no approval so that a judge can try the flow in one tap.
 
 ```bash
 # from the repo root, after the install below
@@ -135,7 +135,7 @@ codex mcp add jaminan --env PYTHONPATH="$PWD" -- "$PWD/.venv/bin/python" -m jami
 npx @modelcontextprotocol/inspector --cli -e PYTHONPATH="$PWD" "$PWD/.venv/bin/python" -m jaminan.mcp_server --method tools/list   # MCP Inspector
 ```
 
-Recorded on 2026-10-24: Claude Code and Codex each booked through `quote_rental → start_rental → get_rental`. The sandbox renter approved in PayPal, and each agent then read back the authorization, `CREATED` for USD 130.00 and USD 145.00. Codex refused `start_rental` until the operator approved that one tool, because it is the only tool not marked read-only. Live, the agent's token gets 403 on 8 money and answer routes. Transcripts and PayPal ids: [`evidence/mcp/`](evidence/mcp/README.md).
+Recorded on 2026-10-24: Claude Code and Codex each booked through `quote_rental → start_rental → get_rental`. The sandbox renter approved in PayPal, and each agent then read back the authorization in a new session: `CREATED`, for USD 130.00 and USD 145.00. Codex's approval policy blocked `start_rental` until the operator approved that one tool. `list_vehicles` and `quote_rental`, which are annotated read-only, ran without approval. Offline, all 18 write routes under `/api/rentals/{id}` refuse the agent's token. Live, it gets 403 on the 8 money and answer routes. Transcripts and PayPal ids: [`evidence/mcp/`](evidence/mcp/README.md).
 
 ## 📊 Engineering Rigor
 
