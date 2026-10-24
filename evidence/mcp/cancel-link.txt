@@ -1,0 +1,18 @@
+Where the renter's key travels in an agent booking: PayPal sandbox, live deploy, 2026-10-25 (WIB). Headless Chromium.
+
+Before the fix (a2a round 8), R-1024-D1DD473C: the approve_url an agent gets from start_rental opens PayPal's login
+page, and with no login that page shows "Batalkan dan kembali ke Jaminan" (Cancel and return to Jaminan) linking to
+  https://jaminan.edycu.dev/app/r/R-1024-D1DD473C?k=<renter-key>&token=<order-id>
+so any holder of approve_url could read the renter's key. Fixed in c82aabe: the cancel URL carries no key.
+
+After the fix (c82aabe .. 2fa22e9 deployed), R-1024-25B2538E:
+  start_rental status_token -> /api/rentals/R-1024-25B2538E/evidence?t=<status_token>   403 (its own token since d1aff5e)
+  approve_url, no login: ?k= values in the page                                          0
+  approve_url, no login: cancel link                                                     https://jaminan.edycu.dev/app/r/R-1024-25B2538E?token=<order-id>
+  the sandbox renter logs in and approves (scripts/mcp_renter_approves.py)              return page /app/r/R-1024-25B2538E/approved, /authorize HTTP 200
+  get_rental                                                                             APPROVED, authorization 1YH57934R56964512
+  approve_url reopened in a fresh browser after approval: ?k= values in the page         0 (no cancel link either)
+
+The return URL still carries the key: PayPal sends only the renter there, after they log in and approve.
+The two recorded bookings (R-1024-FA0400AA, R-1024-B54EE295) keep their published status tokens; their evidence
+tokens were rotated, so those tokens now read status only (evidence pack: 403).

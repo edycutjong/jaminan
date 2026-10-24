@@ -13,6 +13,7 @@ sandbox renter approved in PayPal, and the agent then read back the authorizatio
 | `renter-approvals.txt` | The human step: the sandbox buyer opens each `approve_url`, approves, and Jaminan's return page answers `/authorize` with HTTP 200. |
 | `cc-2-readback.json`, `codex-2-readback.json` | A new session of each client calls `get_rental` and gets back `APPROVED`. PayPal's record shows authorization **8S39497205940830X** (CREATED, USD 130.00) and **4V462197H4984864E** (CREATED, USD 145.00). |
 | `paypal-readback.json` | The same two read-backs from the live route. |
+| `cancel-link.txt` | Where the renter's key travels: PayPal's cancel link carried it before a2a round 8 (anyone holding `approve_url` could read it); live after the fix, no key on PayPal's page before or after the renter approves, and the status token no longer opens the evidence pack |
 | `live-boundary.txt` | On the live deploy, the agent's `status_token` is sent as the key to the authorize, line-decision, claims, propose, settle, release, vault-delete and fine-contest routes. All 8 return **403 FORBIDDEN**. |
 
 The transcripts are condensed from each client's own JSON event stream. Only the jaminan tool calls, their results
