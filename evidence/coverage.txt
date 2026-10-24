@@ -14,15 +14,23 @@ jaminan/tariff.py          57      0      8      0   100%
 jaminan/vision.py         134      0     16      0   100%
 ---------------------------------------------------------
 TOTAL                    1692      0    500      0   100%
-230 passed, 9 deselected in 32.57s
+====================== 234 passed, 9 deselected in 35.30s ======================
 
 # Web unit tests (npm run test:unit, Vitest + v8, thresholds 100 on lib/)
+
+ RUN  v5.0.5 /Users/edycu/Hackathon/devpost/devpost-paypalaihackathon/jaminan/build
       Coverage enabled with v8
+
+
  Test Files  4 passed (4)
       Tests  31 passed (31)
-   Start at  04:30:55
-   Duration  1.28s (environment 87%, tests 5%, import 4%, worker 3%, transform 1%)
- % Coverage report from v8
+   Start at  06:22:42
+   Duration  1.47s (environment 86%, tests 5%, import 5%, worker 3%, transform 1%)
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+No files with missing coverage.
+4 files fully covered.
+
 =============================== Coverage summary ===============================
 Statements   : 100% ( 96/96 )
 Branches     : 100% ( 69/69 )

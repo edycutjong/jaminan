@@ -143,16 +143,17 @@ Recorded on 2026-10-24: Claude Code and Codex each booked through `quote_rental 
 
 | Metric | Value |
 |---|---|
-| Tests collected | 239 (`pytest`): 230 offline unit, contract and invariant tests, 8 against the real PayPal sandbox (including `CAPTURED` and second-capture `422` read-backs), 1 live Qwen schema check; plus 31 Vitest unit tests for the web `lib/` |
+| Tests collected | 243 (`pytest`): 234 offline unit, contract and invariant tests, 8 against the real PayPal sandbox (including `CAPTURED` and second-capture `422` read-backs), 1 live Qwen schema check; plus 31 Vitest unit tests for the web `lib/` |
 | Claim-decision sweep | `decide_claim` run over 23,040 combinations of the five yes/no answers, serving model (pinned, other, none), confidence, a confirmed baseline mark, a low-comparability tile, three parts and five damage classes: every chargeable result satisfies every "new since pickup" condition and carries a tariff price ([`tests/test_invariants.py`](tests/test_invariants.py)) |
 | Settle property test | up to 3,000 generated settlements (Hypothesis): the hold pays exactly the accepted chargeable lines at their tariff price, blocks exactly when a line is mispriced, or unanswered and the settle is not forced; invoices only contested lines plus any accepted amount above the deposit; and never captures more than the authorization |
 | Offline coverage | 100% of `jaminan/`, line and branch (`pytest --cov --cov-branch`, 1,692 statements, 500 branches), enforced in CI with `--cov-fail-under=100`; 100% of the web `lib/` under Vitest (`npm run test:unit`). Two `# pragma: no cover`: a defensive re-check in `rules.settle_plan` (`rules.py:186`) that the line list makes unreachable, and the abstract `Store._cmd` stub (`store.py:18`) |
 | CI | A six-stage GitHub Actions pipeline ([`ci.yml`](.github/workflows/ci.yml)): 1 Quality (ruff, mypy, offline tests with a 100% coverage gate; eslint, `tsc`, Vitest `lib/` tests with a 100% gate) and 2 Security (gitleaks over full history, pip-audit, npm audit, licence check) run in parallel, then 3 Build (`next build`, API boot smoke), 4 E2E (Playwright, no secrets), 5 Performance (Lighthouse CI on `/` and `/pitch`, every category ≥ 0.9, a11y ≥ 0.95) and 6 Deploy gate (every stage green; Vercel deploys only after it). Also gitleaks as its own workflow; CodeQL (Python and TypeScript); GitHub secret scanning with push protection; Dependabot monthly, grouped, no major bumps |
 | Live acceptance script | `scripts/e2e_live.py` (375 px viewport) |
 | Evidence pack | [`evidence/`](evidence): three recorded PayPal sandbox settlements call by call (`scripts/record_paypal_evidence.py`), the full test run, offline coverage and the live e2e log |
-| Vision accuracy | **Not yet measured.** Benchmark on a real-photo scooter set is pending; the model has been shown only on AI-generated test images (not photographs) so far ([recorded answers](evidence/generated-pair/README.md)) |
+| Vision accuracy | **Not yet measured.** The benchmark on a staged scooter set is pending. So far the model has been shown on AI-generated test images (not photographs) ([recorded answers](evidence/generated-pair/README.md)) and in the partial check on public photos below, which it failed |
+| Vision (partial, public single photos) | **FAIL.** 48 Wikimedia Commons photos, the same photo as pickup and return: `qwen3-vl-plus` called an old mark "new" in 71 of 105 answers and a clean spot "new" in 66 of 66 (bar: 0 for both). The damage class matched the label in 36 of 105 readings. p50 2,703 ms, p95 8,601 ms. Labels drawn by the builder's agent (Claude), not an independent annotator. Not the staged-set benchmark ([report](evidence/public-photo-bench/README.md)) |
 
-### Honest limits (7)
+### Honest limits (9)
 
 1. **Sandbox only.** Nothing here has moved live money; live vault and merchant-initiated eligibility are unverified.
 2. **One merchant.** The demo uses a single sandbox merchant; a production path needs one onboarded merchant per shop.
@@ -160,8 +161,9 @@ Recorded on 2026-10-24: Claude Code and Codex each booked through `quote_rental 
 4. **Non-return is out of scope.** Jaminan covers damage and fines, not a scooter that never comes back.
 5. **No vision accuracy claim yet.** Until the benchmark runs, no finding from a non-benchmarked model is chargeable.
 6. **Reauthorize is proven on the sandbox, not yet through the rental flow.** On 2026-10-23 (day 9) PayPal accepted `reauthorize` on a plain hold and on a hold that already had its fee captured (201 both), and refused a second one on the same hold (422 `REAUTHORIZATION_TOO_SOON`, "only allowed once"): [`evidence/paypal-reauthorize.jsonl`](evidence/paypal-reauthorize.jsonl). The sweep's day-4 trigger rule and its refusal fallback (re-authorize on the vaulted wallet, then void the old hold) are unit-tested, including through `cron_daily()`; the `/api/cron/daily` route and Vercel's schedule have not run on a rental, and no rental has yet reached day 4 through the app.
-7. **The model has been shown only on AI-generated test images (not photographs) so far.** Its recorded answers on that pair ([`evidence/generated-pair/`](evidence/generated-pair/README.md)) are not a benchmark and say nothing about real photos.
+7. **The model has not been benchmarked on the staged scooter set.** Its recorded answers on the AI-generated test pair (not photographs, [`evidence/generated-pair/`](evidence/generated-pair/README.md)) are not a benchmark, and the one check on real photos is partial and failed (limit 9).
 8. **An agent booking ends at the hold.** The shop phone opens only the rentals it created, because it holds their key, and no shop login exists yet, so nobody can hand over or release a hold an agent booked. PayPal lets that hold lapse after 29 days (sandbox only).
+9. **The vision model fails a partial check on public photos.** Given the same real photo as pickup and return, `qwen3-vl-plus` called old marks and clean spots "new" in 71 of 105 and 66 of 66 answers ([`evidence/public-photo-bench/`](evidence/public-photo-bench/README.md)). No model is pinned, so those answers charge nothing. Pinning one needs a fix and a passing staged-set benchmark first.
 
 ## 🚀 Getting Started
 
@@ -210,6 +212,7 @@ tests/      unit, contract, invariant and real-sandbox tests
 - [x] Pointed-claim rules in code, tariff-priced
 - [x] Judge route with a fresh sandbox rental
 - [ ] Vision benchmark on a staged scooter set
+  - [x] Partial check on public single photos (Wikimedia Commons): run once, fails both 0-false-"new" bars ([report](evidence/public-photo-bench/README.md))
 - [x] Reauthorize sandbox run (2026-10-23: 201 on two holds, second attempt 422)
 - [x] MCP rental tool for booking agents ([`evidence/mcp/`](evidence/mcp/README.md))
 

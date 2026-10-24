@@ -47,7 +47,7 @@ The side-panel dent in the `accepted` run is the "already there" case: it was vi
 ## 3. Reproduce
 
 ```bash
-# offline suite (230 tests, no credentials)
+# offline suite (234 tests, no credentials)
 .venv/bin/python -m pytest -m "not sandbox and not live_model and not slow" --cov=jaminan --cov-branch
 
 # the claim-decision sweep (23,040 combinations) and the settle property test
@@ -65,7 +65,7 @@ python scripts/e2e_live.py https://jaminan.edycu.dev/app --shots /tmp/jaminan-e2
 
 | Number | Where it comes from |
 |---|---|
-| 239 tests (230 offline, 8 real-sandbox, 1 live Qwen) | [`evidence/test-run.txt`](evidence/test-run.txt) |
+| 243 tests (234 offline, 8 real-sandbox, 1 live Qwen) | [`evidence/test-run.txt`](evidence/test-run.txt) |
 | 100% offline line and branch coverage of `jaminan/` | [`evidence/coverage.txt`](evidence/coverage.txt) |
 | 18/18 live acceptance checks at 375 px (2026-10-24) | [`evidence/e2e-live.txt`](evidence/e2e-live.txt) |
 | 23,040-case claim sweep | [`tests/test_invariants.py`](tests/test_invariants.py) |
@@ -90,8 +90,24 @@ once it expires on 2026-11-22, PayPal's answer is expected to change from the `C
 authorization reads `EXPIRED`). Reads are limited to
 120 a rental an hour.
 
-## 5. Not shown, on purpose
+## 5. A partial vision check on public photos: failed
 
-- **Vision accuracy.** There is no accuracy number anywhere in this repository because the benchmark on the staged scooter photo set has not run. The model has been shown only on AI-generated test images (not photographs) so far (§1).
+48 real photographs from Wikimedia Commons (26 damaged, 37 labelled marks; 22 clean motor scooters), labels drawn by the
+builder's agent (Claude) and committed before any model call. Each photo is used as both the pickup and the return, so
+the only right answers are "old" for a labelled mark and "not new" for a clean spot.
+
+| | Answers | Bar | `qwen3-vl-plus` |
+|---|---|---|---|
+| Old mark called "new" | 105 (35 marks × 3) | 0 | **71**: FAIL |
+| Clean spot called "new" | 66 (22 spots × 3) | 0 | **66**: FAIL |
+| Damage class matches the label | 105 readings | none | 36 |
+
+No model is pinned, so in the app these answers end `comparison_unavailable` and charge nothing. It is not the staged-set
+benchmark and cannot test new damage between two photos. Report and reproduce:
+[`evidence/public-photo-bench/`](evidence/public-photo-bench/README.md).
+
+## 6. Not shown, on purpose
+
+- **Vision accuracy.** There is no accuracy number anywhere in this repository because the benchmark on the staged scooter photo set has not run. The model has been shown on AI-generated test images (not photographs, §1) and failed the partial check on public photos (§5).
 - **Reauthorize inside a rental.** PayPal allows it once, Day 4 to Day 29. The call itself is recorded on the sandbox ([`evidence/paypal-reauthorize.jsonl`](evidence/paypal-reauthorize.jsonl): 201 on two holds, 422 on a second attempt); no rental in the app has reached day 4, so only the sweep's day-4 trigger rule and its refusal fallback are unit-tested, as is `cron_daily()` (the cron route and Vercel's schedule have not fired on a real rental).
 - **Live money.** Sandbox only.
