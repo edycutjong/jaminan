@@ -121,10 +121,11 @@ async function save(name, rows) {
   $("status").textContent = `saved ${name}.csv (${rows.length}) ${new Date().toLocaleTimeString()}`;
   renderCounts();
 }
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
 const frameOf = (file) => frames.find(f => f.file === file);
 function renderFiles() {
   $("files").innerHTML = files.map((f, i) => { const fr = frameOf(f);
-    return `<button data-i="${i}" class="${i===idx?"on":""}">${f.split("/").pop()}<span class="tag">${fr ? `${fr.walkaround_id} · ${fr.phase} · a${fr.angle}` : "— not described yet"}</span></button>`; }).join("");
+    return `<button data-i="${i}" class="${i===idx?"on":""}">${esc(f.split("/").pop())}<span class="tag">${fr ? `${esc(fr.walkaround_id)} · ${esc(fr.phase)} · a${esc(fr.angle)}` : "— not described yet"}</span></button>`; }).join("");
   $("files").querySelectorAll("button").forEach(b => b.onclick = () => show(+b.dataset.i));
 }
 function renderCounts() {
@@ -140,9 +141,9 @@ function show(i) {
   renderFiles(); renderBoxes();
 }
 function current() { return frameOf(files[idx]); }
-function boxEl(b, cls, text) { return `<div class="bx ${cls}" style="left:${b[0]*100}%;top:${b[1]*100}%;width:${b[2]*100}%;height:${b[3]*100}%"><span>${text}</span></div>`; }
+function boxEl(b, cls, text) { return `<div class="bx ${cls}" style="left:${+b[0]*100}%;top:${+b[1]*100}%;width:${+b[2]*100}%;height:${+b[3]*100}%"><span>${esc(text)}</span></div>`; }
 function renderBoxes() {
-  const fr = current(); let html = `<img id="img" alt="" draggable="false" src="${$("img").src}">`;
+  const fr = current(); let html = `<img id="img" alt="" draggable="false" src="${esc($("img").src)}">`;
   const same = (r) => fr && r.walkaround_id === fr.walkaround_id && String(r.angle) === String(fr.angle) && (r.phase ? r.phase === fr.phase : true);
   const mine = fr ? labels.filter(same) : [];
   mine.forEach(l => html += boxEl([+l.bbox_x,+l.bbox_y,+l.bbox_w,+l.bbox_h], l.new === "1" ? "" : "old", `${l.part}/${l.damage_class}${l.new==="1"?" NEW":""}`));
@@ -152,10 +153,10 @@ function renderBoxes() {
     .forEach(c => html += boxEl([+c.pickup_bbox_x,+c.pickup_bbox_y,+c.pickup_bbox_w,+c.pickup_bbox_h], "claim", `${c.claim_id} at pickup`));
   if (draft) html += boxEl(draft, "draft", pendingPickupFor ? `pickup mark for ${pendingPickupFor}` : "draft");
   $("wrap").innerHTML = html;
-  $("labelList").innerHTML = mine.map(l => `<div>${l.part}/${l.damage_class} new=${l.new}<button data-k="${labels.indexOf(l)}">✕</button></div>`).join("");
+  $("labelList").innerHTML = mine.map(l => `<div>${esc(l.part)}/${esc(l.damage_class)} new=${esc(l.new)}<button data-k="${labels.indexOf(l)}">✕</button></div>`).join("");
   $("labelList").querySelectorAll("button").forEach(b => b.onclick = () => { labels.splice(+b.dataset.k, 1); save("labels", labels); renderBoxes(); });
   const cl = fr ? claims.filter(c => c.walkaround_id === fr.walkaround_id && String(c.angle) === String(fr.angle)) : [];
-  $("claimList").innerHTML = cl.map(c => `<div>${c.claim_id} ${c.part}/${c.damage_class} → ${c.expected}${c.pickup_bbox_w ? " ✓pickup" : ""}<button data-k="${claims.indexOf(c)}">✕</button></div>`).join("");
+  $("claimList").innerHTML = cl.map(c => `<div>${esc(c.claim_id)} ${esc(c.part)}/${esc(c.damage_class)} → ${esc(c.expected)}${c.pickup_bbox_w ? " ✓pickup" : ""}<button data-k="${claims.indexOf(c)}">✕</button></div>`).join("");
   $("claimList").querySelectorAll("button").forEach(b => b.onclick = () => { claims.splice(+b.dataset.k, 1); save("claims", claims); renderBoxes(); });
   renderCounts();
 }
