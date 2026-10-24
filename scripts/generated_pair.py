@@ -56,8 +56,9 @@ def main() -> None:
                                                 "glare_frac": round(g.glare_frac, 4), "width": g.width,
                                                 "height": g.height, "low_tiles": g.low_tiles, "sha256": g.sha256}}
         jpegs[phase] = (jpeg, g.low_tiles)
+    rejected = [p for p, f in frames.items() if not f["gate"]["ok"]]
     claims = []
-    for c in CLAIMS:
+    for c in CLAIMS if not rejected else []:  # an upload the gate rejects is never compared: no model call either
         ret_crop, ret_region = gate.crop(jpegs["return"][0], c["bbox"], scale=2.0)
         pick_area, pick_region = gate.crop(jpegs["pickup"][0], c["bbox"], scale=4.0)
         price = tv.price(c["part"], c["damage_class"])
@@ -86,12 +87,16 @@ def main() -> None:
            "requested_model": s.vision_model, "benchmarked_model": s.benchmarked_model or None,
            "confidence_floor": s.confidence_floor, "chargeable_classes": list(s.chargeable_classes),
            "generation": "GENERATION.json", "frames": frames, "claims": claims}
+    if rejected:
+        out["stopped"] = f"frame gate rejected the {' and '.join(rejected)} frame: an upload would be refused, so no claim was compared"
     day = f"{datetime.now():%Y-%m-%d}"  # local (WIB) date; times inside are UTC
     path, n = DIR / f"run-{day}.json", 1
     while path.exists():  # a recorded run is evidence: another run that day gets its own file, never overwrites one
         path, n = DIR / f"run-{day}-{n}.json", n + 1
     path.write_text(json.dumps(out, indent=2, ensure_ascii=False) + "\n")
     print("wrote", path.relative_to(ROOT))
+    if rejected:
+        raise SystemExit(out["stopped"])
 
 
 if __name__ == "__main__":
