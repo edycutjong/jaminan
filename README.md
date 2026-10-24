@@ -35,13 +35,13 @@ In Bali and Jakarta the deposit on a rented scooter is often your passport (or a
 
 Jaminan replaces the passport with a PayPal authorization and replaces the argument with a shared walkaround.
 
+**What runs today, on the PayPal sandbox:** at [`/app/judge`](https://jaminan.edycu.dev/app/judge) one tap authorizes $115.00 on a saved sandbox wallet, captures the $15.00 fee, writes the handover tracking, and releases the hold on a second tap, each stamp waiting for PayPal's read-back. No vision model is pinned as benchmarked yet, so a live rental cannot price a damage line. The priced path is a recorded sandbox run with scripted claim answers ([`evidence/paypal-sandbox-run.json`](evidence/paypal-sandbox-run.json): one $18.00 capture with `final_capture=true`, the other $82.00 released, a second capture refused with 422) and is exercised in the unit and sandbox tests.
+
 1. The renter scans the shop QR and gives **one PayPal approval** that authorizes the fee plus the deposit and saves the wallet for later fines. The fee is captured when both sides confirm the baseline at pickup; the deposit stays held.
 2. A guided 8-angle walkaround records the scooter at pickup. Renter and shop confirm the baseline together.
 3. At return **the owner points, the shared baseline answers.** The shop taps a mark and picks its `(part, damage_class)` from the published tariff. The model only answers what the pickup photos show; it never sets a price.
-4. Code decides: no mark at return, visible at pickup, or not comparable at pickup all mean **cannot be charged**. Only clearly new damage becomes a priced line.
+4. Code decides: no mark at return, visible at pickup, or not comparable at pickup all mean **cannot be charged**, and a mark that doesn't look like the kind the shop named can't be paid from the hold. Only clearly new damage becomes a priced line.
 5. **The hold only pays lines the renter accepted.** Accepted lines become one capture with `final_capture=true`. A clean return voids the hold. A contested line goes out as an itemized PayPal invoice at its tariff price.
-
-On the current deployment no vision model is pinned as benchmarked, so live rentals can release the hold but cannot price a damage line; priced lines are exercised in the unit and sandbox tests.
 
 > **What the shared baseline can't show, nobody can charge.**
 
@@ -97,7 +97,7 @@ approve (Orders v2 AUTHORIZE + vault consent)
 | Invoicing v2 | contested lines and damage above the hold, with an evidence-pack link |
 | Webhooks v1 and `GET /api/integrations/verify` | events checked with PayPal's verify-webhook-signature call when a webhook id is configured and stored with their verified/failed flag; live read-back of PayPal state |
 
-The APIMatic Context Plugin was used once, to write a Transaction Search call through PayPal's generated SDK ([`docs/APIMATIC.md`](docs/APIMATIC.md)); the client itself is hand-written. The settle screen shows the status read back from PayPal after the call. Real-sandbox tests in [`tests/`](tests) cover authorize, vault, capture, void and invoice; tracking, webhooks and fine capture are covered by offline tests only.
+The APIMatic Context Plugin was used once, to write a Transaction Search call through PayPal's generated SDK ([`docs/APIMATIC.md`](docs/APIMATIC.md)): the request authenticated and PayPal answered 403 `NOT_AUTHORIZED`, because Transaction Search is not enabled on this sandbox app. The client itself is hand-written. The settle screen shows the status read back from PayPal after the call. Real-sandbox tests in [`tests/`](tests) cover authorize, vault, capture, void and invoice; tracking, webhooks and fine capture are covered by offline tests. Outside the tests, tracking runs in the recorded sandbox runs and on every `/app/judge` rental, and incoming webhooks are checked with PayPal's signature call and listed with the result on [`/app/integrations/verify`](https://jaminan.edycu.dev/app/integrations/verify); the fine capture has no sandbox run.
 
 ### How this differs
 
