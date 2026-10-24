@@ -303,6 +303,10 @@ async def webhook(req: Request):
     return await run_in_threadpool(record_webhook, dict(req.headers), event)
 
 
+PAYPAL_SIGNATURE_HEADERS = ("paypal-transmission-id", "paypal-transmission-time", "paypal-transmission-sig",
+                            "paypal-cert-url", "paypal-auth-algo")
+
+
 def obj(x: Any) -> dict:
     return x if isinstance(x, dict) else {}
 
@@ -311,8 +315,12 @@ def record_webhook(headers: dict, event: dict) -> dict:
     s = svc()
     verified = None
     if s.s.paypal_webhook_id:
-        v = s.pp.verify_webhook(headers, event, s.s.paypal_webhook_id)
-        verified = v.ok and v.body.get("verification_status") == "SUCCESS"
+        h = {k.lower(): v for k, v in headers.items()}
+        if all(h.get(k) for k in PAYPAL_SIGNATURE_HEADERS):
+            v = s.pp.verify_webhook(headers, event, s.s.paypal_webhook_id)
+            verified = v.ok and v.body.get("verification_status") == "SUCCESS"
+        else:  # no PayPal signature at all: refused here, without an outbound verify call or a ledger row
+            verified = False
     res = obj(event.get("resource"))  # anyone can post here: every nested field is narrowed before .get
     related = obj(obj(res.get("supplementary_data")).get("related_ids"))
     row = {"id": event.get("id"), "event_type": event.get("event_type"), "resource_id": res.get("id"),

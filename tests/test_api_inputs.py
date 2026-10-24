@@ -112,3 +112,18 @@ def test_a_webhook_object_with_odd_nested_shapes_is_stored_not_a_500():
     finally:
         api_index._svc = None
     assert codes == [200] * 5 and len(svc.db.lrange_json("webhooks", 0, -1)) == 5
+
+
+def test_a_webhook_without_paypal_signature_headers_never_calls_paypal_verify():
+    svc = make(PAYPAL_WEBHOOK_ID="WH-TEST")
+    sig = {"PAYPAL-TRANSMISSION-ID": "t1", "PAYPAL-TRANSMISSION-TIME": "2026-10-24T08:00:00Z",
+           "PAYPAL-TRANSMISSION-SIG": "s", "PAYPAL-CERT-URL": "https://api.sandbox.paypal.com/cert", "PAYPAL-AUTH-ALGO": "SHA256"}
+    try:
+        c = client_for(svc)
+        bare = c.post("/api/webhooks/paypal", json={"id": "WH-X", "event_type": "PAYMENT.CAPTURE.COMPLETED"})
+        verifies = len([x for x in svc.calls() if x["action"] == "webhook.verify"])
+        c.post("/api/webhooks/paypal", json={"id": "WH-Y"}, headers=sig)
+    finally:
+        api_index._svc = None
+    assert bare.json()["verified"] is False and verifies == 0
+    assert len([x for x in svc.calls() if x["action"] == "webhook.verify"]) == 1
