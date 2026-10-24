@@ -1,0 +1,60 @@
+image,mark,kind,vehicle,angle,part,damage_class,x,y,w,h,note
+d01,d01-m1,mark,motorcycle,3,side_panel,scuff,0.46,0.47,0.18,0.12,abraded paint on the white/red side fairing
+d01,d01-m2,mark,motorcycle,3,front_fairing,broken_part,0.21,0.32,0.22,0.15,"upper fairing torn, jagged edge"
+d01,d01-m3,mark,motorcycle,3,other,scuff,0.42,0.2,0.12,0.1,grey abrasion on the red tank cover
+d02,d02-m1,mark,motorcycle,7,side_panel,broken_part,0.31,0.4,0.18,0.3,white fairing panel broken off its mounts
+d03,d03-m1,mark,motorcycle,1,front_fairing,broken_part,0.33,0.44,0.36,0.14,lower front fairing ripped below the headlight
+d04,d04-m1,mark,motorcycle,8,front_fairing,broken_part,0.55,0.3,0.2,0.32,front fairing ripped around the headlight
+d05,d05-m1,mark,scooter,7,front_fairing,missing_part,0.55,0.2,0.2,0.4,"front panels gone, rusted steering column exposed"
+d08,d08-m1,mark,motorcycle,7,headlight,missing_part,0.68,0.12,0.27,0.35,"headlight assembly gone, bare wires"
+d11,d11-m1,mark,scooter,2,front_fairing,missing_part,0.33,0.35,0.18,0.3,"front shield missing, frame tube exposed"
+d12,d12-m1,mark,scooter,8,front_fairing,missing_part,0.49,0.31,0.07,0.07,"horn grille missing, hole in the shield"
+d12,d12-m2,mark,scooter,8,front_fender,broken_part,0.4,0.38,0.36,0.27,front fender rotted through at the edge
+d13,d13-m1,mark,scooter,8,front_fender,scuff,0.58,0.66,0.28,0.2,paint chips with rust on the front fender
+d14,d14-m1,mark,scooter,1,front_fender,scuff,0.15,0.8,0.15,0.15,rust patch where the paint is gone on the front fender
+d15,d15-m1,mark,scooter,5,rear_panel,missing_part,0.48,0.58,0.16,0.12,rear cover/plate holder gone below the tail light
+d17,d17-m1,mark,scooter,3,seat,broken_part,0.45,0.43,0.35,0.13,seat cover torn and peeling
+d17,d17-m2,mark,scooter,3,rear_panel,scuff,0.78,0.59,0.12,0.09,paint peeled on the rear panel
+d18,d18-m1,mark,scooter,3,side_panel,broken_part,0.15,0.5,0.15,0.18,"side panel shattered, internals exposed"
+d19,d19-m1,mark,scooter,1,front_fairing,broken_part,0.37,0.18,0.18,0.2,front cowl smashed against the tree
+d20,d20-m1,mark,scooter,7,side_panel,missing_part,0.2,0.35,0.3,0.3,body panels burnt away
+d21,d21-m1,mark,scooter,7,side_panel,scuff,0.2,0.4,0.18,0.12,rust patches through the paint on the side cowl
+d21,d21-m2,mark,scooter,7,seat,missing_part,0.35,0.27,0.13,0.08,"seat cushion missing, bare frame"
+d22,d22-m1,mark,scooter,2,front_fairing,scuff,0.31,0.27,0.2,0.33,"worn, flaking paint on the leg shield"
+d22,d22-m2,mark,scooter,2,front_fender,scuff,0.2,0.6,0.27,0.13,rusted paint on the front fender
+d22,d22-m3,mark,scooter,2,side_panel,scuff,0.52,0.35,0.23,0.2,chipped red paint on the side cowl
+d23,d23-m1,mark,scooter,3,front_fender,scuff,0.1,0.58,0.2,0.08,rust through the paint on the front fender
+d23,d23-m2,mark,scooter,3,side_panel,scuff,0.56,0.52,0.33,0.25,"rusted side panel, paint gone"
+d25,d25-m1,mark,moped,7,other,scuff,0.52,0.33,0.18,0.22,"rusted, scuffed tank"
+d26,d26-m1,mark,moped,3,rear_fender,scuff,0.77,0.46,0.21,0.18,rust through the paint on the rear fender
+d26,d26-m2,mark,moped,3,other,scuff,0.3,0.27,0.22,0.12,worn paint on the tank
+d29,d29-m1,mark,scooter,2,front_fairing,scuff,0.36,0.38,0.14,0.55,long scratch band along the fairing edge
+d29,d29-m2,mark,scooter,2,front_fairing,scuff,0.6,0.02,0.12,0.15,scratches at the top of the fairing
+d31,d31-m1,mark,scooter,3,front_fairing,missing_part,0.24,0.3,0.15,0.4,"leg shield missing, fork exposed"
+d34,d34-m1,mark,motorcycle,7,side_panel,missing_part,0.27,0.45,0.25,0.12,"lower fairing torn off, lying in front"
+d35,d35-m1,mark,scooter,3,side_panel,missing_part,0.3,0.35,0.45,0.25,"body panels burnt away, frame bare"
+d36,d36-m1,mark,scooter,2,side_panel,missing_part,0.25,0.45,0.35,0.25,body panels burnt away
+d36,d36-m2,mark,scooter,2,seat,missing_part,0.45,0.43,0.12,0.07,seat burnt away
+d37,d37-m1,mark,scooter,6,mirror,missing_part,0.5,0.0,0.12,0.12,mirror broken off (it lies on the pavement)
+c01,c01-clean,clean_spot,scooter,2,front_fairing,,0.36,0.36,0.08,0.1,undamaged area of the body
+c02,c02-clean,clean_spot,scooter,2,front_fairing,,0.1,0.42,0.1,0.12,undamaged area of the body
+c03,c03-clean,clean_spot,scooter,8,front_fairing,,0.58,0.42,0.12,0.1,undamaged area of the body
+c04,c04-clean,clean_spot,scooter,8,front_fairing,,0.58,0.3,0.1,0.1,undamaged area of the body
+c05,c05-clean,clean_spot,scooter,2,side_panel,,0.5,0.36,0.12,0.08,undamaged area of the body
+c06,c06-clean,clean_spot,scooter,1,front_fairing,,0.35,0.3,0.15,0.1,undamaged area of the body
+c07,c07-clean,clean_spot,scooter,8,side_panel,,0.3,0.5,0.12,0.08,undamaged area of the body
+c08,c08-clean,clean_spot,scooter,2,front_fairing,,0.33,0.45,0.08,0.08,undamaged area of the body
+c09,c09-clean,clean_spot,scooter,2,side_panel,,0.6,0.45,0.15,0.08,undamaged area of the body
+c10,c10-clean,clean_spot,scooter,1,front_fender,,0.38,0.62,0.15,0.12,undamaged area of the body
+c11,c11-clean,clean_spot,scooter,3,side_panel,,0.45,0.55,0.15,0.07,undamaged area of the body
+c12,c12-clean,clean_spot,scooter,2,side_panel,,0.6,0.52,0.15,0.08,undamaged area of the body
+c13,c13-clean,clean_spot,scooter,8,side_panel,,0.12,0.38,0.2,0.1,undamaged area of the body
+c14,c14-clean,clean_spot,scooter,8,front_fairing,,0.62,0.42,0.12,0.1,undamaged area of the body
+c15,c15-clean,clean_spot,scooter,3,side_panel,,0.48,0.52,0.15,0.07,undamaged area of the body
+c16,c16-clean,clean_spot,scooter,2,side_panel,,0.58,0.48,0.18,0.08,undamaged area of the body
+c17,c17-clean,clean_spot,scooter,3,side_panel,,0.55,0.52,0.15,0.07,undamaged area of the body
+c18,c18-clean,clean_spot,scooter,2,side_panel,,0.6,0.5,0.14,0.08,undamaged area of the body
+c19,c19-clean,clean_spot,scooter,4,rear_panel,,0.28,0.45,0.15,0.08,undamaged area of the body
+c20,c20-clean,clean_spot,scooter,8,side_panel,,0.25,0.42,0.18,0.08,undamaged area of the body
+c21,c21-clean,clean_spot,scooter,2,front_fairing,,0.25,0.52,0.12,0.12,undamaged area of the body
+c22,c22-clean,clean_spot,scooter,3,side_panel,,0.5,0.37,0.15,0.08,undamaged area of the body
