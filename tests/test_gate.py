@@ -66,3 +66,9 @@ def test_a_strip_or_a_non_image_is_refused_before_any_resize():
         except gate.NotAnImage:
             continue
         raise AssertionError("gate accepted an input it cannot judge")
+
+
+def test_a_thumbnail_is_too_small_even_though_it_is_widened_to_1280():
+    rng = np.random.default_rng(3)
+    res, _ = gate.check(jpeg(rng.integers(0, 255, size=(240, 320, 3))))
+    assert res.reason == "too_small"

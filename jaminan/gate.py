@@ -56,7 +56,8 @@ class GateResult:
                 "low_tiles": self.low_tiles, "sha256": self.sha256}
 
 
-def normalize(data: bytes) -> Image.Image:
+def normalize(data: bytes) -> tuple[Image.Image, tuple[int, int]]:
+    """The frame widened/narrowed to 1280 px, and the source size (the gate's too_small reads the source)."""
     try:
         opened = Image.open(io.BytesIO(data))
         w, h = opened.size
@@ -65,11 +66,12 @@ def normalize(data: bytes) -> Image.Image:
         if max(w, h) > MAX_ASPECT * max(1, min(w, h)):
             raise NotAnImage(f"{w}×{h} is not a photo of a scooter (aspect beyond 1:{MAX_ASPECT:g})")
         img = ImageOps.exif_transpose(opened).convert("RGB")
+        source = img.size
     except (UnidentifiedImageError, Image.DecompressionBombError, OSError) as e:
         raise NotAnImage("not a readable image") from e
     if img.width != WIDTH:
         img = img.resize((WIDTH, max(1, round(img.height * WIDTH / img.width))), Image.Resampling.LANCZOS)
-    return img
+    return img, source
 
 
 def to_jpeg(img: Image.Image, max_bytes: int = MAX_JPEG_BYTES) -> bytes:
@@ -91,7 +93,7 @@ def _laplacian_var(gray: np.ndarray) -> float:
 def check(data: bytes, thresholds: dict | None = None) -> tuple[GateResult, bytes]:
     """Returns the gate verdict and the normalized JPEG (≤ 150 KB) that is stored and hashed."""
     t = {**THRESHOLDS, **(thresholds or {})}
-    img = normalize(data)
+    img, source = normalize(data)
     jpeg = to_jpeg(img)
     gray = np.asarray(img.convert("L"))
     h, w = gray.shape
@@ -109,7 +111,7 @@ def check(data: bytes, thresholds: dict | None = None) -> tuple[GateResult, byte
             if bad:
                 low.append(box)
     reason = None
-    if min(img.width, img.height) < t["min_short_side"]:
+    if min(source) < t["min_short_side"]:  # read before the widening, or every thumbnail would pass
         reason = "too_small"
     elif blur < t["blur_min_var"]:
         reason = "blurry"
