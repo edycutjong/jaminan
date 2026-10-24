@@ -4,4 +4,4 @@ import { cpSync, mkdirSync, readdirSync } from "node:fs";
 
 for (const name of readdirSync("docs")) cpSync(`docs/${name}`, `public/${name}`, { recursive: true });
 mkdirSync("public/evidence", { recursive: true });
-for (const name of readdirSync("evidence")) cpSync(`evidence/${name}`, `public/evidence/${name}`);
+for (const name of readdirSync("evidence")) cpSync(`evidence/${name}`, `public/evidence/${name}`, { recursive: true });
