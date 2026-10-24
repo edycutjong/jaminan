@@ -21,9 +21,11 @@ with the app's prompts unchanged and nothing tuned on this set. Raw record: [`ru
 - **Labels** ([labels.csv](labels.csv)) were **drawn by the builder's agent (Claude), not by an independent annotator**,
   from each image. Ambiguous images were dropped rather than guessed. The labels were committed
   in `a2f7d9c` before any model call; the run records that commit and the file's SHA-256.
-- **Frame gate:** 1 of 48 images was rejected as blurry (`d29`, blur variance 38.3 < 40). An upload the gate rejects is
+- **Frame gate:** 1 of 48 images was rejected as blurry (`d29`, blur variance 38.3 < 40; the stored copies are ≤ 960 px
+  and the gate resizes every frame to a 1280 px width before measuring, as it does for uploads). An upload the gate rejects is
   never compared, so its 2 marks are not scored. T1 therefore covers **35 marks on 25 images**.
-- **Size:** 26 damaged images remained after ambiguous ones were dropped (25 after the blur gate), so n is small.
+- **Size:** of 40 damaged candidates picked for labelling, 14 were dropped as ambiguous, leaving 26 (25 after the blur
+  gate), so n is small. The earlier triage of Commons thumbnails was not recorded.
 
 ## Results (`qwen3-vl-plus`, 3 repeats, 246 calls, all served by `qwen3-vl-plus`)
 
