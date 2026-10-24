@@ -57,8 +57,8 @@ export default function Judge() {
       <Bar who="Judge" />
       {!r ? (
         <div style={{ maxWidth: 560 }}>
-          <h1 style={{ fontSize: 34 }}>You&apos;re the shop — tap what you&apos;d charge</h1>
-          <p>One tap mints a fresh rental on the PayPal sandbox: a merchant-initiated <span className="data">AUTHORIZE</span> of fee + deposit on a saved sandbox wallet, the fee captured from the hold at handover. Then you play the shop at the return counter, and the renter at settle.</p>
+          <h1 style={{ fontSize: 34 }}>{info?.staged_set ? <>You&apos;re the shop — tap what you&apos;d charge</> : <>You&apos;re the shop — hold the deposit, then release it</>}</h1>
+          <p>One tap mints a fresh rental on the PayPal sandbox: a merchant-initiated <span className="data">AUTHORIZE</span> of fee + deposit on a saved sandbox wallet, the fee captured from the hold at handover. {info?.staged_set ? "Then you play the shop at the return counter, and the renter at settle." : "Then you release the hold at the return counter, and the stamp waits for PayPal's read-back."}</p>
           {info && !info.staged_set ? (
             <div className="note small">The staged walkaround (real photos of a real scooter, labelled by hand) is not in this deploy yet, and no vision model is pinned by the accuracy bench yet. Until both land, a judge rental shows the real PayPal hold and lets you <strong>release</strong> it; the tap-to-claim screen opens once the staged set ships.</div>
           ) : info && !info.benchmarked_model ? (
@@ -72,7 +72,7 @@ export default function Judge() {
             <p className="small">Full path sandbox buyer login: <span className="data">{info.full_path.buyer_email}</span> / <span className="data">{info.full_path.buyer_password}</span> (PayPal sandbox test account, no real money).</p>
           ) : null}
           {info && info.pool === 0 ? <p className="small muted">Judge wallet pool not configured on this deploy — use the full path.</p> : null}
-          {err ? <div className="toast" role="alert">{err}</div> : null}
+          {err ? <div className="toast" role="alert">{err} · PayPal&apos;s answers from three recorded sandbox runs: <a href="/#money">on the landing page</a></div> : null}
           <p className="small" style={{ marginTop: 20 }}><Link href="/app/integrations/verify">Every PayPal call, live</Link></p>
         </div>
       ) : (
