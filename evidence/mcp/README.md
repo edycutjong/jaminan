@@ -7,11 +7,11 @@ sandbox renter approved in PayPal, and the agent then read back the authorizatio
 | File | What it shows |
 |---|---|
 | `tools-list.json` | `tools/list` over stdio (`scripts/mcp_tools_list.py`) returns **4** tools. Only `start_rental` is annotated as a write (`read_only_hint: false`). |
-| `claude-1-booking.json` | Claude Code (`claude -p`, Sonnet 5.5) runs `list_vehicles → quote_rental → start_rental → get_rental`. It books **R-1024-FA0400AA** (veh-01, 2 days, $30 + $100 = $130). The read-back shows order `2AM99761A5518700K` as `PAYER_ACTION_REQUIRED`. |
+| `cc-1-booking.json` | Claude Code (`claude -p`, Sonnet 5.5) runs `list_vehicles → quote_rental → start_rental → get_rental`. It books **R-1024-FA0400AA** (veh-01, 2 days, $30 + $100 = $130). The read-back shows order `2AM99761A5518700K` as `PAYER_ACTION_REQUIRED`. |
 | `codex-0-write-gated.json` | Codex with no tool approved. It ran `list_vehicles` and `quote_rental`, then refused `start_rental` by itself ("requires approval"), because that tool is annotated as a write. |
 | `codex-1-booking.json` | Codex (`codex exec`) after the operator approves that one tool. It runs `quote_rental → start_rental → get_rental` and books **R-1024-B54EE295** (veh-02, 3 days, $45 + $100 = $145), with order `77H944659E772632G`. |
 | `renter-approvals.txt` | The human step: the sandbox buyer opens each `approve_url`, approves, and Jaminan's return page answers `/authorize` with HTTP 200. |
-| `claude-2-readback.json`, `codex-2-readback.json` | A new session of each client calls `get_rental` and gets back `APPROVED`. PayPal's record shows authorization **8S39497205940830X** (CREATED, USD 130.00) and **4V462197H4984864E** (CREATED, USD 145.00). |
+| `cc-2-readback.json`, `codex-2-readback.json` | A new session of each client calls `get_rental` and gets back `APPROVED`. PayPal's record shows authorization **8S39497205940830X** (CREATED, USD 130.00) and **4V462197H4984864E** (CREATED, USD 145.00). |
 | `paypal-readback.json` | The same two read-backs from the live route. |
 | `live-boundary.txt` | On the live deploy, the agent's `status_token` is sent as the key to the authorize, line-decision, claims, propose, settle, release, vault-delete and fine-contest routes. All 8 return **403 FORBIDDEN**. |
 

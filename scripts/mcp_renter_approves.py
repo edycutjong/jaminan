@@ -1,6 +1,6 @@
 """The human half of an agent booking, automated for the recorded run: open the approve_url an agent got from
 start_rental, log in as the PayPal SANDBOX buyer, approve, and let Jaminan's return page authorize the hold —
-exactly what the renter's phone does. Prints the return path with the renter key redacted. Sandbox only.
+exactly what the renter's phone does. Prints the return path with the renter key and PayPal's one-time return parameters redacted. Sandbox only.
 
     .venv/bin/python scripts/mcp_renter_approves.py 'https://www.sandbox.paypal.com/checkoutnow?token=...'
 """
@@ -30,7 +30,9 @@ def main(url: str) -> None:
         deadline = time.time() + 60
         while not seen and time.time() < deadline:
             pg.wait_for_timeout(500)
-        print(f"return page: {re.sub(r'k=[^&]+', 'k=<renter-key>', final)}")
+        for name, mask in (("k", "<renter-key>"), ("PayerID", "<payer-id>"), ("ba_token", "<billing-agreement-token>")):
+            final = re.sub(rf"\b{name}=[^&]+", f"{name}={mask}", final)
+        print(f"return page: {final}")
         print(f"authorize: HTTP {seen[0] if seen else 'not seen in 60 s'}")
         b.close()
 

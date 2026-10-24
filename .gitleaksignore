@@ -1,0 +1,3 @@
+# A PayPal SANDBOX return-URL billing-agreement token (ba_token), already consumed by the approval it came from; it is
+# not a credential (charging needs the merchant's OAuth secret). Redacted from the file in the next commit.
+83b9df29145dff68eebba7ce2df910140b1bdef9:evidence/mcp/renter-approvals.txt:generic-api-key:10
