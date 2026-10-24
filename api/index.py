@@ -9,6 +9,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from fastapi import FastAPI, File, Form, Header, Request, UploadFile  # noqa: E402
+from fastapi.concurrency import run_in_threadpool  # noqa: E402
 from fastapi.responses import JSONResponse, Response  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
@@ -37,6 +38,17 @@ async def service_error(_: Request, e: ServiceError):
 
 
 Key = Header(default=None, alias="X-Jaminan-Key")
+MAX_UPLOAD = 4_000_000
+
+# Handlers that touch Pillow, Redis, PayPal or Qwen are plain `def`: FastAPI runs them in its thread pool, so one slow
+# upload never blocks the event loop the other requests on this instance share.
+
+
+def read_upload(file: UploadFile) -> bytes:
+    data = file.file.read(MAX_UPLOAD + 1)
+    if len(data) > MAX_UPLOAD:
+        raise ServiceError(413, "TOO_LARGE", "frames are resized on the phone first; max 4 MB")
+    return data
 
 
 def client_ip(req: Request) -> str:
@@ -116,12 +128,9 @@ def authorize(rid: str, key: str | None = Key):
 
 
 @app.post("/api/rentals/{rid}/photos")
-async def photo(rid: str, phase: str = Form(...), angle: int = Form(...), file: UploadFile = File(...),
-                key: str | None = Key):
-    data = await file.read()
-    if len(data) > 4_000_000:
-        raise ServiceError(413, "TOO_LARGE", "frames are resized on the phone first; max 4 MB")
-    return svc().add_photo(rid, key, phase, angle, data)
+def photo(rid: str, phase: str = Form(...), angle: int = Form(...), file: UploadFile = File(...),
+          key: str | None = Key):
+    return svc().add_photo(rid, key, phase, angle, read_upload(file))
 
 
 @app.post("/api/rentals/{rid}/baseline/premark")
@@ -230,8 +239,8 @@ def evidence(rid: str, t: str | None = None, key: str | None = Key):
 
 
 @app.post("/api/rentals/{rid}/fines")
-async def fine(rid: str, ticket_amount_idr: int = Form(...), file: UploadFile = File(...), key: str | None = Key):
-    return svc().create_fine(rid, key, await file.read(), ticket_amount_idr)
+def fine(rid: str, ticket_amount_idr: int = Form(...), file: UploadFile = File(...), key: str | None = Key):
+    return svc().create_fine(rid, key, read_upload(file), ticket_amount_idr)
 
 
 @app.get("/api/rentals/{rid}/fines")
@@ -260,11 +269,21 @@ def frame(sha: str, bbox: str | None = None, scale: float = 1.0):
 # --- PayPal webhooks + public verification --------------------------------------------------------
 @app.post("/api/webhooks/paypal")
 async def webhook(req: Request):
+    try:
+        event = await req.json()
+    except ValueError as e:
+        raise ServiceError(400, "BAD_JSON", "webhook body is not JSON") from e
+    if not isinstance(event, dict):
+        raise ServiceError(400, "BAD_JSON", "webhook body is not a JSON object")
+    # verification and storage are blocking HTTP calls: off the event loop
+    return await run_in_threadpool(record_webhook, dict(req.headers), event)
+
+
+def record_webhook(headers: dict, event: dict) -> dict:
     s = svc()
-    event = await req.json()
     verified = None
     if s.s.paypal_webhook_id:
-        v = s.pp.verify_webhook(dict(req.headers), event, s.s.paypal_webhook_id)
+        v = s.pp.verify_webhook(headers, event, s.s.paypal_webhook_id)
         verified = v.ok and v.body.get("verification_status") == "SUCCESS"
     res = event.get("resource") or {}
     row = {"id": event.get("id"), "event_type": event.get("event_type"), "resource_id": res.get("id"),
