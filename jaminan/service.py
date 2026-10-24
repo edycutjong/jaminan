@@ -26,6 +26,8 @@ JUDGE_VOID_AFTER_S = 2 * 3600
 # Longer than the function's maxDuration (vercel.json: 120 s): a held lock can only expire after its holder is gone,
 # never mid-capture (one PayPal write may take 3 × 30 s with retries).
 LOCK_TTL_S = 130
+# A void refused with these issues has nothing left to release.
+VOID_DONE = ("AUTHORIZATION_ALREADY_VOIDED", "AUTHORIZATION_ALREADY_CAPTURED")
 STAGED = Path(__file__).resolve().parents[1] / "fixtures" / "staged"
 
 
@@ -656,13 +658,32 @@ class Service:
                 if not auth:
                     r["reauth_error"] = {"reauthorize": res.issue, "mit": mit.issue, "at": iso()}
                     return self._save(r)
-                self.pp.void(old, rid)
+                v = self.pp.void(old, rid)
+                if not v.ok and v.issue not in VOID_DONE:
+                    # the new hold stands; the old one is still open on PayPal, so the daily job retries the void
+                    r["stale_hold"] = {"authorization_id": old, "issue": v.issue, "debug_id": v.debug_id, "at": iso()}
                 self._record_auth(r, auth, replaces=old)
                 r.update(authorization_id=auth["id"], reauthorized_at=iso(), reauth_method="mit_resecure",
                          reauth_refusal=res.issue, fee_captured_cents=0, authorized_cents=r["deposit_cents"])
             else:
                 r["reauth_error"] = {"reauthorize": res.issue, "at": iso()}
             return self._save(r)
+
+    def retry_stale_void(self, rid: str) -> str:
+        """Void a replaced hold that PayPal refused to void during the re-secure (see reauthorize)."""
+        with self.lock(rid):
+            r = self.get(rid)
+            stale = r.get("stale_hold")
+            if not stale:
+                return "none"
+            v = self.pp.void(stale["authorization_id"], rid)
+            if v.ok or v.issue in VOID_DONE:
+                r.pop("stale_hold")
+                self._save(r)
+                return "voided"
+            r["stale_hold"].update(issue=v.issue, debug_id=v.debug_id, retried_at=iso())
+            self._save(r)
+            return "open"
 
     def create_fine(self, rid: str, key: str | None, image: bytes, ticket_amount_idr: int) -> dict:
         r = self.get(rid)
@@ -775,9 +796,11 @@ class Service:
                 "summary": {k: sum(1 for x in rows if x["match"] == k) for k in ("match", "pending", "mismatch")}}
 
     def cron_daily(self) -> dict:
-        out: dict[str, list] = {"reauth": [], "expiry_void": [], "judge_void": [], "fines": []}
+        out: dict[str, list] = {"reauth": [], "expiry_void": [], "judge_void": [], "fines": [], "stale_void": []}
         for shop_id in tariff.shops():
             for r in self.shop_rentals(shop_id, 200):
+                if r.get("stale_hold"):
+                    out["stale_void"].append(self.retry_stale_void(r["id"]))
                 age_days = age_s(r.get("auth_created_at")) / 86400
                 if rules.needs_reauth(r["state"], age_days, bool(r.get("reauthorized_at"))):
                     out["reauth"].append(self.reauthorize(r["id"]).get("reauth_method"))

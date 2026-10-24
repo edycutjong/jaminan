@@ -351,3 +351,18 @@ def test_a_claim_on_an_expired_stored_photo_is_a_410_not_a_crash():
     with pytest.raises(ServiceError) as e:
         svc.claim(rid, k["shop"], 1, [0.4, 0.4, 0.1, 0.1], "mirror_housing", "crack")
     assert e.value.status == 410 and e.value.code == "FRAME_EXPIRED"
+
+
+def test_a_refused_void_during_the_resecure_is_kept_and_retried_by_the_daily_job():
+    svc = make()
+    rid, k = to_out(svc)
+    old = svc.get(rid)["authorization_id"]
+    orig = svc.pp._route
+    svc.pp._route = lambda m, p, b: ((422, {"name": "UNPROCESSABLE_ENTITY", "details": [{"issue": "PERMISSION_DENIED"}]})
+                                     if p == f"/v2/payments/authorizations/{old}/void" else orig(m, p, b))
+    r = svc.reauthorize(rid)
+    assert r["reauth_method"] == "mit_resecure" and r["stale_hold"]["authorization_id"] == old
+    assert svc.pp.auths[old]["status"] != "VOIDED"
+    svc.pp._route = orig
+    assert svc.cron_daily()["stale_void"] == ["voided"]
+    assert svc.pp.auths[old]["status"] == "VOIDED" and "stale_hold" not in svc.get(rid)
