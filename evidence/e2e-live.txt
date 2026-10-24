@@ -1,0 +1,20 @@
+PASS counter: new rental + renter QR  — R-1024-3A9FC469
+PASS 375 px: no horizontal scroll on /shop  — scrollWidth 375 vs 375
+PASS rental page shows the vault consent copy before PayPal
+PASS 375 px: no horizontal scroll on /r/[id] rental page  — scrollWidth 375 vs 375
+PASS one approval → authorization + saved wallet  — APPROVED auth 80558513JL284741X
+PASS pickup: 8 angles captured in-app, gated and hashed
+PASS 375 px: no horizontal scroll on /shop/r/[id] baseline  — scrollWidth 375 vs 375
+PASS both confirm → fee captured (final_capture=false), tracking written  — PARTIALLY_CAPTURED JMN-R-1024-3A9FC469-ecee770a
+PASS return: 8 angles captured in-app, gated and hashed
+PASS claim answer shows the pickup crop beside the return crop
+PASS 375 px: no horizontal scroll on /shop/r/[id] return  — scrollWidth 375 vs 375
+PASS pointed claim → model answer recorded with the serving model id  — comparison_unavailable · model qwen3-vl-plus · perbandingan tidak tersedia — tidak ada yang ditagih
+PASS no benchmarked model pinned → the claim cannot be charged  — comparison_unavailable
+PASS release → void, stamp fires on PayPal read-back VOIDED  — {"at": "2026-10-24T09:19:13+00:00", "void": true, "capture_cents": 0, "capture_id": null, "capture_status": null, "released_cents": 10000, "auth_read_back": "VO
+PASS 375 px: no horizontal scroll on /r/[id] receipt  — scrollWidth 375 vs 375
+PASS renter receipt shows the green released stamp
+PASS /integrations/verify lists the rental's PayPal calls + read-back  — 68 rows
+PASS evidence pack renders hashes, model ids and PayPal debug ids
+
+18/18 checks passed · rental R-1024-3A9FC469
