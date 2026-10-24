@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 import api.index as api_index
 from jaminan import mcp_server as m
 from jaminan.paypal import Resp
+from jaminan.service import now
 from mcp.client import Client
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
@@ -258,11 +259,16 @@ def test_status_reads_paypal_without_changing_anything_and_has_a_budget(monkeypa
     assert svc.agent_status(r["id"], t)["paypal"]["status"] == "APPROVED"
     assert len(svc.calls(r["id"])) == ledger  # a polling agent never grows the rental's PayPal ledger
     monkeypatch.setattr(svc.pp, "get_order", lambda *a, **k: Resp(503, {"name": "SERVICE_UNAVAILABLE"}, "d", "x"))
+    assert svc.agent_status(r["id"], t)["paypal"]["status"] == "APPROVED"  # PayPal's answer is cached 10 s
+    svc.db.delete(f"agentread:{svc.get(r['id'])['order_id']}")  # ...then asked again
     down = svc.agent_status(r["id"], t)["paypal"]
     assert down["object"] == "order" and down["status"] is None and down["error"] == "SERVICE_UNAVAILABLE"
     assert svc.get(r["id"]) == before and before["state"] == "DRAFT"  # reads write nothing to the rental
-    svc.db.incr(f"budget:{r['id']}:status", by=120)
+    hour = now().strftime("%Y%m%d%H")
+    svc.db.incr(f"budget:{r['id']}:status:{hour}", by=120)
     assert code(svc.agent_status, r["id"], t) == "BUDGET"
+    svc.db.delete(f"budget:{r['id']}:status:{hour}")  # the allowance is per hour, not for the rental's life
+    assert svc.agent_status(r["id"], t)["paypal"]["object"] == "order"
 
 
 def test_quote_routes_validate_like_the_counter():

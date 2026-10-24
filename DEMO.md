@@ -85,6 +85,10 @@ or refund: no tool does it, and the agent never holds a key to the rental it boo
 curl -s "https://jaminan.edycu.dev/api/agent/rentals/R-1024-FA0400AA?t=vG8cd6f18tPt"
 ```
 
+The `paypal` part is PayPal's answer at the time you ask (cached 10 s). This sandbox hold was never picked up, so
+from its expiry on 2026-11-22 PayPal's answer is `EXPIRED`, not the `CREATED` recorded above. Reads are limited to
+120 a rental an hour.
+
 ## 5. Not shown, on purpose
 
 - **Vision accuracy.** There is no accuracy number anywhere in this repository because the benchmark on the staged scooter photo set has not run. The model has been shown only on AI-generated test images so far (§1).

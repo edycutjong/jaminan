@@ -32,7 +32,7 @@ JUDGE_VOID_AFTER_S = 2 * 3600
 LOCK_TTL_S = 130
 # Per rental: 8 pickup + 8 return angles, retakes, close-ups and a few taps fit far inside these. A key holder
 # scripting more cannot fill Redis (frames live until FRAME_EXPIRY) or spend the model balance.
-BUDGETS = {"upload": 64, "model": 120, "fine": 5, "status": 120}
+BUDGETS = {"upload": 64, "model": 120, "fine": 5, "status": 120}  # per rental; "status" per rental per hour
 # An agent booking's renter: a shape check no looser than PayPal's email_address (dot-atom local part, host names),
 # so an address PayPal would refuse (400 INVALID_PARAMETER_SYNTAX on "a,b@…" or "a..b@…", sandbox 2026-10-25) is
 # refused here, before a rental exists or the booking budget is spent. PayPal knows whether the account exists.
@@ -1125,15 +1125,23 @@ class Service:
         r = self.get(rid)
         if not (token and r.get("agent_token") and same_secret(token, r["agent_token"])):
             raise ServiceError(403, "FORBIDDEN", "reading a rental needs the status_token start_rental returned")
-        self._spend(rid, "status")  # 120 reads a rental; quiet, so a polling agent never grows the rental's ledger
+        # 120 reads a rental an hour: status tokens are published in evidence/mcp/, and a lifetime cap would let anyone
+        # close that read-back for good. Quiet (a polling agent never grows the rental's ledger), and PayPal's answer
+        # is cached 10 s, as /integrations/verify does, so a polling loop cannot flood PayPal.
+        if self.db.incr(f"budget:{rid}:status:{now():%Y%m%d%H}", ex=3600) > BUDGETS["status"]:
+            raise ServiceError(429, "BUDGET", "this rental's status was read 120 times this hour; try again later")
         out = self.agent_view(r)
         if r.get("authorization_id"):
-            res, obj = self.pp.get_authorization(r["authorization_id"], rid, quiet=True), "authorization"
+            obj, oid = "authorization", r["authorization_id"]
         elif r.get("order_id"):
-            res, obj = self.pp.get_order(r["order_id"], rid, quiet=True), "order"
+            obj, oid = "order", r["order_id"]
         else:
             return {**out, "paypal": None}
-        b = res.body if res.ok else {}
-        return {**out, "paypal": {"object": obj, "id": b.get("id"), "status": b.get("status"),
-                                  "amount": b.get("amount"), "expiration_time": b.get("expiration_time"),
-                                  "error": None if res.ok else res.issue}}
+        paypal = self.db.get_json(f"agentread:{oid}")
+        if paypal is None:
+            res = (self.pp.get_authorization if obj == "authorization" else self.pp.get_order)(oid, rid, quiet=True)
+            b = res.body if res.ok else {}
+            paypal = {"object": obj, "id": b.get("id"), "status": b.get("status"), "amount": b.get("amount"),
+                      "expiration_time": b.get("expiration_time"), "error": None if res.ok else res.issue}
+            self.db.set_json(f"agentread:{oid}", paypal, ex=10)
+        return {**out, "paypal": paypal}
