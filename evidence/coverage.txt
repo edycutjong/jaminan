@@ -17,18 +17,18 @@ TOTAL                    1675      0    492      0   100%
 ================ 226 passed, 9 deselected in 32.13s =================
 
 # Web unit tests (npm run test:unit, Vitest + v8, thresholds 100 on lib/)
- Test Files  3 passed (3)
-      Tests  26 passed (26)
-   Start at  20:52:48
-   Duration  1.17s (environment 83%, tests 8%, import 5%, worker 3%, transform 1%)
+ Test Files  4 passed (4)
+      Tests  31 passed (31)
+   Start at  01:30:25
+   Duration  1.21s (environment 84%, tests 6%, import 5%, worker 3%, transform 2%)
 
  % Coverage report from v8
 No files with missing coverage.
-3 files fully covered.
+4 files fully covered.
 
 =============================== Coverage summary ===============================
-Statements   : 100% ( 76/76 )
-Branches     : 100% ( 51/51 )
-Functions    : 100% ( 16/16 )
-Lines        : 100% ( 53/53 )
+Statements   : 100% ( 95/95 )
+Branches     : 100% ( 67/67 )
+Functions    : 100% ( 27/27 )
+Lines        : 100% ( 68/68 )
 ================================================================================

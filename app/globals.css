@@ -284,3 +284,20 @@ td.data, td .data { font-family: var(--font-data); font-size: 13px; }
   .spin { animation: none !important; border-right-color: currentColor; opacity: 0.6; }
   .skeleton { animation: none !important; }
 }
+
+/* /app/judge: the AI-generated test pair (evidence/generated-pair/) */
+.gp { margin-top: 40px; border-top: 1px solid var(--rule); padding-top: 22px; max-width: 980px; }
+.gp h2 { font-size: 26px; margin: 6px 0 8px; }
+.gp-chip { display: inline-block; font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 999px; border: 1.5px dashed var(--ink); color: var(--ink); background: var(--paper-2); margin: 0; }
+.gp-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin: 16px 0; }
+.gp-frame { margin: 0; }
+.gp-img { position: relative; border: 1.5px solid var(--ink); border-radius: 6px; overflow: hidden; }
+.gp-img img { display: block; width: 100%; height: auto; }
+.gp-box { position: absolute; border: 2.5px dashed var(--before); border-radius: 4px; }
+.gp-box b { position: absolute; top: 2px; left: 4px; font-size: 13px; background: var(--before); color: #fff; padding: 0 5px; border-radius: 3px; }
+.gp-frame figcaption { font-size: 14px; margin-top: 6px; }
+.gp-label { font-weight: 700; }
+.gp-claim { margin: 14px 0; }
+.gp-claim .kv dd { font-family: inherit; word-break: normal; }
+.gp-wrong { color: var(--charge); }
+@media (max-width: 640px) { .gp-pair { grid-template-columns: minmax(0, 1fr); } }

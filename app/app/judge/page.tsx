@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import Bar from "@/components/Bar";
 import Stub from "@/components/Stub";
+import GeneratedPair from "@/components/GeneratedPair";
 import RenterSettle from "@/components/flows/RenterSettle";
 import ShopReturn from "@/components/flows/ShopReturn";
 import Receipt from "@/components/flows/Receipt";
@@ -75,7 +76,8 @@ export default function Judge() {
           {err ? <div className="toast" role="alert">{err} · PayPal&apos;s answers from three recorded sandbox runs: <a href="/#money">on the landing page</a></div> : null}
           <p className="small" style={{ marginTop: 20 }}><Link href="/app/integrations/verify">Every PayPal call, live</Link></p>
         </div>
-      ) : (
+      ) : null}
+      {!r ? <GeneratedPair /> : (
         <div className="split">
           <div>
             <div className="row" style={{ marginTop: 12 }}>
