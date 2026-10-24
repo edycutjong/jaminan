@@ -27,7 +27,7 @@ export default function Close() {
                 <td className={x.match === "match" ? "st-ok" : x.match === "pending" ? "st-held" : "st-bad"}>{x.match}<br /><span className="small muted">{x.via === "read_back" ? "baca ulang" : "pencarian"}</span></td></tr>
             ))}</tbody>
           </table></div>
-          {d.complete === false ? <p className="small">Hanya 200 sewa terbaru yang diperiksa · <span className="caption-en">only the newest 200 rentals were checked; older ones from this day are not listed</span></p> : null}
+          {d.complete === false ? <p className="small">Hanya 200 sewa terbaru yang diperiksa; sewa lebih lama dari hari ini tidak ditampilkan · <span className="caption-en">only the newest 200 rentals were checked; older ones from this day are not listed</span></p> : null}
           <p className="small muted">Transaction Search HTTP {d.transaction_search_status}{d.transaction_search_issue ? ` · ${d.transaction_search_issue}` : ""} · {d.listed} transaksi tercatat</p>
         </>
       ) : d?.error ? <div className="toast">{d.error}</div> : null}
