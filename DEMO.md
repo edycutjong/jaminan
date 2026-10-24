@@ -24,7 +24,7 @@ The builder pointed two claims, and a script running the same crop, model-call a
 ([`evidence/generated-pair/`](evidence/generated-pair/README.md), request ids inside). The answers on screen are those
 recorded calls, not live ones:
 
-| Claim | True answer | Model read (all 3 calls) | App answer |
+| Claim | True answer | Model read (all 3 calls) | App's rules |
 |---|---|---|---|
 | C1 `front_fairing` / `dent` on the grey scuff | old: in the pickup image too | new since pickup (wrong) | comparison unavailable — nothing charged from the hold |
 | C2 `mirror` / `missing_part` on the mirror mounts | new: both mirrors gone | no missing mirror; a smudge elsewhere (wrong) | comparison unavailable — nothing charged from the hold |
@@ -86,7 +86,8 @@ curl -s "https://jaminan.edycu.dev/api/agent/rentals/R-1024-FA0400AA?t=vG8cd6f18
 ```
 
 The `paypal` part is PayPal's answer at the time you ask (cached 10 s). This sandbox hold was never picked up, so
-from its expiry on 2026-11-22 PayPal's answer is `EXPIRED`, not the `CREATED` recorded above. Reads are limited to
+once it expires on 2026-11-22, PayPal's answer is expected to change from the `CREATED` recorded above (an expired
+authorization reads `EXPIRED`). Reads are limited to
 120 a rental an hour.
 
 ## 5. Not shown, on purpose

@@ -44,7 +44,7 @@ export default function GeneratedPair() {
             <dt>True answer</dt><dd>{c.truth}</dd>
             <dt>Model read</dt><dd>{c.read} · <strong className={c.wrong ? "gp-wrong" : "st-ok"}>{c.tally}</strong></dd>
             <dt>Its reason</dt><dd>&ldquo;{c.rationale}&rdquo; <span className="muted">(the model calls these images photos)</span></dd>
-            <dt>Rules&apos; answer</dt><dd>{c.appAnswer} (no model is benchmarked yet)</dd>
+            <dt>App&apos;s rules</dt><dd>{c.appAnswer} (no model is benchmarked yet)</dd>
           </dl>
         </div>
       ))}

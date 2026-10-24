@@ -26,9 +26,10 @@ ANGLES = {1: "front", 2: "front-left three-quarter", 3: "left side", 4: "rear-le
 
 
 def _box(v: Any) -> list[float] | None:
-    """Corners in, [x, y, w, h] out. Asked for [x, y, w, h], qwen3-vl-plus answered in corners anyway: in all 12
-    recorded generated-pair calls its pickup box read as corners lands on the pointed spot at about its size, and read
-    as [x, y, w, h] covers half the image (evidence/generated-pair/run-2026-10-25*.json, before this parser)."""
+    """Corners in, [x, y, w, h] out. Asked for [x, y, w, h], qwen3-vl-plus answered in corners anyway: in all 6
+    recorded C1 calls on the generated pair its pickup box read as corners sits on the tapped scuff at about its size,
+    and read as [x, y, w, h] covers 36% of the search area off the scuff (evidence/generated-pair/run-2026-10-25*.json,
+    before this parser)."""
     if v is None:
         return None
     if not isinstance(v, (list, tuple)) or len(v) != 4:

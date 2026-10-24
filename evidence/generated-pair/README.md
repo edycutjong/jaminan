@@ -40,9 +40,10 @@ rule out before any model is pinned, and C2's miss of a missing part is the kind
 second weakness: the claim prompt asks about a "mark" at the tap, which fits a missing part badly. The prompt was not
 changed here, because tuning it on the only test pair would make the next result meaningless. Both findings feed the bench.
 
-**Boxes in these two run files (corrected 2026-10-25, after an outside code review).** The model's `pickup_bbox` values above were
-parsed as `[x, y, w, h]`, as the prompt then asked. Read that way, C1's box covers about half the search area. Read as
-corners `[x1, y1, x2, y2]`, the format Qwen-VL grounds in, it is a 200 × 240 box around the tapped scuff, and C2's is a
-small box low on the fairing. The model was answering in corners, so the parser (`jaminan/vision.py` `_box`) and the
-prompt now use corners. The readings, dispositions and prices in the table do not use the box, so none of them changes.
+**Boxes in these two run files (corrected 2026-10-25).** The model's `pickup_bbox` values above were parsed as
+`[x, y, w, h]`, as the prompt then asked. Read that way, C1's box `[0.38, 0.38, 0.58, 0.62]` covers 36% of the search
+area and is centred off the scuff. Read as corners `[x1, y1, x2, y2]`, it is a box of 200 × 240 on the 0–1000 grid of
+the search area, centred on the tapped scuff. C2's, read as corners, is a narrow, tall box (about 0.08 × 0.44 of its
+search area) that does not sit on the mirror mounts. C1's box fits corners, not `[x, y, w, h]`, so the parser
+(`jaminan/vision.py` `_box`) and the prompt now use corners. The readings, dispositions and prices in the table do not use the box, so none of them changes.
 The files are kept as recorded.

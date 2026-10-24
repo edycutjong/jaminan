@@ -18,10 +18,10 @@ const TRUTH: Record<string, string> = {
   old: "old: the same scuff is in the pickup image",
   new: "new: both mirrors are missing at return",
 };
-// Why the shop's claim reads as it does (from each claim's note in the recorded run).
+// Why each claim reads as it does (evidence/generated-pair/README.md).
 const WHY: Record<string, string> = {
   old: "The tariff has no scuff line on the fairing, so the shop names a dent: an over-claim on an old mark.",
-  new: "A missing part, asked about as a \u201cmark\u201d at the tap: the claim question fits it badly.",
+  new: "A missing part, asked about as a \u201cmark\u201d at the tap: the claim question may fit it badly.",
 };
 const READ: Record<string, string> = {
   old: "visible at pickup (old)",

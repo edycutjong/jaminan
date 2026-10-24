@@ -41,7 +41,7 @@ curl -s "https://jaminan.edycu.dev/api/agent/rentals/R-1024-FA0400AA?t=vG8cd6f18
   hold exists only after the renter logs in to PayPal and approves.
 
 The two holds were left open so the read-backs stay checkable. They are sandbox authorizations, and PayPal lists
-their expiry as 2026-11-22: from then on the same read-back returns PayPal's `EXPIRED`. Status reads are limited to
+their expiry as 2026-11-22: after that, the same read-back is expected to show PayPal's `EXPIRED`. Status reads are limited to
 120 a rental an hour, and PayPal's answer is cached 10 s.
 
 ## Reproduce

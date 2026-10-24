@@ -3,7 +3,7 @@
 Every test, PayPal and coverage number on the landing page, the pitch deck and the README comes from a file in this
 folder or from the test files it names. Recorded 2026-10-14 (UTC times inside each file), except
 `paypal-reauthorize.jsonl` (2026-10-23, local WIB times, UTC+7), `e2e-live.txt` (re-recorded 2026-10-24),
-`coverage.txt` and `test-run.txt` (re-recorded 2026-10-25 WIB, after the outside code review's fixes; the Vitest start time inside
+`coverage.txt` and `test-run.txt` (re-recorded 2026-10-25 WIB, after that day's fixes, commits c82aabe to cc25a9b; the Vitest start time inside
 is WIB) and `test-run-2026-10-24.txt` (2026-10-24 19:02 UTC, in a terminal recorder: the 235-test run the demo video's
 proof scene replays).
 
