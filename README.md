@@ -47,6 +47,12 @@ Jaminan replaces the passport with a PayPal authorization and replaces the argum
 
 ## 🏗️ Architecture & Tech Stack
 
+![Jaminan architecture](docs/architecture.png)
+
+*Every box names the file, route or endpoint behind it. Source: [`docs/architecture.html`](docs/architecture.html) ([live](https://jaminan.edycu.dev/architecture.html)).*
+
+<details><summary>Mermaid source</summary>
+
 ```mermaid
 flowchart LR
   R[Renter phone PWA] --> API
@@ -62,6 +68,8 @@ flowchart LR
   PP -- webhooks --> API
   L --> DB[(Upstash Redis jaminan:*)]
 ```
+
+</details>
 
 | Layer | Technology |
 |---|---|
