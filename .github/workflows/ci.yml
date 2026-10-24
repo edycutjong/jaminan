@@ -36,7 +36,7 @@ jobs:
       # The real-sandbox, live-Qwen and headless-browser tests need credentials and are run by hand
       # (see README); this is the offline suite: unit, contract, state-machine and the 23,040-case claim-decision sweep.
       - name: Tests + coverage (offline)
-        run: pytest -m "not sandbox and not live_model and not slow" --cov=jaminan --cov-report=term-missing --cov-report=xml --cov-fail-under=80
+        run: pytest -m "not sandbox and not live_model and not slow" --cov=jaminan --cov-branch --cov-report=term-missing --cov-report=xml --cov-fail-under=100
       - uses: actions/upload-artifact@v4
         with:
           name: api-coverage
@@ -44,7 +44,7 @@ jobs:
           retention-days: 7
 
   quality-web:
-    name: "Stage 1 · Quality · Web (eslint, tsc)"
+    name: "Stage 1 · Quality · Web (eslint, tsc, unit)"
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -56,6 +56,8 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+      - name: Unit tests + coverage (lib/, 100% gate)
+        run: npm run test:unit
 
   # ── Stage 2 · Security (parallel with Stage 1) ────────────
   security:
