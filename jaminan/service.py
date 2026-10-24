@@ -387,7 +387,8 @@ class Service:
                               f"Rental fee {rid}. Damage deposit stays on hold.", rental_id=rid, action="auth.capture.fee")
         if not cap.ok:
             raise ServiceError(502, "PAYPAL_CAPTURE_FAILED", str(PayPalError(cap)), debug_id=cap.debug_id)
-        self._to(r, "HELD", fee_capture_id=cap.body["id"], fee_captured_cents=r["fee_cents"], baseline_sha256=sha)
+        self._to(r, "HELD", fee_capture_id=cap.body["id"], fee_capture_status=cap.body.get("status"),
+                 fee_captured_cents=r["fee_cents"], baseline_sha256=sha)
         tracking = f"JMN-{rid}-{sha[:8]}"
         tr = self.pp.add_tracking(r["order_id"], cap.body["id"], tracking, rental_id=rid) if r.get("order_id") else None
         rb = self.pp.get_authorization(r["authorization_id"], rid)
@@ -573,11 +574,12 @@ class Service:
                 if not res.ok:
                     raise ServiceError(502, "PAYPAL_CAPTURE_FAILED", str(PayPalError(res)), debug_id=res.debug_id)
                 capture_id = res.body.get("id")
+            capture_status = None if plan.void else res.body.get("status")
             rb = self.pp.get_authorization(aid, rid)   # the stamp fires on PayPal's read-back, not ours
             read_back = rb.body.get("status")
             self._to(r, "RELEASED" if plan.void else "SETTLED")
             r["settlement"] = {"at": iso(), "void": plan.void, "capture_cents": plan.capture_cents,
-                               "capture_id": capture_id, "released_cents": r["deposit_cents"] - plan.capture_cents,
+                               "capture_id": capture_id, "capture_status": capture_status, "released_cents": r["deposit_cents"] - plan.capture_cents,
                                "auth_read_back": read_back, "debug_id": res.debug_id,
                                "tap_to_readback_ms": int((time.perf_counter() - t_tap) * 1000),
                                "accepted": [l["id"] for l in plan.accepted], "contested": [l["id"] for l in plan.contested],
@@ -749,16 +751,18 @@ class Service:
     def contest_fine(self, rid: str, key: str | None, fid: str) -> dict:
         r = self.get(rid)
         self.auth(r, key, "renter")
-        f = self.db.get_json(f"fine:{fid}")
-        if not f or f["rental_id"] != rid:
-            raise ServiceError(404, "NO_FINE", fid)
-        if f["status"] != "notified" or iso() > f["contest_until"]:
-            raise ServiceError(409, "NOT_CONTESTABLE", f"fine is {f['status']}")
-        f["status"], f["contested_at"] = "contested_invoiced", iso()
-        f["invoice_id"] = self._fine_invoice(r, f, "Traffic fine (e-TLE) during the rental, contested")
-        self.db.zrem("fines:due", fid)
-        self.db.set_json(f"fine:{fid}", f)
-        return f
+        with self.lock(fid):  # the lock capture_fine takes: a contest and the debit never interleave
+            f = self.db.get_json(f"fine:{fid}")
+            if not f or f["rental_id"] != rid:
+                raise ServiceError(404, "NO_FINE", fid)
+            if f["status"] != "notified" or iso() > f["contest_until"]:
+                raise ServiceError(409, "NOT_CONTESTABLE", f"fine is {f['status']}")
+            f["status"], f["contested_at"] = "contested_invoiced", iso()
+            self.db.zrem("fines:due", fid)
+            self.db.set_json(f"fine:{fid}", f)  # stored before the invoice calls, so the debit already sees it
+            f["invoice_id"] = self._fine_invoice(r, f, "Traffic fine (e-TLE) during the rental, contested")
+            self.db.set_json(f"fine:{fid}", f)
+            return f
 
     def _fine_invoice(self, r: dict, f: dict, name: str) -> str | None:
         res = self.pp.create_invoice(r["id"], f"JMN-{f['id']}-{r['nonce'][:4]}", r.get("payer_email"),
@@ -773,18 +777,20 @@ class Service:
         return inv
 
     def capture_fine(self, fid: str) -> dict:
-        f = self.db.get_json(f"fine:{fid}")
-        if not f or f["status"] != "notified":
-            return f or {}
-        r = self.get(f["rental_id"])
-        res = self.pp.create_vault_order(fid, r["vault_id"], f["quote"]["amount_cents"], "CAPTURE",
-                                         f"e-TLE traffic fine during rental {r['id']} (ticket sha256 {f['ticket_sha256'][:12]})", rental_id=r["id"])
-        cap = first_capture(res.body) if res.ok else None
-        f["status"] = "captured" if cap else "capture_failed"
-        f["capture_id"], f["captured_at"], f["debug_id"] = (cap or {}).get("id"), iso(), res.debug_id
-        self.db.zrem("fines:due", fid)
-        self.db.set_json(f"fine:{fid}", f)
-        return f
+        with self.lock(fid):
+            f = self.db.get_json(f"fine:{fid}")
+            if not f or f["status"] != "notified" or iso() < f["contest_until"]:
+                return f or {}
+            r = self.get(f["rental_id"])
+            res = self.pp.create_vault_order(fid, r["vault_id"], f["quote"]["amount_cents"], "CAPTURE",
+                                             f"e-TLE traffic fine during rental {r['id']} (ticket sha256 {f['ticket_sha256'][:12]})", rental_id=r["id"])
+            cap = first_capture(res.body) if res.ok else None
+            status = (cap or {}).get("status")  # a capture object can be PENDING or DECLINED, not only COMPLETED
+            f["status"] = {"COMPLETED": "captured", "PENDING": "capture_pending"}.get(status or "", "capture_failed")
+            f["capture_id"], f["capture_status"], f["captured_at"], f["debug_id"] = (cap or {}).get("id"), status, iso(), res.debug_id
+            self.db.zrem("fines:due", fid)
+            self.db.set_json(f"fine:{fid}", f)
+            return f
 
     def shop_rentals(self, shop_id: str, limit: int = 60) -> list[dict]:
         ids = self.db.zrange(f"shop:{shop_id}:rentals", 0, limit - 1, rev=True)

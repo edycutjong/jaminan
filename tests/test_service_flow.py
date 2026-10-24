@@ -251,8 +251,10 @@ def test_fine_is_quoted_then_captured_on_the_saved_wallet_after_the_contest_wind
     svc.db.set_json(f"rental:{rid}", {**svc.get(rid), "returned_at": "2100-01-01T00:00:00+00:00"})
     f = svc.create_fine(rid, k["shop"], frame_bytes(9), 900000)
     assert f["quote"]["chargeable"] and f["quote"]["capped"]
+    assert svc.capture_fine(f["id"])["status"] == "notified"       # never inside the 72 h contest window
+    svc.db.set_json(f"fine:{f['id']}", {**f, "contest_until": "2000-01-01T00:00:00+00:00"})
     out = svc.capture_fine(f["id"])
-    assert out["status"] == "captured" and out["capture_id"]
+    assert out["status"] == "captured" and out["capture_id"] and out["capture_status"] == "COMPLETED"
 
 
 def test_paypal_5xx_is_retried_with_the_same_request_id():
@@ -393,6 +395,46 @@ def test_a_tap_box_must_be_four_finite_numbers_and_a_retake_a_real_angle():
     with pytest.raises(ServiceError) as e:
         svc.request_retake(r["id"], r["keys"]["shop"], 9)
     assert e.value.code == "BAD_ANGLE"
+
+
+def _fined(svc):
+    rid, k = to_returned(svc)
+    svc.release(rid, k["shop"])
+    svc.db.set_json(f"rental:{rid}", {**svc.get(rid), "returned_at": "2100-01-01T00:00:00+00:00"})
+    return rid, k, svc.create_fine(rid, k["shop"], frame_bytes(9), 900000)
+
+
+def test_a_contest_is_stored_before_its_invoice_calls_so_the_daily_debit_skips_it():
+    svc = make()
+    rid, k, f = _fined(svc)
+    seen = {}
+
+    def invoice(r, fine, name):
+        seen["stored"] = svc.db.get_json(f"fine:{fine['id']}")["status"]
+        return "INV2-TEST"
+    svc._fine_invoice = invoice
+    out = svc.contest_fine(rid, k["renter"], f["id"])
+    assert seen["stored"] == "contested_invoiced" and out["invoice_id"] == "INV2-TEST"
+    svc.db.set_json(f"fine:{f['id']}", {**out, "contest_until": "2000-01-01T00:00:00+00:00"})
+    assert svc.capture_fine(f["id"])["status"] == "contested_invoiced"
+    assert not [c for c in svc.calls(rid) if c["action"] == "order.create.mit.capture"]
+
+
+def test_a_pending_fine_capture_is_not_reported_as_captured():
+    svc = make()
+    rid, k, f = _fined(svc)
+    svc.db.set_json(f"fine:{f['id']}", {**f, "contest_until": "2000-01-01T00:00:00+00:00"})
+    orig = svc.pp._route
+
+    def pending(m, p, b):
+        st, body = orig(m, p, b)
+        for pu in body.get("purchase_units") or []:
+            for c in (pu.get("payments") or {}).get("captures") or []:
+                c["status"] = "PENDING"
+        return st, body
+    svc.pp._route = pending
+    out = svc.capture_fine(f["id"])
+    assert out["status"] == "capture_pending" and out["capture_status"] == "PENDING"
 
 
 def test_a_pickup_photo_that_lands_after_the_handover_is_refused(monkeypatch):
