@@ -56,7 +56,7 @@ export default function Judge() {
     <main className="wrap wide">
       <Bar who="Judge" />
       {!r ? (
-        <div style={{ maxWidth: 560 }}>
+        <div style={{ maxWidth: 560, visibility: info ? "visible" : "hidden" }}>
           <h1 style={{ fontSize: 34 }}>{info?.staged_set ? <>You&apos;re the shop — tap what you&apos;d charge</> : <>You&apos;re the shop — hold the deposit, then release it</>}</h1>
           <p>One tap mints a fresh rental on the PayPal sandbox: a merchant-initiated <span className="data">AUTHORIZE</span> of fee + deposit on a saved sandbox wallet, the fee captured from the hold at handover. {info?.staged_set ? "Then you play the shop at the return counter, and the renter at settle." : "Then you release the hold at the return counter, and the stamp waits for PayPal's read-back."}</p>
           {info && !info.staged_set ? (
