@@ -89,9 +89,9 @@ class Store:
     def ltrim(self, key: str, start: int, stop: int) -> None:
         self._cmd("LTRIM", self.k(key), start, stop)
 
-    def incr(self, key: str, ex: int | None = None) -> int:
-        n = int(self._cmd("INCR", self.k(key)))
-        if ex and n == 1:
+    def incr(self, key: str, ex: int | None = None, by: int = 1) -> int:
+        n = int(self._cmd("INCRBY", self.k(key), int(by)))
+        if ex and n == by:
             self._cmd("EXPIRE", self.k(key), int(ex))
         return n
 
@@ -161,8 +161,8 @@ class MemoryStore(Store):
         if op == "EXPIRE":
             self.exp[rest[0]] = time.time() + int(rest[1])
             return 1
-        if op == "INCR":
-            v = int(self.data.get(rest[0], 0) if self._alive(rest[0]) else 0) + 1
+        if op in ("INCR", "INCRBY"):
+            v = int(self.data.get(rest[0], 0) if self._alive(rest[0]) else 0) + (int(rest[1]) if op == "INCRBY" else 1)
             self.data[rest[0]] = str(v)
             return v
         if op == "ZADD":

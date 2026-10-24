@@ -6,6 +6,7 @@ Upstash Redis under `jaminan:` (store.py), frames are JPEG ≤ 150 KB with a TTL
 """
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import json
 import math
@@ -28,6 +29,9 @@ JUDGE_VOID_AFTER_S = 2 * 3600
 # Longer than the function's maxDuration (vercel.json: 120 s): a held lock can only expire after its holder is gone,
 # never mid-capture (one PayPal write may take 3 × 30 s with retries).
 LOCK_TTL_S = 130
+# Per rental: 8 pickup + 8 return angles, retakes, close-ups and a few taps fit far inside these. A key holder
+# scripting more cannot fill Redis (frames live until FRAME_EXPIRY) or spend the model balance.
+BUDGETS = {"upload": 64, "model": 120, "fine": 5}
 # A void refused with these issues has nothing left to release (PayPal sandbox, read 2026-10-24).
 VOID_DONE = ("PREVIOUSLY_VOIDED", "PREVIOUSLY_CAPTURED")
 STAGED = Path(__file__).resolve().parents[1] / "fixtures" / "staged"
@@ -45,6 +49,17 @@ def now() -> datetime:
 
 def iso(t: datetime | None = None) -> str:
     return (t or now()).isoformat(timespec="seconds")
+
+
+def valid_box(b: Any, optional: bool = False) -> bool:
+    """[x, y, w, h], normalized: four finite numbers, the box inside the frame and not empty."""
+    if b is None:
+        return optional
+    if not isinstance(b, (list, tuple)) or len(b) != 4 or \
+            not all(isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) for v in b):
+        return False
+    x, y, w, h = (float(v) for v in b)
+    return 0 <= x < 1 and 0 <= y < 1 and 0 < w <= 1 and 0 < h <= 1
 
 
 def same_secret(given: str, want: str) -> bool:
@@ -238,6 +253,7 @@ class Service:
         if int(angle) not in ANGLES:
             raise ServiceError(422, "BAD_ANGLE", "a photo names one of the angles 1–8")
         self._photo_phase_open(r, phase)
+        self._spend(rid, "upload")
         res, jpeg = self._gate(data)
         if phase != "pickup_closeup" and not res.ok:
             return {"accepted": False, "gate": res.public()}
@@ -295,6 +311,7 @@ class Service:
             return c["id"], self.vision.locate_closeup(self.frame_required(r["photos"]["pickup"][str(angle)]["sha256"]),
                                                        self.frame_required(c["sha256"]), angle)
 
+        self._spend(rid, "model", len(ANGLES) + len(r["closeups"]))
         inspected = self._premark_inputs(r)
         with ThreadPoolExecutor(max_workers=8) as ex:
             marks = list(ex.map(mark_angle, ANGLES))
@@ -333,11 +350,14 @@ class Service:
             if r["state"] != "APPROVED":
                 raise ServiceError(409, "BASELINE_LOCKED", "the baseline is already confirmed")
             if action == "add":
-                if mark.get("damage_class") not in tariff.DAMAGE_CLASSES or int(mark.get("angle", 0)) not in ANGLES:
-                    raise ServiceError(422, "BAD_MARK", "a mark needs angle 1–8 and a damage class")
+                angle, part, bbox = mark.get("angle"), mark.get("part") or "other", mark.get("bbox")
+                if mark.get("damage_class") not in tariff.DAMAGE_CLASSES or not isinstance(angle, int) \
+                        or angle not in ANGLES or not isinstance(part, str) or not valid_box(bbox, optional=True):
+                    raise ServiceError(422, "BAD_MARK", "a mark needs angle 1–8, a damage class, a part name and "
+                                                        "an optional box [x, y, w, h] inside the frame")
                 r["baseline_marks"].append({"id": f"{role[0].upper()}{len(r['baseline_marks']) + 1}",
-                                            "angle": int(mark["angle"]), "part": mark.get("part", "other"),
-                                            "damage_class": mark["damage_class"], "bbox": mark.get("bbox"),
+                                            "angle": angle, "part": part,
+                                            "damage_class": mark["damage_class"], "bbox": bbox,
                                             "source": role, "confirmed": False, "removed": False})
             elif action == "remove":
                 m = next((x for x in r["baseline_marks"] if x["id"] == mark.get("id")), None)
@@ -431,6 +451,7 @@ class Service:
         self.auth(r, key, "shop")
         if r["state"] not in ("RETURNED", "CLAIMED"):
             raise ServiceError(409, "NOT_RETURNED", f"rental is {r['state']}")
+        self._spend(rid, "model", len(ANGLES))
         marks = [m for m in r["baseline_marks"] if m.get("confirmed")]
 
         def one(a: int):
@@ -483,6 +504,7 @@ class Service:
             raise ServiceError(422, "BAD_TAP", "a tap needs angle 1–8 and a box [x, y, w, h]")
         bbox = [min(max(float(v), 0.0), 1.0) for v in bbox]
         self._no_duplicate(r, angle, bbox, part, damage_class)
+        self._spend(rid, "model")
         pick, ret = r["photos"]["pickup"][str(angle)], r["photos"]["return"][str(angle)]
         ret_jpg, pick_jpg = self.frame_required(ret["sha256"]), self.frame_required(pick["sha256"])
         ret_crop, ret_region = gate.crop(ret_jpg, bbox, scale=2.0)
@@ -543,6 +565,8 @@ class Service:
     def decide_line(self, rid: str, key: str | None, line_id: str, decision: str) -> dict:
         if decision not in ("accepted", "contested"):
             raise ServiceError(422, "BAD_DECISION", "accepted or contested")
+        if self.get(rid).get("settle_intent"):
+            raise ServiceError(409, "SETTLING", "this settlement has already gone to PayPal; answers are final")
         with self.lock(rid):
             r = self.get(rid)
             self.auth(r, key, "renter")
@@ -568,13 +592,20 @@ class Service:
             if r["state"] != "PROPOSED" and not force:
                 raise ServiceError(409, "NOT_PROPOSED", "the shop has not sent its lines to the renter yet")
             tv = tariff.load(r["tariff_version_id"])
-            try:
-                plan = rules.settle_plan(fee_cents=r["fee_cents"], deposit_cents=r["deposit_cents"],
-                                         authorized_cents=r["authorized_cents"],
-                                         fee_captured_cents=r.get("fee_captured_cents", 0), lines=r["findings"],
-                                         tariff_price=tv.price, force=force)
-            except rules.SettleBlocked as e:
-                raise ServiceError(409, "SETTLE_BLOCKED", str(e)) from e
+            if r.get("settle_intent"):
+                # PayPal may already have this settle but our save was lost: replay the SAME plan, so the capture
+                # carries the same amount and therefore the same PayPal-Request-Id
+                plan = rules.SettlePlan(**r["settle_intent"]["plan"])
+            else:
+                try:
+                    plan = rules.settle_plan(fee_cents=r["fee_cents"], deposit_cents=r["deposit_cents"],
+                                             authorized_cents=r["authorized_cents"],
+                                             fee_captured_cents=r.get("fee_captured_cents", 0), lines=r["findings"],
+                                             tariff_price=tv.price, force=force)
+                except rules.SettleBlocked as e:
+                    raise ServiceError(409, "SETTLE_BLOCKED", str(e)) from e
+                r["settle_intent"] = {"plan": dataclasses.asdict(plan), "force": force, "at": iso()}
+                self._save(r)  # written before PayPal is called: from here the renter's answers are frozen
             aid = r["authorization_id"]
             t_tap = time.perf_counter()
             if plan.void:
@@ -690,7 +721,7 @@ class Service:
             r = self.get(rid)
             if r.get("reauthorized_at"):
                 return r
-            if r["state"] not in rules.OPEN_HOLD_STATES or r.get("settlement"):
+            if r["state"] not in rules.OPEN_HOLD_STATES or r.get("settlement") or r.get("settle_intent"):
                 raise ServiceError(409, "NOT_OPEN", f"rental is {r['state']}: there is no open hold to re-secure")
             old = r["authorization_id"]
             res = self.pp.reauthorize(old, r["deposit_cents"], rid)
@@ -721,6 +752,17 @@ class Service:
                 r["reauth_error"] = {"reauthorize": res.issue, "at": iso()}
             return self._save(r)
 
+    def _spend(self, rid: str, kind: str, n: int = 1) -> None:
+        if self.db.incr(f"budget:{rid}:{kind}", ex=60 * 86400, by=n) > BUDGETS[kind]:
+            raise ServiceError(429, "BUDGET", f"this rental has used its {kind} allowance")
+
+    def rate_limit_counter(self, ip: str) -> None:
+        """New counter rentals open real PayPal orders: 30 per address per hour, 500 per day in all."""
+        hour = now().strftime("%Y%m%d%H")
+        if self.db.incr(f"rl:rental:{hashlib.sha256(ip.encode()).hexdigest()[:16]}:{hour}", ex=3600) > 30 or \
+                self.db.incr(f"rl:rental:all:{now().strftime('%Y%m%d')}", ex=86400) > 500:
+            raise ServiceError(429, "RATE_LIMITED", "too many new rentals from here this hour; try again later")
+
     def _vault_usable(self, r: dict) -> bool:
         vid = r.get("vault_id")
         return bool(vid) and r.get("vault_status") != "DELETED" and not self.db.get_json(f"vault:deleted:{vid}")
@@ -748,6 +790,7 @@ class Service:
         self.auth(r, key, "shop")
         if r["state"] not in ("SETTLED", "RELEASED", "INVOICED", "CLOSED"):
             raise ServiceError(409, "RENTAL_OPEN", "fines attach to a returned, settled rental")
+        self._spend(rid, "fine")
         has_vault = self._vault_usable(r)
         tv = tariff.load(r["tariff_version_id"])
         res, jpeg = self._gate(image)
@@ -822,13 +865,26 @@ class Service:
             res = self.pp.create_vault_order(fid, r["vault_id"], f["quote"]["amount_cents"], "CAPTURE",
                                              f"e-TLE traffic fine during rental {r['id']} (ticket sha256 {f['ticket_sha256'][:12]})", rental_id=r["id"])
             cap = first_capture(res.body) if res.ok else None
-            if not cap:  # the saved wallet could not be charged at all: the renter gets the itemized invoice instead
+            if not cap and res.status >= 500:
+                # no answer after the client's retries: PayPal may or may not have charged. Never invoice on top of a
+                # possible charge, never retry blind on another day: the shop checks PayPal for this one
+                f.update(status="capture_unknown", capture_issue=res.issue, debug_id=res.debug_id, attempted_at=iso())
+                self.db.zrem("fines:due", fid)
+                self.db.set_json(f"fine:{fid}", f)
+                return f
+            if not cap:  # PayPal refused the saved wallet: the renter gets the itemized invoice instead
                 f.update(status="invoiced", capture_issue=res.issue, debug_id=res.debug_id,
                          invoice_id=self._fine_invoice(r, f, "Traffic fine (e-TLE) during the rental"))
                 self.db.zrem("fines:due", fid)
                 self.db.set_json(f"fine:{fid}", f)
                 return f
             status = cap.get("status")  # a capture object can be PENDING or DECLINED, not only COMPLETED
+            if status in ("DECLINED", "FAILED"):  # PayPal answered no: the renter gets the itemized invoice instead
+                f.update(status="invoiced", capture_status=status, capture_id=cap.get("id"), debug_id=res.debug_id,
+                         invoice_id=self._fine_invoice(r, f, "Traffic fine (e-TLE) during the rental"))
+                self.db.zrem("fines:due", fid)
+                self.db.set_json(f"fine:{fid}", f)
+                return f
             f["status"] = {"COMPLETED": "captured", "PENDING": "capture_pending"}.get(status or "", "capture_failed")
             f["capture_id"], f["capture_status"], f["captured_at"], f["debug_id"] = (cap or {}).get("id"), status, iso(), res.debug_id
             self.db.zrem("fines:due", fid)
@@ -916,7 +972,10 @@ class Service:
                 guarded("reauth", r["id"], lambda rid: self.reauthorize(rid).get("reauth_method"), r["id"])
             elif rules.expiry_guard_due(r["state"], age_days) and not r.get("settlement"):
                 guarded("expiry_void", r["id"], expiry_void, r["id"])
-        out["judge_void"] = self.judge_void_sweep()
+        try:
+            out["judge_void"] = self.judge_void_sweep()
+        except Exception as e:
+            out["errors"].append({"kind": "judge_void", "ref": "sweep", "error": getattr(e, "code", type(e).__name__)})
         for fid in self.db.zrangebyscore("fines:due", 0, time.time()):
             guarded("fines", fid, lambda f: self.capture_fine(f).get("status"), fid)
         try:
@@ -942,7 +1001,11 @@ class Service:
                     done.append(rid)
             except ServiceError as e:
                 if e.code != "RENTAL_NOT_FOUND":
-                    continue  # the void failed: stay tracked, the next sweep tries again
+                    self.db.zadd("judge:open", time.time(), rid)  # stays tracked, behind the others: never pins the queue
+                    continue
+            except Exception:  # someone else's stale hold must never fail this judge's request (or the daily job)
+                self.db.zadd("judge:open", time.time(), rid)
+                continue
             self.db.zrem("judge:open", rid)
         return done
 

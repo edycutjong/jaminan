@@ -72,3 +72,17 @@ def test_a_thumbnail_is_too_small_even_though_it_is_widened_to_1280():
     rng = np.random.default_rng(3)
     res, _ = gate.check(jpeg(rng.integers(0, 255, size=(240, 320, 3))))
     assert res.reason == "too_small"
+
+
+def test_a_crop_centred_off_the_frame_stays_inside_it_and_exotic_formats_are_refused():
+    rng = np.random.default_rng(5)
+    data = jpeg(rng.integers(0, 255, size=(960, 1280, 3)))
+    out, region = gate.crop(data, [5, 5, 0.1, 0.1])
+    assert out and all(0 <= v <= 1 for v in region)
+    gif = io.BytesIO()
+    Image.new("RGB", (1280, 960)).save(gif, "GIF")
+    try:
+        gate.check(gif.getvalue())
+    except gate.NotAnImage:
+        return
+    raise AssertionError("a GIF went through the gate")

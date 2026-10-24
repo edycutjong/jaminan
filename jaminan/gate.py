@@ -59,7 +59,7 @@ class GateResult:
 def normalize(data: bytes) -> tuple[Image.Image, tuple[int, int]]:
     """The frame widened/narrowed to 1280 px, and the source size (the gate's too_small reads the source)."""
     try:
-        opened = Image.open(io.BytesIO(data))
+        opened = Image.open(io.BytesIO(data), formats=("JPEG", "PNG", "WEBP"))  # phone frames only, no exotic decoders
         w, h = opened.size
         if w * h > MAX_SOURCE_PIXELS:
             raise NotAnImage(f"{w}×{h} is over {MAX_SOURCE_PIXELS // 1_000_000} MP")
@@ -67,7 +67,7 @@ def normalize(data: bytes) -> tuple[Image.Image, tuple[int, int]]:
             raise NotAnImage(f"{w}×{h} is not a photo of a scooter (aspect beyond 1:{MAX_ASPECT:g})")
         img = ImageOps.exif_transpose(opened).convert("RGB")
         source = img.size
-    except (UnidentifiedImageError, Image.DecompressionBombError, OSError) as e:
+    except (UnidentifiedImageError, Image.DecompressionBombError, OSError, ValueError) as e:
         raise NotAnImage("not a readable image") from e
     if img.width != WIDTH:
         img = img.resize((WIDTH, max(1, round(img.height * WIDTH / img.width))), Image.Resampling.LANCZOS)
@@ -127,7 +127,7 @@ def crop(jpeg: bytes, bbox: list[float], scale: float = 1.0, min_px: int = 192) 
     the normalized region actually cropped, so a box the model returns inside it maps back to the frame."""
     img = Image.open(io.BytesIO(jpeg)).convert("RGB")
     x, y, bw, bh = bbox
-    cx, cy = x + bw / 2, y + bh / 2
+    cx, cy = min(max(x + bw / 2, 0.0), 1.0), min(max(y + bh / 2, 0.0), 1.0)  # a centre off the frame never inverts the box
     bw, bh = bw * scale, bh * scale
     bw, bh = max(bw, min_px / img.width), max(bh, min_px / img.height)
     x0, y0 = max(0.0, cx - bw / 2), max(0.0, cy - bh / 2)

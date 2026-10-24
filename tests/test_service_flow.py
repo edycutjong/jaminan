@@ -497,8 +497,11 @@ def test_a_judge_hold_whose_void_fails_stays_tracked_until_a_sweep_voids_it():
     orig = svc.pp._route
     svc.pp._route = lambda m, p, b: ((422, {"name": "UNPROCESSABLE_ENTITY", "details": [{"issue": "PERMISSION_DENIED"}]})
                                      if p.endswith(f"{aid}/void") else orig(m, p, b))
-    assert svc.judge_void_sweep() == [] and r["id"] in svc.db.zrangebyscore("judge:open", 0, 2.0)
+    assert svc.judge_void_sweep() == []
+    assert r["id"] in svc.db.zrangebyscore("judge:open", 0, time.time() + 1)      # still tracked …
+    assert r["id"] not in svc.db.zrangebyscore("judge:open", 0, 2.0)              # … but behind the others now
     svc.pp._route = orig
+    svc.db.zadd("judge:open", 1.0, r["id"])                                       # its turn comes round again
     assert svc.judge_void_sweep() == [r["id"]] and svc.pp.auths[aid]["status"] == "VOIDED"
 
 
@@ -631,3 +634,96 @@ def test_daily_close_reads_every_transaction_search_page_and_flags_a_partial_sca
     many = [{"id": f"R-{i}", "created_at": iso()} for i in range(200)]
     svc.shop_rentals = lambda shop_id, limit=60: many
     assert svc.daily_close()["complete"] is False
+
+
+def _proposed_with_a_line(svc):
+    vision = svc.vision
+    rid, k = to_returned(svc)
+    line = svc.claim(rid, k["shop"], 2, [0.4, 0.4, 0.1, 0.1], "mirror_housing", "crack")["finding"]
+    assert line["disposition"] == "chargeable", line
+    svc.propose(rid, k["shop"])
+    svc.decide_line(rid, k["renter"], line["id"], "accepted")
+    return rid, k, line, vision
+
+
+def test_a_settle_lost_after_paypal_answered_replays_the_same_capture_and_freezes_the_answers():
+    svc = make()
+    rid, k, line, _ = _proposed_with_a_line(svc)
+    real = svc.pp.get_authorization
+    calls = {"n": 0}
+
+    def crash_once(aid, rental_id=None, quiet=False):          # the function dies right after the capture
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("killed at maxDuration")
+        return real(aid, rental_id, quiet)
+    svc.pp.get_authorization = crash_once
+    with pytest.raises(RuntimeError):
+        svc.settle(rid, k["renter"])
+    with pytest.raises(ServiceError) as e:
+        svc.decide_line(rid, k["renter"], line["id"], "contested")
+    assert e.value.code == "SETTLING"
+    r = svc.settle(rid, k["renter"])
+    caps = [c for c in svc.calls(rid) if c["action"] == "auth.capture.final"]
+    assert r["state"] == "SETTLED" and len({c["request_id"] for c in caps}) == 1
+    assert r["settlement"]["capture_cents"] == line["price_cents"]
+
+
+def test_a_stale_judge_hold_that_crashes_never_fails_the_next_judges_mint():
+    svc = make(JUDGE_VAULT_IDS="vault-ok")
+    old = svc.mint_judge("7.7.7.7")
+    svc.db.zadd("judge:open", 1.0, old["id"])
+    real = svc.settle
+    svc.settle = lambda rid, key, force=False: (_ for _ in ()).throw(RuntimeError("token endpoint down")) \
+        if rid == old["id"] else real(rid, key, force)
+    fresh = svc.mint_judge("8.8.8.8")
+    assert fresh["id"] != old["id"] and old["id"] in svc.db.zrangebyscore("judge:open", 0, time.time() + 1)
+
+
+def test_a_rental_has_an_upload_and_model_budget():
+    svc = make()
+    r = svc.create_rental("shop-demo", "veh-01", 1)
+    svc.approve(r["id"]); svc.authorize(r["id"])
+    svc.db.incr(f"budget:{r['id']}:upload", by=64)
+    with pytest.raises(ServiceError) as e:
+        svc.add_photo(r["id"], r["keys"]["renter"], "pickup", 1, frame_bytes(1))
+    assert e.value.status == 429 and e.value.code == "BUDGET"
+
+
+def test_a_mark_is_validated_and_a_missing_part_never_breaks_the_confirm():
+    svc = make()
+    r = svc.create_rental("shop-demo", "veh-01", 1)
+    rid, k = r["id"], r["keys"]
+    svc.approve(rid); svc.authorize(rid)
+    for a in range(1, 9):
+        svc.add_photo(rid, k["renter"], "pickup", a, frame_bytes(a))
+    for bad in ({"angle": "abc", "damage_class": "dent"}, {"angle": 1, "damage_class": "dent", "bbox": [5, 5, .1, .1]},
+                {"angle": 1, "damage_class": "dent", "part": 7}):
+        with pytest.raises(ServiceError) as e:
+            svc.edit_mark(rid, k["shop"], "add", bad)
+        assert e.value.code == "BAD_MARK"
+    svc.edit_mark(rid, k["shop"], "add", {"angle": 1, "damage_class": "dent", "part": None})
+    svc.edit_mark(rid, k["renter"], "add", {"angle": 1, "damage_class": "dent", "part": "side_panel"})
+    svc.confirm_baseline(rid, k["renter"])
+    assert svc.confirm_baseline(rid, k["shop"])["state"] == "OUT"
+
+
+def test_a_fine_paypal_declines_is_invoiced_and_an_unanswered_one_is_never_retried_blind():
+    svc = make()
+    rid, k, f = _fined(svc)
+    svc.db.set_json(f"fine:{f['id']}", {**f, "contest_until": "2000-01-01T00:00:00+00:00"})
+    orig = svc.pp._route
+
+    def declined(m, p, b):
+        st, body = orig(m, p, b)
+        for pu in body.get("purchase_units") or []:
+            for c in (pu.get("payments") or {}).get("captures") or []:
+                c["status"] = "DECLINED"
+        return st, body
+    svc.pp._route = declined
+    assert svc.capture_fine(f["id"])["status"] == "invoiced"
+    rid2, k2, f2 = _fined(svc)
+    svc.db.set_json(f"fine:{f2['id']}", {**f2, "contest_until": "2000-01-01T00:00:00+00:00"})
+    svc.pp._route = lambda m, p, b: (503, {"name": "SERVICE_UNAVAILABLE"}) if p == "/v2/checkout/orders" else orig(m, p, b)
+    out = svc.capture_fine(f2["id"])
+    assert out["status"] == "capture_unknown" and not out.get("invoice_id") and f2["id"] not in svc.db.zrangebyscore("fines:due", 0, 1e12)

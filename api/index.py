@@ -1,7 +1,6 @@
 """Jaminan API — FastAPI, served as a Vercel Python function under /api/*."""
 from __future__ import annotations
 
-import math
 import os
 import sys
 import time
@@ -19,7 +18,7 @@ from pydantic import BaseModel  # noqa: E402
 from jaminan import gate, paypal, store, tariff, vision  # noqa: E402
 from jaminan.config import Settings, load_local_env  # noqa: E402
 from jaminan.rules import IllegalTransition  # noqa: E402
-from jaminan.service import Service, ServiceError, iso, same_secret  # noqa: E402
+from jaminan.service import Service, ServiceError, iso, same_secret, valid_box  # noqa: E402
 
 if not os.environ.get("VERCEL"):
     load_local_env()
@@ -96,7 +95,8 @@ class NewRental(BaseModel):
 
 
 @app.post("/api/shops/{shop_id}/rentals")
-def new_rental(shop_id: str, body: NewRental):
+def new_rental(shop_id: str, body: NewRental, req: Request):
+    svc().rate_limit_counter(client_ip(req))
     r = svc().create_rental(shop_id, body.vehicle_id, body.days)
     return {**svc().view(r, "shop"), "shop_key": r["keys"]["shop"]}
 
@@ -284,8 +284,8 @@ def frame(sha: str, bbox: str | None = None, scale: float = 1.0):
             box = [float(x) for x in bbox.split(",")]
         except ValueError:
             box = []
-        if len(box) != 4 or not all(math.isfinite(v) for v in box):
-            raise ServiceError(400, "BAD_BBOX", "bbox is four numbers: x,y,w,h")
+        if not valid_box(box):
+            raise ServiceError(400, "BAD_BBOX", "bbox is x,y,w,h inside the frame (0–1)")
         data, _ = gate.crop(data, box, scale=max(1.0, min(scale, 6.0)))
     return Response(data, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=86400, immutable"})
 

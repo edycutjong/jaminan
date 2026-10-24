@@ -127,3 +127,19 @@ def test_a_webhook_without_paypal_signature_headers_never_calls_paypal_verify():
         api_index._svc = None
     assert bare.json()["verified"] is False and verifies == 0
     assert len([x for x in svc.calls() if x["action"] == "webhook.verify"]) == 1
+
+
+def test_counter_rentals_are_rate_limited_and_an_off_frame_crop_is_a_400():
+    svc = make()
+    jpeg = frame_bytes(2)
+    import hashlib
+    sha = hashlib.sha256(jpeg).hexdigest()
+    svc.db.set_bytes(f"frame:{sha}", jpeg)
+    try:
+        c = client_for(svc)
+        codes = [c.post("/api/shops/shop-demo/rentals", json={"vehicle_id": "veh-01"}).status_code for _ in range(31)]
+        off = c.get(f"/api/frames/{sha}", params={"bbox": "5,5,0.1,0.1"})
+    finally:
+        api_index._svc = None
+    assert codes[:30] == [200] * 30 and codes[30] == 429
+    assert off.status_code == 400 and off.json()["error"] == "BAD_BBOX"
