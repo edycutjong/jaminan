@@ -64,14 +64,18 @@ class FakePayPal(PayPal):
         if m:
             oid, tail = m.groups()
             if tail == "/authorize":
+                if self.orders[oid]["status"] != "APPROVED":
+                    return 422, {"name": "UNPROCESSABLE_ENTITY", "details": [{"issue": "ORDER_ALREADY_AUTHORIZED"}]}
                 a = self._auth(self.orders[oid]["amount"])
-                return 201, {"id": oid, "status": "COMPLETED", "payment_source": {"paypal": {
+                body = {"id": oid, "status": "COMPLETED", "payment_source": {"paypal": {
                     "email_address": "buyer@example.com",
                     "attributes": {"vault": {"id": "vault-1", "status": "VAULTED", "customer": {"id": "cust-1"}}}}},
                     "purchase_units": [{"payments": {"authorizations": [dict(a)]}}]}
+                self.orders[oid] = {**self.orders[oid], "status": "COMPLETED", "body": body}  # as PayPal: COMPLETED after
+                return 201, body
             if tail == "/track":
                 return 201, {"id": oid}
-            return 200, {"id": oid, "status": self.orders[oid]["status"]}
+            return 200, self.orders[oid].get("body") or {"id": oid, "status": self.orders[oid]["status"]}
         m = re.match(r"/v2/payments/authorizations/(\w+)(/capture|/void|/reauthorize)?$", path)
         if m:
             aid, tail = m.groups()
@@ -98,7 +102,9 @@ class FakePayPal(PayPal):
         if path.endswith("/send"):
             return 200, {"links": [{"rel": "payer-view", "href": "https://www.sandbox.paypal.com/invoice/p/#x"}]}
         if path.endswith("/generate-qr-code"):
-            return 200, {"raw": "iVBORw0KGgo="}
+            # the real answer's shape (sandbox, 2026-10-24): multipart/form-data, the PNG as base64 in the "image" part
+            return 200, {"raw": "--b22b\r\nContent-Disposition: form-data; name=\"image\"\r\nContent-Type: text/plain\r\n\r\n"
+                                "iVBORw0KGgoAAAANSUhEUgAAAAE=\r\n--b22b--"}
         m = re.match(r"/v2/payments/captures/(\w+)$", path)
         if m:
             return 200, {"id": m.group(1), "status": "COMPLETED"}

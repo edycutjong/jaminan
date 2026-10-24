@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import re
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -128,7 +129,7 @@ class PayPal:
         try:
             data = r.json() if r.content else {}
         except ValueError:
-            data = {"raw": r.text[:500]}
+            data = {"raw": r.text[:65536]}  # generate-qr-code answers multipart/form-data, not JSON
         return r.status_code, data, r.headers.get("Paypal-Debug-Id")
 
     # -- Orders v2 -----------------------------------------------------------------------------
@@ -269,6 +270,14 @@ def first_capture(order_body: dict[str, Any]) -> dict[str, Any] | None:
     pu = (order_body.get("purchase_units") or [{}])[0]
     caps = (pu.get("payments") or {}).get("captures") or []
     return caps[0] if caps else None
+
+
+def qr_png_b64(raw: str) -> str | None:
+    """generate-qr-code returns multipart/form-data whose "image" part is the PNG as base64 text (sandbox,
+    2026-10-24): take that part, never the envelope."""
+    m = re.search(r'name="image".*?\r?\n\r?\n(.*?)\r?\n--', raw, re.S)
+    b64 = re.sub(r"\s", "", m.group(1) if m else raw)
+    return b64 if b64.startswith("iVBOR") else None
 
 
 def vault_of(order_body: dict[str, Any]) -> dict[str, Any]:

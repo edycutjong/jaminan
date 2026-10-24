@@ -238,7 +238,7 @@ class FineQuote:
     capped: bool = False
 
 
-def fine_quote(*, plate_read: str | None, rental_plate: str, ticket_time: str | None, pickup_at: str,
+def fine_quote(*, plate_read: str | None, rental_plate: str, ticket_time: str | None, pickup_at: str | None,
                return_at: str | None, violation_read: str | None, ceilings: dict[str, tuple[str, int]],
                ticket_amount_idr: int, idr_per_usd: float, admin_fee_cents: int) -> FineQuote:
     """Fine is chargeable iff plate matches AND ticket time is inside the rental window; amount =

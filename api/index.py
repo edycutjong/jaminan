@@ -4,6 +4,7 @@ from __future__ import annotations
 import math
 import os
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -11,12 +12,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from fastapi import FastAPI, File, Form, Header, Request, UploadFile  # noqa: E402
 from fastapi.concurrency import run_in_threadpool  # noqa: E402
+from fastapi.exceptions import RequestValidationError  # noqa: E402
 from fastapi.responses import JSONResponse, Response  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
 from jaminan import gate, paypal, store, tariff, vision  # noqa: E402
 from jaminan.config import Settings, load_local_env  # noqa: E402
-from jaminan.service import Service, ServiceError, iso  # noqa: E402
+from jaminan.rules import IllegalTransition  # noqa: E402
+from jaminan.service import Service, ServiceError, iso, same_secret  # noqa: E402
 
 if not os.environ.get("VERCEL"):
     load_local_env()
@@ -36,6 +39,19 @@ def svc() -> Service:
 @app.exception_handler(ServiceError)
 async def service_error(_: Request, e: ServiceError):
     return JSONResponse({"error": e.code, "message": e.message, **e.extra}, status_code=e.status)
+
+
+@app.exception_handler(IllegalTransition)
+async def illegal_transition(_: Request, e: IllegalTransition):
+    # a repeated tap (RETURNED → RETURNED) is a conflict to show, not a crash
+    return JSONResponse({"error": "ILLEGAL_TRANSITION", "message": str(e)}, status_code=409)
+
+
+@app.exception_handler(RequestValidationError)
+async def bad_request(_: Request, e: RequestValidationError):
+    # the same {error, message} shape as every other refusal, so the client never prints "[object Object]"
+    msg = "; ".join(f"{'.'.join(str(x) for x in err.get('loc', [])[1:]) or 'body'}: {err.get('msg')}" for err in e.errors())
+    return JSONResponse({"error": "BAD_REQUEST", "message": msg}, status_code=422)
 
 
 Key = Header(default=None, alias="X-Jaminan-Key")
@@ -240,7 +256,8 @@ def evidence(rid: str, t: str | None = None, key: str | None = Key):
 
 
 @app.post("/api/rentals/{rid}/fines")
-def fine(rid: str, ticket_amount_idr: int = Form(...), file: UploadFile = File(...), key: str | None = Key):
+def fine(rid: str, ticket_amount_idr: int = Form(..., gt=0, le=100_000_000), file: UploadFile = File(...),
+         key: str | None = Key):
     return svc().create_fine(rid, key, read_upload(file), ticket_amount_idr)
 
 
@@ -344,11 +361,12 @@ def judge(req: Request):
 
 
 @app.post("/api/judge/full")
-def judge_full():
+def judge_full(req: Request):
     s = svc()
+    s.rate_limit_judge(client_ip(req))  # the same budget as /api/judge: each one opens a real PayPal order
     r = s.create_rental("shop-demo", "veh-01", 1, kind="judge_full")
     out = s.approve(r["id"])
-    s.db.zadd("judge:open", __import__("time").time(), r["id"])
+    s.db.zadd("judge:open", time.time(), r["id"])
     return {"id": r["id"], **out, "shop_key": r["keys"]["shop"], "renter_key": r["keys"]["renter"]}
 
 
@@ -383,7 +401,7 @@ def health_judge(req: Request):
 @app.get("/api/cron/daily")
 def cron(authorization: str | None = Header(default=None)):
     s = svc()
-    if not s.s.cron_secret or authorization != f"Bearer {s.s.cron_secret}":
+    if not s.s.cron_secret or not same_secret(authorization or "", f"Bearer {s.s.cron_secret}"):
         raise ServiceError(401, "UNAUTHORIZED", "cron only")
     return s.cron_daily()
 
@@ -391,7 +409,7 @@ def cron(authorization: str | None = Header(default=None)):
 @app.post("/api/admin/reauthorize/{rid}")
 def admin_reauth(rid: str, authorization: str | None = Header(default=None)):
     s = svc()
-    if not s.s.cron_secret or authorization != f"Bearer {s.s.cron_secret}":
+    if not s.s.cron_secret or not same_secret(authorization or "", f"Bearer {s.s.cron_secret}"):
         raise ServiceError(401, "UNAUTHORIZED", "admin only")
     r = s.reauthorize(rid)
     return {k: r.get(k) for k in ("id", "authorization_id", "reauthorized_at", "reauth_method", "reauth_refusal",

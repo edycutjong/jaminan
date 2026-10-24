@@ -1,10 +1,12 @@
 """The whole rental through the service with an in-memory PayPal and a scripted model: approval →
 baseline → return → claims → settle, plus every refusal on the way."""
+from datetime import timedelta
+
 import pytest
 
 from jaminan import gate
 from jaminan.config import Settings
-from jaminan.service import Service, ServiceError, age_s
+from jaminan.service import Service, ServiceError, age_s, iso, now
 from jaminan.store import MemoryStore
 from tests.fakes import FakePayPal, ScriptedVision, frame_bytes
 
@@ -473,3 +475,78 @@ def test_premark_results_never_land_on_a_baseline_that_changed_during_the_model_
     with pytest.raises(ServiceError) as e:
         svc.premark(rid, k["renter"])
     assert e.value.code == "PHOTOS_CHANGED" and not [m for m in svc.get(rid)["baseline_marks"] if m["source"] == "model"]
+
+
+def test_an_order_paypal_already_authorized_is_resumed_not_refused():
+    svc = make()
+    r = svc.create_rental("shop-demo", "veh-01", 1)
+    svc.approve(r["id"])
+    first = svc.authorize(r["id"])
+    svc.db.set_json(f"rental:{r['id']}", {**r, "state": "DRAFT", "order_id": first["order_id"]})  # the save was lost
+    again = svc.authorize(r["id"])
+    assert again["state"] == "APPROVED" and again["authorization_id"] == first["authorization_id"]
+    assert len([c for c in svc.calls(r["id"]) if c["action"] == "order.authorize"]) == 1
+
+
+def test_a_judge_hold_whose_void_fails_stays_tracked_until_a_sweep_voids_it():
+    svc = make(JUDGE_VAULT_IDS="vault-ok")
+    r = svc.mint_judge("5.5.5.5")
+    aid = r["authorization_id"]
+    svc.db.zadd("judge:open", 1.0, r["id"])                     # older than the 2 h judge window
+    orig = svc.pp._route
+    svc.pp._route = lambda m, p, b: ((422, {"name": "UNPROCESSABLE_ENTITY", "details": [{"issue": "PERMISSION_DENIED"}]})
+                                     if p.endswith(f"{aid}/void") else orig(m, p, b))
+    assert svc.judge_void_sweep() == [] and r["id"] in svc.db.zrangebyscore("judge:open", 0, 2.0)
+    svc.pp._route = orig
+    assert svc.judge_void_sweep() == [r["id"]] and svc.pp.auths[aid]["status"] == "VOIDED"
+
+
+def test_one_failing_rental_does_not_stop_the_daily_job():
+    svc = make()
+    a, _ = to_out(svc)
+    b, _ = to_out(svc)
+    for rid in (a, b):
+        svc.db.set_json(f"rental:{rid}", {**svc.get(rid), "auth_created_at": iso(now() - timedelta(days=5))})
+    real = svc.reauthorize
+
+    def reauth(rid):
+        if rid == a:
+            raise ServiceError(502, "PAYPAL_DOWN", "x")
+        return real(rid)
+    svc.reauthorize = reauth
+    out = svc.cron_daily()
+    assert out["errors"] == [{"kind": "reauth", "ref": a, "error": "PAYPAL_DOWN"}]
+    assert out["reauth"] == ["mit_resecure"] and "close" in out
+
+
+def test_a_fine_after_a_release_from_out_is_outside_the_rental_and_never_chargeable():
+    svc = make()
+    rid, k = to_out(svc)
+    svc.release(rid, k["shop"])                                   # released while out: no returned_at
+    f = svc.create_fine(rid, k["shop"], frame_bytes(9), 900000)   # the scripted ticket is dated 2099
+    assert not f["quote"]["chargeable"] and f["status"] == "not_chargeable"
+
+
+def test_a_fine_on_a_wallet_removed_in_the_window_becomes_the_promised_invoice():
+    svc = make()
+    rid, k, f = _fined(svc)
+    svc.db.set_json(f"rental:{rid}", {**svc.get(rid), "vault_status": "DELETED"})
+    svc.db.set_json(f"fine:{f['id']}", {**f, "contest_until": "2000-01-01T00:00:00+00:00"})
+    out = svc.capture_fine(f["id"])
+    assert out["status"] == "invoiced" and out["invoice_id"] and not out.get("capture_id")
+
+
+def test_reauthorize_refuses_a_settled_rental():
+    svc = make()
+    rid, k = to_returned(svc)
+    svc.release(rid, k["shop"])
+    with pytest.raises(ServiceError) as e:
+        svc.reauthorize(rid)
+    assert e.value.code == "NOT_OPEN"
+
+
+def test_the_invoice_qr_is_the_png_inside_paypals_multipart_answer():
+    from jaminan.paypal import qr_png_b64
+    raw = ('--b22b\r\nContent-Disposition: form-data; name="image"\r\nContent-Type: text/plain\r\n\r\n'
+           'iVBORw0KGgoAAAA\r\nNSUhEUg==\r\n--b22b--')
+    assert qr_png_b64(raw) == "iVBORw0KGgoAAAANSUhEUg==" and qr_png_b64('{"name": "x"}') is None

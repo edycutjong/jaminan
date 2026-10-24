@@ -67,3 +67,36 @@ def test_an_upload_that_is_not_an_image_is_a_422():
     finally:
         api_index._svc = None
     assert r.status_code == 422 and r.json()["error"] == "NOT_AN_IMAGE"
+
+
+def test_a_repeated_tap_is_a_409_and_a_bad_body_keeps_the_error_shape():
+    svc = make()
+    rid, k = to_out(svc)
+    for a in range(1, 9):
+        svc.add_photo(rid, k["shop"], "return", a, frame_bytes(100 + a))
+    try:
+        c = client_for(svc)
+        h = {"X-Jaminan-Key": k["shop"]}
+        first = c.post(f"/api/rentals/{rid}/return/complete", headers=h)
+        again = c.post(f"/api/rentals/{rid}/return/complete", headers=h)
+        bad = c.post(f"/api/rentals/{rid}/claims", json={"angle": 1}, headers=h)
+        odd = c.get(f"/api/rentals/{rid}", headers={"X-Jaminan-Key": "clé".encode("latin-1")})
+    finally:
+        api_index._svc = None
+    assert first.status_code == 200 and again.status_code == 409 and again.json()["error"] == "ILLEGAL_TRANSITION"
+    assert bad.status_code == 422 and bad.json()["error"] == "BAD_REQUEST" and "bbox" in bad.json()["message"]
+    assert odd.status_code == 403
+
+
+def test_the_full_judge_path_shares_the_judge_rate_limit_and_photos_name_a_real_angle():
+    svc = make()
+    try:
+        c = client_for(svc)
+        codes = [c.post("/api/judge/full").status_code for _ in range(13)]
+        rid, k = to_out(svc)
+        p = c.post(f"/api/rentals/{rid}/photos", data={"phase": "return", "angle": "9"},
+                   files={"file": ("f.jpg", frame_bytes(1))}, headers={"X-Jaminan-Key": k["shop"]})
+    finally:
+        api_index._svc = None
+    assert codes[:12] == [200] * 12 and codes[12] == 429
+    assert p.status_code == 422 and p.json()["error"] == "BAD_ANGLE"

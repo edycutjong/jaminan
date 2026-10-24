@@ -18,7 +18,8 @@ from pathlib import Path
 from typing import Any
 
 from . import gate, rules, tariff
-from .paypal import PayPal, PayPalError, approve_link, first_authorization, first_capture, payer_email, vault_of
+from .paypal import (PayPal, PayPalError, approve_link, first_authorization, first_capture, payer_email, qr_png_b64,
+                     vault_of)
 from .store import Store
 
 ANGLES = range(1, 9)
@@ -44,6 +45,11 @@ def now() -> datetime:
 
 def iso(t: datetime | None = None) -> str:
     return (t or now()).isoformat(timespec="seconds")
+
+
+def same_secret(given: str, want: str) -> bool:
+    """Constant-time; bytes, because compare_digest raises TypeError on a non-ASCII str (a crafted header = a 500)."""
+    return secrets.compare_digest(given.encode(), want.encode())
 
 
 def age_s(ts: str | None) -> float:
@@ -102,12 +108,12 @@ class Service:
     def auth(self, r: dict, key: str | None, role: str) -> None:
         """Capability keys: the renter's key travels in the QR link, the shop's stays on the shop phone."""
         want = r["keys"].get(role)
-        if not key or not secrets.compare_digest(key, want):
+        if not key or not same_secret(key, want):
             raise ServiceError(403, "FORBIDDEN", f"this action needs the {role}'s key for {r['id']}")
 
     def role_of(self, r: dict, key: str | None) -> str | None:
         for role in ("shop", "renter"):
-            if key and secrets.compare_digest(key, r["keys"][role]):
+            if key and same_secret(key, r["keys"][role]):
                 return role
         return None
 
@@ -177,9 +183,12 @@ class Service:
             if r["state"] != "DRAFT":
                 return r  # idempotent: return-page reloads land here
             o = self.pp.get_order(r["order_id"], rid)
-            if o.body.get("status") != "APPROVED":
+            if o.body.get("status") == "COMPLETED" and first_authorization(o.body):
+                res = o  # authorized on an earlier try whose reply was never stored: resume from PayPal's own record
+            elif o.body.get("status") != "APPROVED":
                 raise ServiceError(409, "NOT_APPROVED", f"PayPal order is {o.body.get('status')}, not APPROVED")
-            res = self.pp.authorize_order(r["order_id"], rid)
+            else:
+                res = self.pp.authorize_order(r["order_id"], rid)
             auth = first_authorization(res.body) if res.ok else None
             if not auth:
                 raise ServiceError(502, "PAYPAL_AUTHORIZE_FAILED", str(PayPalError(res)), debug_id=res.debug_id)
@@ -221,6 +230,8 @@ class Service:
         self.auth(r, key, "renter" if phase != "return" else self.role_of(r, key) or "shop")
         if phase not in ("pickup", "pickup_closeup", "return"):
             raise ServiceError(422, "BAD_PHASE", "phase must be pickup, pickup_closeup or return")
+        if int(angle) not in ANGLES:
+            raise ServiceError(422, "BAD_ANGLE", "a photo names one of the angles 1–8")
         self._photo_phase_open(r, phase)
         res, jpeg = self._gate(data)
         if phase != "pickup_closeup" and not res.ok:
@@ -613,8 +624,7 @@ class Service:
             qr = self.pp.invoice_qr(inv["id"], rid)
             inv["qr_status"] = qr.status
             if qr.ok:
-                raw = qr.body.get("raw") or ""
-                inv["qr_png_b64"] = raw if raw and not raw.startswith("{") else None
+                inv["qr_png_b64"] = qr_png_b64(qr.body.get("raw") or "")
         r["invoice"] = inv
         if inv["id"] and r["state"] in ("SETTLED", "RELEASED"):
             self._to(r, "INVOICED")
@@ -647,7 +657,7 @@ class Service:
 
     def evidence(self, rid: str, key: str | None = None, token: str | None = None) -> dict:
         r = self.get(rid)
-        ok_token = bool(token and r.get("evidence_token") and secrets.compare_digest(token, r["evidence_token"]))
+        ok_token = bool(token and r.get("evidence_token") and same_secret(token, r["evidence_token"]))
         if not ok_token and not self.role_of(r, key):
             raise ServiceError(403, "FORBIDDEN", "the evidence pack needs the renter's or shop's key, or its link")
         return {"rental": r["id"], "tariff_version": r["tariff_version_id"], "tariff_sha256": r["tariff_sha256"],
@@ -673,6 +683,8 @@ class Service:
             r = self.get(rid)
             if r.get("reauthorized_at"):
                 return r
+            if r["state"] not in rules.OPEN_HOLD_STATES or r.get("settlement"):
+                raise ServiceError(409, "NOT_OPEN", f"rental is {r['state']}: there is no open hold to re-secure")
             old = r["authorization_id"]
             res = self.pp.reauthorize(old, r["deposit_cents"], rid)
             if res.ok:
@@ -729,7 +741,8 @@ class Service:
         call = self.vision.read_ticket(jpeg, list(tv.fine_ceilings))
         read = call.parsed.model_dump() if call.ok else {}
         q = rules.fine_quote(plate_read=read.get("plate"), rental_plate=r["plate"], ticket_time=read.get("time"),
-                             pickup_at=r.get("picked_up_at") or r["created_at"], return_at=r.get("returned_at"),
+                             pickup_at=r.get("picked_up_at"),
+                             return_at=r.get("returned_at") or (r.get("settlement") or {}).get("at"),
                              violation_read=read.get("violation"), ceilings=tv.fine_ceilings,
                              ticket_amount_idr=ticket_amount_idr, idr_per_usd=tv.idr_per_usd,
                              admin_fee_cents=tv.admin_fee_cents)
@@ -786,6 +799,12 @@ class Service:
             if not f or f["status"] != "notified" or iso() < f["contest_until"]:
                 return f or {}
             r = self.get(f["rental_id"])
+            if not r.get("vault_id") or r.get("vault_status") == "DELETED":
+                # the renter removed saved PayPal during the contest window: the invoice create_fine promises
+                f.update(status="invoiced", invoice_id=self._fine_invoice(r, f, "Traffic fine (e-TLE) during the rental"))
+                self.db.zrem("fines:due", fid)
+                self.db.set_json(f"fine:{fid}", f)
+                return f
             res = self.pp.create_vault_order(fid, r["vault_id"], f["quote"]["amount_cents"], "CAPTURE",
                                              f"e-TLE traffic fine during rental {r['id']} (ticket sha256 {f['ticket_sha256'][:12]})", rental_id=r["id"])
             cap = first_capture(res.body) if res.ok else None
@@ -845,21 +864,35 @@ class Service:
                 "summary": {k: sum(1 for x in rows if x["match"] == k) for k in ("match", "pending", "mismatch")}}
 
     def cron_daily(self) -> dict:
-        out: dict[str, list] = {"reauth": [], "expiry_void": [], "judge_void": [], "fines": [], "stale_void": []}
+        out: dict[str, Any] = {"reauth": [], "expiry_void": [], "judge_void": [], "fines": [], "stale_void": [],
+                               "errors": []}
+
+        def guarded(kind: str, ref: str, fn, *args) -> None:
+            try:
+                out[kind].append(fn(*args))
+            except Exception as e:  # one stuck rental or fine never stops the job for all the others
+                out["errors"].append({"kind": kind, "ref": ref, "error": getattr(e, "code", type(e).__name__)})
+
+        def expiry_void(rid: str) -> str:
+            self.settle(rid, None, force=True)
+            return rid
+
         for shop_id in tariff.shops():
             for r in self.shop_rentals(shop_id, 200):
                 if r.get("stale_hold"):
-                    out["stale_void"].append(self.retry_stale_void(r["id"]))
+                    guarded("stale_void", r["id"], self.retry_stale_void, r["id"])
                 age_days = age_s(r.get("auth_created_at")) / 86400
                 if rules.needs_reauth(r["state"], age_days, bool(r.get("reauthorized_at"))):
-                    out["reauth"].append(self.reauthorize(r["id"]).get("reauth_method"))
+                    guarded("reauth", r["id"], lambda rid: self.reauthorize(rid).get("reauth_method"), r["id"])
                 elif rules.expiry_guard_due(r["state"], age_days) and not r.get("settlement"):
-                    self.settle(r["id"], None, force=True)
-                    out["expiry_void"].append(r["id"])
+                    guarded("expiry_void", r["id"], expiry_void, r["id"])
         out["judge_void"] = self.judge_void_sweep()
         for fid in self.db.zrangebyscore("fines:due", 0, time.time()):
-            out["fines"].append(self.capture_fine(fid).get("status"))
-        out["close"] = self.daily_close((now() - timedelta(days=1)).date().isoformat())["summary"]
+            guarded("fines", fid, lambda f: self.capture_fine(f).get("status"), fid)
+        try:
+            out["close"] = self.daily_close((now() - timedelta(days=1)).date().isoformat())["summary"]
+        except Exception as e:
+            out["errors"].append({"kind": "close", "ref": "daily", "error": getattr(e, "code", type(e).__name__)})
         return out
 
     # ------------------------------------------------------------------------------------------
@@ -869,27 +902,32 @@ class Service:
         p = STAGED / "judge.json"
         return json.loads(p.read_text()) if p.exists() else None
 
-    def judge_void_sweep(self) -> list[str]:
+    def judge_void_sweep(self, limit: int | None = None) -> list[str]:
         done = []
-        for rid in self.db.zrangebyscore("judge:open", 0, time.time() - JUDGE_VOID_AFTER_S):
+        for rid in self.db.zrangebyscore("judge:open", 0, time.time() - JUDGE_VOID_AFTER_S)[:limit]:
             try:
                 r = self.get(rid)
                 if not r.get("settlement") and r["state"] in rules.OPEN_HOLD_STATES:
                     self.settle(rid, None, force=True)
                     done.append(rid)
-            except ServiceError:
-                pass
+            except ServiceError as e:
+                if e.code != "RENTAL_NOT_FOUND":
+                    continue  # the void failed: stay tracked, the next sweep tries again
             self.db.zrem("judge:open", rid)
         return done
 
-    def mint_judge(self, ip: str) -> dict:
-        """A FRESH rental per visit: merchant-initiated AUTHORIZE on a pool wallet (failover on any 4xx),
-        fee captured from the hold, the staged baseline cloned; opens on the shop's return screen."""
+    def rate_limit_judge(self, ip: str) -> None:
+        """12 per address per hour and 300 per day: 12 × 24 = 288, so one address cannot use up a judging day."""
         hour = now().strftime("%Y%m%d%H")
         if self.db.incr(f"rl:judge:{hashlib.sha256(ip.encode()).hexdigest()[:16]}:{hour}", ex=3600) > 12 or \
                 self.db.incr(f"rl:judge:all:{now().strftime('%Y%m%d')}", ex=86400) > 300:
             raise ServiceError(429, "RATE_LIMITED", "too many judge rentals from here this hour; try again later")
-        self.judge_void_sweep()
+
+    def mint_judge(self, ip: str) -> dict:
+        """A FRESH rental per visit: merchant-initiated AUTHORIZE on a pool wallet (failover on any 4xx),
+        fee captured from the hold, the staged baseline cloned; opens on the shop's return screen."""
+        self.rate_limit_judge(ip)
+        self.judge_void_sweep(limit=2)  # a judge waits on this request: the daily job sweeps the rest
         if not self.s.judge_vault_ids:
             raise ServiceError(503, "NO_JUDGE_POOL", "judge wallet pool not configured — use the full path")
         n = self.db.incr("judge:seq")
