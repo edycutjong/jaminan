@@ -580,3 +580,54 @@ def test_a_release_whose_void_already_happened_elsewhere_still_settles():
     svc.pp.seen.clear()                                         # and PayPal no longer replays the first answer
     r = svc.release(rid, k["shop"])
     assert r["state"] == "RELEASED" and r["settlement"]["auth_read_back"] == "VOIDED"
+
+
+def test_a_stale_hold_is_retried_even_after_its_rental_settled_and_left_both_lists():
+    svc = make()
+    rid, k = to_out(svc)
+    old = svc.get(rid)["authorization_id"]
+    orig = svc.pp._route
+    svc.pp._route = lambda m, p, b: ((422, {"name": "UNPROCESSABLE_ENTITY", "details": [{"issue": "PERMISSION_DENIED"}]})
+                                     if p == f"/v2/payments/authorizations/{old}/void" else orig(m, p, b))
+    svc.reauthorize(rid)
+    svc.pp._route = orig
+    svc.release(rid, k["shop"])                                 # settled: out of holds:open
+    svc.shop_rentals = lambda shop_id, limit=60: []             # and out of the newest 200
+    assert svc.cron_daily()["stale_void"] == ["voided"] and svc.pp.auths[old]["status"] == "VOIDED"
+
+
+def test_a_token_revoked_on_one_rental_is_revoked_for_the_other_and_its_fine_is_invoiced():
+    svc = make()
+    a, ka = to_out(svc)
+    rid, k, f = _fined(svc)                                      # same buyer → same vault token (vault-1)
+    assert svc.get(a)["vault_id"] == svc.get(rid)["vault_id"]
+    svc.revoke_vault(a, ka["renter"])
+    svc.db.set_json(f"fine:{f['id']}", {**f, "contest_until": "2000-01-01T00:00:00+00:00"})
+    out = svc.capture_fine(f["id"])
+    assert out["status"] == "invoiced" and not [c for c in svc.calls(rid) if c["action"] == "order.create.mit.capture"]
+
+
+def test_a_fine_the_saved_wallet_refuses_becomes_the_invoice_not_capture_failed():
+    svc = make()
+    rid, k, f = _fined(svc)
+    svc.db.set_json(f"rental:{rid}", {**svc.get(rid), "vault_id": "bad-token"})   # PayPal refuses the MIT
+    svc.db.set_json(f"fine:{f['id']}", {**f, "contest_until": "2000-01-01T00:00:00+00:00"})
+    out = svc.capture_fine(f["id"])
+    assert out["status"] == "invoiced" and out["capture_issue"] and out["invoice_id"]
+
+
+def test_daily_close_reads_every_transaction_search_page_and_flags_a_partial_scan():
+    from jaminan.paypal import Resp
+    svc = make()
+    rid, k = to_returned(svc)
+    svc.release(rid, k["shop"])
+    fee = svc.get(rid)["fee_capture_id"]
+    pages = {1: [], 2: [{"transaction_info": {"transaction_id": fee}}]}   # the fee capture sits on page 2
+    svc.pp.transactions = lambda s, e, page=1: Resp(200, {"total_pages": 2, "transaction_details": pages[page]},
+                                                    None, "reporting.transactions", None, 1)
+    out = svc.daily_close()
+    assert ("fee", "transaction_search", "match") in {(x["kind"], x["via"], x["match"]) for x in out["rows"]}
+    assert out["complete"] is True
+    many = [{"id": f"R-{i}", "created_at": iso()} for i in range(200)]
+    svc.shop_rentals = lambda shop_id, limit=60: many
+    assert svc.daily_close()["complete"] is False

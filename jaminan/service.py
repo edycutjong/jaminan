@@ -658,6 +658,8 @@ class Service:
                                  "at": iso()}
             if res.ok:
                 r["vault_status"] = "DELETED"
+                # PayPal shares one token per buyer + merchant: every other rental holding it must see the deletion
+                self.db.set_json(f"vault:deleted:{r['vault_id']}", iso())
             return self._save(r)
 
     def evidence(self, rid: str, key: str | None = None, token: str | None = None) -> dict:
@@ -709,6 +711,7 @@ class Service:
                 if not v.ok and v.issue not in VOID_DONE:
                     # the new hold stands; the old one is still open on PayPal, so the daily job retries the void
                     r["stale_hold"] = {"authorization_id": old, "issue": v.issue, "debug_id": v.debug_id, "at": iso()}
+                    self.db.zadd("holds:stale", time.time(), rid)  # its own index: still found after this rental settles
                 self._record_auth(r, auth, replaces=old)
                 # a brand-new hold: its own 29 days, so the expiry guard counts from now, not from the voided one
                 r.update(authorization_id=auth["id"], reauthorized_at=iso(), reauth_method="mit_resecure",
@@ -718,17 +721,23 @@ class Service:
                 r["reauth_error"] = {"reauthorize": res.issue, "at": iso()}
             return self._save(r)
 
+    def _vault_usable(self, r: dict) -> bool:
+        vid = r.get("vault_id")
+        return bool(vid) and r.get("vault_status") != "DELETED" and not self.db.get_json(f"vault:deleted:{vid}")
+
     def retry_stale_void(self, rid: str) -> str:
         """Void a replaced hold that PayPal refused to void during the re-secure (see reauthorize)."""
         with self.lock(rid):
             r = self.get(rid)
             stale = r.get("stale_hold")
             if not stale:
+                self.db.zrem("holds:stale", rid)
                 return "none"
             v = self.pp.void(stale["authorization_id"], rid)
             if v.ok or v.issue in VOID_DONE:
                 r.pop("stale_hold")
                 self._save(r)
+                self.db.zrem("holds:stale", rid)
                 return "voided"
             r["stale_hold"].update(issue=v.issue, debug_id=v.debug_id, retried_at=iso())
             self._save(r)
@@ -739,7 +748,7 @@ class Service:
         self.auth(r, key, "shop")
         if r["state"] not in ("SETTLED", "RELEASED", "INVOICED", "CLOSED"):
             raise ServiceError(409, "RENTAL_OPEN", "fines attach to a returned, settled rental")
-        has_vault = bool(r.get("vault_id")) and r.get("vault_status") != "DELETED"
+        has_vault = self._vault_usable(r)
         tv = tariff.load(r["tariff_version_id"])
         res, jpeg = self._gate(image)
         self.db.set_bytes(f"frame:{res.sha256}", jpeg, ex=self._frame_ttl())
@@ -804,7 +813,7 @@ class Service:
             if not f or f["status"] != "notified" or iso() < f["contest_until"]:
                 return f or {}
             r = self.get(f["rental_id"])
-            if not r.get("vault_id") or r.get("vault_status") == "DELETED":
+            if not self._vault_usable(r):
                 # the renter removed saved PayPal during the contest window: the invoice create_fine promises
                 f.update(status="invoiced", invoice_id=self._fine_invoice(r, f, "Traffic fine (e-TLE) during the rental"))
                 self.db.zrem("fines:due", fid)
@@ -813,7 +822,13 @@ class Service:
             res = self.pp.create_vault_order(fid, r["vault_id"], f["quote"]["amount_cents"], "CAPTURE",
                                              f"e-TLE traffic fine during rental {r['id']} (ticket sha256 {f['ticket_sha256'][:12]})", rental_id=r["id"])
             cap = first_capture(res.body) if res.ok else None
-            status = (cap or {}).get("status")  # a capture object can be PENDING or DECLINED, not only COMPLETED
+            if not cap:  # the saved wallet could not be charged at all: the renter gets the itemized invoice instead
+                f.update(status="invoiced", capture_issue=res.issue, debug_id=res.debug_id,
+                         invoice_id=self._fine_invoice(r, f, "Traffic fine (e-TLE) during the rental"))
+                self.db.zrem("fines:due", fid)
+                self.db.set_json(f"fine:{fid}", f)
+                return f
+            status = cap.get("status")  # a capture object can be PENDING or DECLINED, not only COMPLETED
             f["status"] = {"COMPLETED": "captured", "PENDING": "capture_pending"}.get(status or "", "capture_failed")
             f["capture_id"], f["capture_status"], f["captured_at"], f["debug_id"] = (cap or {}).get("id"), status, iso(), res.debug_id
             self.db.zrem("fines:due", fid)
@@ -841,11 +856,18 @@ class Service:
         """Ledger vs PayPal: captures matched in Transaction Search (it can lag — unmatched = pending);
         voids re-read per authorization, since Transaction Search may not list them."""
         day = date or now().date().isoformat()
-        rentals = [r for r in self.shop_rentals(shop_id, 200) if (r.get("settlement") or {}).get("at", "")[:10] == day
+        scanned = self.shop_rentals(shop_id, 200)
+        # newest first: if the 200th is still from this day or later, older rentals of the day were not read
+        complete = len(scanned) < 200 or (scanned[-1].get("created_at") or "")[:10] < day
+        rentals = [r for r in scanned if (r.get("settlement") or {}).get("at", "")[:10] == day
                    or (r.get("picked_up_at") or "")[:10] == day]
         start, end = f"{day}T00:00:00-0000", f"{day}T23:59:59-0000"
         ts = self.pp.transactions(start, end)
-        listed = {t["transaction_info"]["transaction_id"] for t in ts.body.get("transaction_details", [])} if ts.ok else set()
+        details = list(ts.body.get("transaction_details", [])) if ts.ok else []
+        for page in range(2, min(int(ts.body.get("total_pages") or 1), 10) + 1) if ts.ok else ():
+            more = self.pp.transactions(start, end, page)  # 500 per page: a busy day spans several
+            details += more.body.get("transaction_details", []) if more.ok else []
+        listed = {t["transaction_info"]["transaction_id"] for t in details}
         rows = []
         for r in rentals:
             for kind, cid in (("fee", r.get("fee_capture_id")), ("damage", r.get("settle_capture_id"))):
@@ -865,7 +887,7 @@ class Service:
                              "match": "match" if self._final_status("auth", r["authorization_id"], r["id"]) == "VOIDED"
                              else "mismatch"})
         return {"date": day, "transaction_search_status": ts.status, "transaction_search_issue": ts.issue,
-                "listed": len(listed), "rows": rows,
+                "listed": len(listed), "rows": rows, "complete": complete,
                 "summary": {k: sum(1 for x in rows if x["match"] == k) for k in ("match", "pending", "mismatch")}}
 
     def cron_daily(self) -> dict:
@@ -886,9 +908,9 @@ class Service:
         seen = {r["id"] for r in rentals}
         older = [i for i in self.db.zrangebyscore("holds:open", 0, time.time() - rules.HONOR_DAYS * 86400) if i not in seen]
         rentals += [x for x in self.db.mget_json([f"rental:{i}" for i in older]) if x]
+        for rid in self.db.zrangebyscore("holds:stale", 0, time.time()):
+            guarded("stale_void", rid, self.retry_stale_void, rid)
         for r in rentals:
-            if r.get("stale_hold"):
-                guarded("stale_void", r["id"], self.retry_stale_void, r["id"])
             age_days = age_s(r.get("auth_created_at")) / 86400
             if rules.needs_reauth(r["state"], age_days, bool(r.get("reauthorized_at"))):
                 guarded("reauth", r["id"], lambda rid: self.reauthorize(rid).get("reauth_method"), r["id"])
