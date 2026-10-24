@@ -1,6 +1,6 @@
 Where the renter's key travels in an agent booking: PayPal sandbox, live deploy, 2026-10-25 (WIB). Headless Chromium.
 
-Before the fix (a2a round 8), R-1024-D1DD473C: the approve_url an agent gets from start_rental opens PayPal's login
+Before the fix (2026-10-25), R-1024-D1DD473C: the approve_url an agent gets from start_rental opens PayPal's login
 page, and with no login that page shows "Batalkan dan kembali ke Jaminan" (Cancel and return to Jaminan) linking to
   https://jaminan.edycu.dev/app/r/R-1024-D1DD473C?k=<renter-key>&token=<order-id>
 so any holder of approve_url could read the renter's key. Fixed in c82aabe: the cancel URL carries no key.

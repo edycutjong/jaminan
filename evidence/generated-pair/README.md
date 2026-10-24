@@ -40,7 +40,7 @@ rule out before any model is pinned, and C2's miss of a missing part is the kind
 second weakness: the claim prompt asks about a "mark" at the tap, which fits a missing part badly. The prompt was not
 changed here, because tuning it on the only test pair would make the next result meaningless. Both findings feed the bench.
 
-**Boxes in these two run files (corrected 2026-10-25, a2a round 8).** The model's `pickup_bbox` values above were
+**Boxes in these two run files (corrected 2026-10-25, after an outside code review).** The model's `pickup_bbox` values above were
 parsed as `[x, y, w, h]`, as the prompt then asked. Read that way, C1's box covers about half the search area. Read as
 corners `[x1, y1, x2, y2]`, the format Qwen-VL grounds in, it is a 200 × 240 box around the tapped scuff, and C2's is a
 small box low on the fairing. The model was answering in corners, so the parser (`jaminan/vision.py` `_box`) and the
