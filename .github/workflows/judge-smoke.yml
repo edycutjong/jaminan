@@ -1,0 +1,22 @@
+# The judge route, end to end, once a day through the judging window (2026-12-01 → 12-15): /api/health/judge mints a
+# fresh sandbox judge rental, releases it and reads the hold back from PayPal (VOIDED). A failure turns this run red.
+name: judge-smoke
+
+on:
+  schedule:
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: GET /api/health/judge
+        run: |
+          code=$(curl -s -o body.json -w '%{http_code}' --max-time 150 -A 'jaminan-judge-smoke' https://jaminan.edycu.dev/api/health/judge)
+          cat body.json; echo; echo "HTTP $code"
+          test "$code" = 200
