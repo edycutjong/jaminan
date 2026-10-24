@@ -32,7 +32,7 @@ The side-panel dent in the `accepted` run is the "already there" case: it was vi
 
 ```bash
 # offline suite (210 tests, no credentials)
-.venv/bin/python -m pytest -m "not sandbox and not live_model and not slow" --cov=jaminan
+.venv/bin/python -m pytest -m "not sandbox and not live_model and not slow" --cov=jaminan --cov-branch
 
 # the claim-decision sweep (23,040 combinations) and the settle property test
 .venv/bin/python -m pytest tests/test_invariants.py -v
