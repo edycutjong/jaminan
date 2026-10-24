@@ -16,6 +16,22 @@ The settle screen only stamps after PayPal's read-back, not after our own call r
 
 **What the live route cannot do yet.** The staged scooter photo set is not in this deploy and no vision model is pinned as benchmarked, so on `/judge` you can release the hold but cannot tap a claim. On the ordinary shop flow a pointed claim ends `comparison_unavailable — nothing charged from the hold`. That is deliberate: only a benchmarked model can produce a chargeable line. The priced path is shown below as a recording and exercised by the test suite.
 
+### Below the button: AI-generated test images, recorded model answers
+
+The same page shows a pickup/return pair of **AI-generated test images (not photographs)**: a white scooter made by
+`qwen-image-2.0`, and a `wan2.6-image` edit of it with both mirrors removed ([`GENERATION.json`](evidence/generated-pair/GENERATION.json)).
+The builder pointed two claims, and the app's own claim path asked `qwen3-vl-plus` about each three times
+([`evidence/generated-pair/`](evidence/generated-pair/README.md), request ids inside). The answers on screen are those
+recorded calls, not live ones:
+
+| Claim | True answer | Model read (all 3 calls) | App answer |
+|---|---|---|---|
+| C1 `front_fairing` / `dent` on the grey scuff | old: in the pickup image too | new since pickup (wrong) | comparison unavailable — nothing charged from the hold |
+| C2 `mirror` / `missing_part` on the mirror mounts | new: both mirrors gone | a smudge, not a missing mirror (wrong) | comparison unavailable — nothing charged from the hold |
+
+Nothing is charged because no model is benchmarked. Had this model been pinned without the bench, C1 would have been
+priced at $45.00 for a mark that was there at pickup. This is not a benchmark and not real-world evidence.
+
 ## 2. The priced path, recorded on the sandbox
 
 [`evidence/paypal-sandbox-run.json`](evidence/paypal-sandbox-run.json) holds three settlements recorded against the real PayPal sandbox on 2026-10-14 (`scripts/record_paypal_evidence.py`). The claim answers in these runs are **scripted** (`scripted-test-model`), because the vision benchmark has not run; every PayPal call and every status is real.
@@ -71,6 +87,6 @@ curl -s "https://jaminan.edycu.dev/api/agent/rentals/R-1024-FA0400AA?t=vG8cd6f18
 
 ## 5. Not shown, on purpose
 
-- **Vision accuracy.** There is no accuracy number anywhere in this repository because the benchmark on the staged scooter photo set has not run.
+- **Vision accuracy.** There is no accuracy number anywhere in this repository because the benchmark on the staged scooter photo set has not run. The model has been shown only on AI-generated test images so far (§1).
 - **Reauthorize inside a rental.** PayPal allows it once, Day 4 to Day 29. The call itself is recorded on the sandbox ([`evidence/paypal-reauthorize.jsonl`](evidence/paypal-reauthorize.jsonl): 201 on two holds, 422 on a second attempt); no rental in the app has reached day 4, so only the sweep's day-4 trigger rule and its refusal fallback are unit-tested, as is `cron_daily()` (the cron route and Vercel's schedule have not fired on a real rental).
 - **Live money.** Sandbox only.

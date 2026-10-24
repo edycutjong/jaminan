@@ -39,6 +39,8 @@ Jaminan replaces the passport with a PayPal authorization and replaces the argum
 
 **What runs today, on the PayPal sandbox:** at [`/app/judge`](https://jaminan.edycu.dev/app/judge) one tap authorizes $115.00 on a saved sandbox wallet, captures the $15.00 fee, writes the handover tracking, and releases the hold on a second tap, each stamp waiting for PayPal's read-back. No vision model is pinned as benchmarked yet, so a live rental cannot price a damage line. The priced path is a recorded sandbox run with scripted claim answers ([`evidence/paypal-sandbox-run.json`](evidence/paypal-sandbox-run.json): one $18.00 capture with `final_capture=true`, the other $82.00 released, a second capture refused with 422) and is exercised in the unit and sandbox tests.
 
+**On AI-generated test images (not photographs):** the app's own claim path asked `qwen3-vl-plus` about two pointed claims on a generated pickup/return pair, three times each, and recorded every answer. It read both wrong (the old scuff as new, the missing mirrors as a smudge), and nothing was charged because no model is benchmarked. Not a benchmark: [`evidence/generated-pair/`](evidence/generated-pair/README.md).
+
 1. The renter scans the shop QR and gives **one PayPal approval** that authorizes the fee plus the deposit and saves the wallet for later fines. The fee is captured when both sides confirm the baseline at pickup; the deposit stays held.
 2. A guided 8-angle walkaround records the scooter at pickup. Renter and shop confirm the baseline together.
 3. At return **the owner points, the shared baseline answers.** The shop taps a mark and picks its `(part, damage_class)` from the published tariff. The model only answers what the pickup photos show; it never sets a price.
@@ -141,16 +143,16 @@ Recorded on 2026-10-24: Claude Code and Codex each booked through `quote_rental 
 
 | Metric | Value |
 |---|---|
-| Tests collected | 235 (`pytest`): 226 offline unit, contract and invariant tests, 8 against the real PayPal sandbox (including `CAPTURED` and second-capture `422` read-backs), 1 live Qwen schema check; plus 26 Vitest unit tests for the web `lib/` |
+| Tests collected | 235 (`pytest`): 226 offline unit, contract and invariant tests, 8 against the real PayPal sandbox (including `CAPTURED` and second-capture `422` read-backs), 1 live Qwen schema check; plus 31 Vitest unit tests for the web `lib/` |
 | Claim-decision sweep | `decide_claim` run over 23,040 combinations of the five yes/no answers, serving model (pinned, other, none), confidence, a confirmed baseline mark, a low-comparability tile, three parts and five damage classes: every chargeable result satisfies every "new since pickup" condition and carries a tariff price ([`tests/test_invariants.py`](tests/test_invariants.py)) |
 | Settle property test | up to 3,000 generated settlements (Hypothesis): the hold pays exactly the accepted chargeable lines at their tariff price, blocks exactly when a line is mispriced, or unanswered and the settle is not forced; invoices only contested lines plus any accepted amount above the deposit; and never captures more than the authorization |
 | Offline coverage | 100% of `jaminan/`, line and branch (`pytest --cov --cov-branch`, 1,675 statements, 492 branches), enforced in CI with `--cov-fail-under=100`; 100% of the web `lib/` under Vitest (`npm run test:unit`). Two `# pragma: no cover`: a defensive re-check in `rules.settle_plan` (`rules.py:186`) that the line list makes unreachable, and the abstract `Store._cmd` stub (`store.py:18`) |
 | CI | A six-stage GitHub Actions pipeline ([`ci.yml`](.github/workflows/ci.yml)): 1 Quality (ruff, mypy, offline tests with a 100% coverage gate; eslint, `tsc`, Vitest `lib/` tests with a 100% gate) and 2 Security (gitleaks over full history, pip-audit, npm audit, licence check) run in parallel, then 3 Build (`next build`, API boot smoke), 4 E2E (Playwright, no secrets), 5 Performance (Lighthouse CI on `/` and `/pitch`, every category ≥ 0.9, a11y ≥ 0.95) and 6 Deploy gate (every stage green; Vercel deploys only after it). Also gitleaks as its own workflow; CodeQL (Python and TypeScript); GitHub secret scanning with push protection; Dependabot monthly, grouped, no major bumps |
 | Live acceptance script | `scripts/e2e_live.py` (375 px viewport) |
 | Evidence pack | [`evidence/`](evidence): three recorded PayPal sandbox settlements call by call (`scripts/record_paypal_evidence.py`), the full test run, offline coverage and the live e2e log |
-| Vision accuracy | **Not yet measured.** Benchmark on the staged scooter set is pending |
+| Vision accuracy | **Not yet measured.** Benchmark on the staged scooter set is pending; the model has been shown only on AI-generated test images so far ([recorded answers](evidence/generated-pair/README.md)) |
 
-### Honest limits (6)
+### Honest limits (7)
 
 1. **Sandbox only.** Nothing here has moved live money; live vault and merchant-initiated eligibility are unverified.
 2. **One merchant.** The demo uses a single sandbox merchant; a production path needs one onboarded merchant per shop.
@@ -158,6 +160,7 @@ Recorded on 2026-10-24: Claude Code and Codex each booked through `quote_rental 
 4. **Non-return is out of scope.** Jaminan covers damage and fines, not a scooter that never comes back.
 5. **No vision accuracy claim yet.** Until the benchmark runs, no finding from a non-benchmarked model is chargeable.
 6. **Reauthorize is proven on the sandbox, not yet through the rental flow.** On 2026-10-23 (day 9) PayPal accepted `reauthorize` on a plain hold and on a hold that already had its fee captured (201 both), and refused a second one on the same hold (422 `REAUTHORIZATION_TOO_SOON`, "only allowed once"): [`evidence/paypal-reauthorize.jsonl`](evidence/paypal-reauthorize.jsonl). The sweep's day-4 trigger rule and its refusal fallback (re-authorize on the vaulted wallet, then void the old hold) are unit-tested, including through `cron_daily()`; the `/api/cron/daily` route and Vercel's schedule have not run on a rental, and no rental has yet reached day 4 through the app.
+7. **The model has been shown only on AI-generated test images so far.** Its recorded answers on that pair ([`evidence/generated-pair/`](evidence/generated-pair/README.md)) are not a benchmark and say nothing about real photos.
 
 ## 🚀 Getting Started
 

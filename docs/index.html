@@ -479,6 +479,22 @@ section.block { padding-top: 88px; }
 @media print { .stub .decide, .tape .more { display: none !important; } }
 
 
+.tapper { margin-top: 30px; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 30px; align-items: start; }
+.tapper .photo { position: relative; border: 1.5px solid var(--ink); border-radius: 6px; overflow: hidden; }
+.tapper .photo img { width: 100%; }
+.tapper .spot { position: absolute; border: 2.5px dashed var(--before); border-radius: 6px; background: transparent; cursor: pointer; min-width: 44px; min-height: 44px; }
+.tapper .spot:hover, .tapper .spot[aria-pressed="true"] { border-style: solid; background: color-mix(in srgb, var(--before) 12%, transparent); }
+.tapper .out { min-height: 160px; }
+.tapper.two { grid-template-columns: minmax(0, 1fr); }
+.tapper .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.tapper .photo-f { margin: 0; } .tapper .photo-f figcaption { font-size: 14px; margin-top: 6px; }
+.tapper .spot b { position: absolute; top: 2px; left: 4px; font-size: 13px; background: var(--before); color: #fff; padding: 0 5px; border-radius: 3px; }
+.tapper .ans-row .a + .a { color: var(--ink); }
+.gp-chip { display: inline-block; font-size: 13.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1.5px dashed var(--ink); color: var(--ink); background: var(--paper-stub); white-space: nowrap; }
+.lede-s { max-width: 70ch; margin: 14px 0 0; }
+@media (max-width: 960px) { .tapper { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) { .tapper .pair { grid-template-columns: minmax(0, 1fr); } }
+
 </style>
 </head>
 <body>
@@ -577,7 +593,14 @@ section.block { padding-top: 88px; }
     </div>
   </div>
 </section>
-
+<section class="block wrap" id="tap" aria-labelledby="tap-h">
+  <p class="sec"><b>No. 1½</b> <span lang="id">Coba</span> · your turn</p>
+  <h2 id="tap-h">You're the shop. <em>Tap what you'd charge.</em></h2>
+  <p class="lede-s"><span class="gp-chip">AI-generated test images (not photographs)</span> A pickup image made by qwen-image-2.0 and a return image edited from it by wan2.6-image, which removed both mirrors. The builder pointed two claims; the app&#x27;s own claim path asked the vision model three times each.</p>
+  <div class="tapper two"><div class="pair"><figure class="photo-f"><div class="photo"><img src="site/generated-pair/pickup-front-left.jpg" width="960" height="536" loading="lazy" alt="AI-generated test images (not photographs): the pickup image of a white scooter, front-left view, both mirrors on, a grey scuff on the front fairing"></div><figcaption>At pickup · <span class="gp-chip">AI-generated test images (not photographs)</span></figcaption></figure><figure class="photo-f"><div class="photo"><img src="site/generated-pair/return-front-left.jpg" width="960" height="536" loading="lazy" alt="AI-generated test images (not photographs): the return image of a white scooter, front-left view, edited so both rear-view mirrors are gone"><button type="button" class="spot" aria-pressed="false" aria-label="C1 front fairing — dent" style="left:43.5%;top:42.5%;width:7.5%;height:13.5%"><b>C1</b><template><div class="ans-row x"><span class="q">front fairing — dent</span><span class="p">—</span><span class="a">comparison unavailable — nothing charged from the hold (no model is benchmarked yet)</span><span class="a">True answer: old: the same scuff is in the pickup image.</span><span class="a">Model read: new since pickup (wrong in all 3 calls).</span><span class="a">Its reason: “The mark in the return photo is a distinct irregular indentation consistent with a dent on the fairing; the same location in the pickup photo shows no such mark and is clear enough to assess.”</span></div><p class="small">Recorded model output · qwen3-vl-plus · 2026-10-24T18:22:10+00:00 · <a href="evidence/generated-pair/README.md">source</a> · <span class="gp-chip">AI-generated test images (not photographs)</span></p></template></button><button type="button" class="spot" aria-pressed="false" aria-label="C2 mirror — missing part" style="left:36.0%;top:0.0%;width:36.0%;height:24.0%"><b>C2</b><template><div class="ans-row x"><span class="q">mirror — missing part</span><span class="p">—</span><span class="a">comparison unavailable — nothing charged from the hold (no model is benchmarked yet)</span><span class="a">True answer: new: both mirrors are missing at return.</span><span class="a">Model read: a mark at return, but not this part and class (wrong in all 3 calls).</span><span class="a">Its reason: “The mark in the return photo is a dark smudge on the front fairing near the headlight, not on or near the mirror; it does not resemble a missing part of the mirror.”</span></div><p class="small">Recorded model output · qwen3-vl-plus · 2026-10-24T18:22:10+00:00 · <a href="evidence/generated-pair/README.md">source</a> · <span class="gp-chip">AI-generated test images (not photographs)</span></p></template></button></div><figcaption>At return · <span class="gp-chip">AI-generated test images (not photographs)</span></figcaption></figure></div>
+    <div class="out sheet" aria-live="polite"><p class="small" style="margin:16px 20px">Tap a box on the return image. The answer is the model's recorded output for that spot.</p></div></div>
+  <p class="note">These are recorded answers, not a benchmark and not real-world evidence. Had this model been pinned without the bench, the rules would have priced C1 at $45.00 for a scuff that was there at pickup. That is why no model can price a line until it passes a held-out bench on real photos.</p>
+</section>
 <section class="block wrap" id="money" aria-labelledby="money-h">
   <p class="sec"><b>No. 2</b> <span lang="id">Uang</span> · the money</p>
   <h2 id="money-h">One authorization carries <em>the whole rental.</em></h2>
@@ -636,7 +659,7 @@ section.block { padding-top: 88px; }
 </section>
 <section class="block wrap" id="faq" aria-labelledby="faq-h">
   <h2 id="faq-h">Fair questions <em>a judge would ask.</em></h2>
-  <div class="faq"><details><summary>What does the AI decide?</summary><div class="ans"><p>Nothing about money. For each mark the shop taps, the vision model answers narrow questions about the shared pickup photos: is there a mark now, is it the kind named, was it visible at pickup, can the pickup photo show that spot. Code turns the answers into “cannot be charged” or a line priced from the tariff.</p></div></details><details><summary>Has the vision model been benchmarked?</summary><div class="ans"><p>Not yet. The staged scooter photo set is being shot. Until a model is pinned by the benchmark, every live claim ends “comparison unavailable — nothing charged from the hold”, which is why the recorded runs on this page use scripted answers. No accuracy number appears anywhere.</p></div></details><details><summary>What stops the shop from charging an old dent?</summary><div class="ans"><p>Two locks. The pickup baseline both sides confirmed: a mark it shows, or a spot it cannot show, cannot be charged. And the renter: the hold pays only the lines they accept.</p></div></details><details><summary>And if the renter contests everything?</summary><div class="ans"><p>Every contested line leaves as an itemized PayPal invoice at the published tariff price, with a link to the evidence pack, and the hold is released. That is the trade: the hold never pays a line the renter did not accept, and the shop keeps a priced claim on photos both sides confirmed.</p></div></details><details><summary>Can an AI agent book a scooter?</summary><div class="ans"><p>Yes, through four MCP tools: list_vehicles, quote_rental, start_rental and get_rental. The agent can price a rental and ask for it, but start_rental returns a PayPal link that only the renter can approve. No tool approves, answers a damage line, captures, voids or refunds. Claude Code and Codex each booked one on the sandbox on 2026-10-24 and read back the authorization; the transcripts are in evidence/mcp.</p></div></details><details><summary>What happens when I open /judge?</summary><div class="ans"><p>It mints a fresh sandbox rental on a saved sandbox wallet, with no login, and opens it on the shop's phone; today it can only release the hold (read back VOIDED). A full-path button runs PayPal's real approval page with a sandbox buyer.</p></div></details></div>
+  <div class="faq"><details><summary>What does the AI decide?</summary><div class="ans"><p>Nothing about money. For each mark the shop taps, the vision model answers narrow questions about the shared pickup photos: is there a mark now, is it the kind named, was it visible at pickup, can the pickup photo show that spot. Code turns the answers into “cannot be charged” or a line priced from the tariff.</p></div></details><details><summary>Has the vision model been benchmarked?</summary><div class="ans"><p>Not yet: the bench on real scooter photos has not run. Until a model is pinned by it, every live claim ends “comparison unavailable — nothing charged from the hold”, which is why the recorded settlements on this page use scripted answers. The “Tap what you'd charge” section shows the model's real recorded answers on AI-generated test images (not photographs); it read both claims wrong, which is a reason for the bench, not a measurement. No accuracy number appears anywhere.</p></div></details><details><summary>What stops the shop from charging an old dent?</summary><div class="ans"><p>Two locks. The pickup baseline both sides confirmed: a mark it shows, or a spot it cannot show, cannot be charged. And the renter: the hold pays only the lines they accept.</p></div></details><details><summary>And if the renter contests everything?</summary><div class="ans"><p>Every contested line leaves as an itemized PayPal invoice at the published tariff price, with a link to the evidence pack, and the hold is released. That is the trade: the hold never pays a line the renter did not accept, and the shop keeps a priced claim on photos both sides confirmed.</p></div></details><details><summary>Can an AI agent book a scooter?</summary><div class="ans"><p>Yes, through four MCP tools: list_vehicles, quote_rental, start_rental and get_rental. The agent can price a rental and ask for it, but start_rental returns a PayPal link that only the renter can approve. No tool approves, answers a damage line, captures, voids or refunds. Claude Code and Codex each booked one on the sandbox on 2026-10-24 and read back the authorization; the transcripts are in evidence/mcp.</p></div></details><details><summary>What happens when I open /judge?</summary><div class="ans"><p>It mints a fresh sandbox rental on a saved sandbox wallet, with no login, and opens it on the shop's phone; today it can only release the hold (read back VOIDED). A full-path button runs PayPal's real approval page with a sandbox buyer.</p></div></details></div>
 </section>
 </main>
 <footer class="counterfoil wrap" aria-label="Counterfoil">
@@ -654,7 +677,7 @@ section.block { padding-top: 88px; }
       <li><a href="https://github.com/edycutjong/jaminan/blob/main/LICENSE">MIT license</a></li>
     </ul>
   </div>
-  <p class="small">Built for the PayPal AI Hackathon · PayPal sandbox only · v0.1.0 · built from a259352</p>
+  <p class="small">Built for the PayPal AI Hackathon · PayPal sandbox only · v0.2.3 · built from ce370a5</p>
 </footer>
 <script>(() => {
 const D = {"steps": {"accept": [{"t": "16:29:37", "call": "capture $18.00 \u00b7 final_capture=true", "http": 201, "answer": "COMPLETED", "ok": true, "id": "1DK41086KS913835V", "debug": "f92235735fe35", "ms": 2283}, {"t": "16:29:37", "call": "read back the authorization", "http": 200, "answer": "CAPTURED", "ok": true, "id": null, "debug": "f2917404f2365", "ms": 484}], "again": [{"t": "16:29:38", "call": "capture $1.00 again", "http": 422, "answer": "AUTHORIZATION_ALREADY_CAPTURED", "ok": false, "id": null, "debug": "f5799404eea63", "ms": 671}], "contest": [{"t": "16:29:55", "call": "void the hold", "http": 200, "answer": "VOIDED", "ok": true, "id": "3EP89225J0560011A", "debug": "f36444694a742", "ms": 1475}, {"t": "16:29:55", "call": "read back the authorization", "http": 200, "answer": "VOIDED", "ok": true, "id": null, "debug": "f919047ff3ba4", "ms": 458}, {"t": "16:29:56", "call": "invoice the contested line \u00b7 $18.00", "http": 201, "answer": "DRAFT", "ok": true, "id": "INV2-EP2Z-3UZM-4A88-7E4W", "debug": "f919047966708", "ms": 574}, {"t": "16:29:57", "call": "send the invoice", "http": 200, "answer": "OK", "ok": true, "id": "INV2-EP2Z-3UZM-4A88-7E4W", "debug": "f5470326ae735", "ms": 1025}, {"t": "16:29:58", "call": "invoice QR code", "http": 200, "answer": "OK", "ok": true, "id": "INV2-EP2Z-3UZM-4A88-7E4W", "debug": "f94609796710e", "ms": 969}]}, "accepted": {"rid": "R-JUDGE-9001", "auth": "59Y22025SE889191E", "readback": "CAPTURED"}, "contested": {"rid": "R-JUDGE-9003", "auth": "3EP89225J0560011A", "readback": "VOIDED", "invoice": "INV2-EP2Z-3UZM-4A88-7E4W"}};
@@ -777,6 +800,11 @@ if (sw) {
   }
 }
 })();</script>
-
+<script>(() => { document.querySelectorAll('.tapper').forEach((t) => {
+  const out = t.querySelector('.out');
+  t.querySelectorAll('.spot').forEach((b) => b.addEventListener('click', () => {
+    t.querySelectorAll('.spot').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    out.innerHTML = b.querySelector('template').innerHTML; }));
+}); })();</script>
 </body>
 </html>
