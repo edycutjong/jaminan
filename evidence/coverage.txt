@@ -13,4 +13,4 @@ jaminan/tariff.py        57      1    98%
 jaminan/vision.py       133     13    90%
 -----------------------------------------
 TOTAL                  1518    157    90%
-================ 117 passed, 9 deselected, 1 warning in 18.12s =================
+================ 118 passed, 9 deselected, 1 warning in 18.35s =================
