@@ -33,8 +33,11 @@ LOCK_TTL_S = 130
 # Per rental: 8 pickup + 8 return angles, retakes, close-ups and a few taps fit far inside these. A key holder
 # scripting more cannot fill Redis (frames live until FRAME_EXPIRY) or spend the model balance.
 BUDGETS = {"upload": 64, "model": 120, "fine": 5, "status": 120}
-# An agent booking's renter: a plain shape check; PayPal is the one that knows whether the account exists.
-EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,190}\.[A-Za-z]{2,24}$")
+# An agent booking's renter: a shape check no looser than PayPal's email_address (dot-atom local part, host names),
+# so an address PayPal would refuse (400 INVALID_PARAMETER_SYNTAX on "a,b@…" or "a..b@…", sandbox 2026-10-25) is
+# refused here, before a rental exists or the booking budget is spent. PayPal knows whether the account exists.
+_ATOM = r"[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+"
+EMAIL = re.compile(rf"^(?=.{{1,254}}$)(?=[^@]{{1,64}}@){_ATOM}(?:\.{_ATOM})*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{{2,24}}$")
 # A void refused with these issues has nothing left to release (PayPal sandbox, read 2026-10-24).
 VOID_DONE = ("PREVIOUSLY_VOIDED", "PREVIOUSLY_CAPTURED")
 STAGED = Path(__file__).resolve().parents[1] / "fixtures" / "staged"

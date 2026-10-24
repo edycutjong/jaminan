@@ -230,8 +230,13 @@ def test_the_paypal_cancel_link_carries_no_key():
 
 def test_bad_input_spends_no_budget_and_the_13th_booking_an_hour_is_refused():
     svc = make()
-    for bad in [("veh-99", 1, "a@example.com"), ("veh-01", 0, "a@example.com"), ("veh-01", 1, "nope")]:
+    # the two addresses PayPal's sandbox refused with 400 INVALID_PARAMETER_SYNTAX (2026-10-25), and a 65-char local part
+    emails = ["nope", "a,b@example.com", "a..b@example.com", ".a@example.com", "a@-x.com", "a" * 65 + "@example.com"]
+    for bad in [("veh-99", 1, "a@example.com"), ("veh-01", 0, "a@example.com")] + [("veh-01", 1, e) for e in emails]:
         code(svc.agent_book, "9.9.9.9", *bad)
+    assert all(code(svc.agent_book, "9.9.9.9", "veh-01", 1, e) == "BAD_EMAIL" for e in emails)
+    assert svc.db.zrangebyscore("shop:shop-demo:rentals", 0, 1e12) == []  # no rental was created for any of them
+    assert svc.agent_book("8.8.8.8", "veh-01", 1, "first.last+jaminan@mail.example.co.id")["state"] == "DRAFT"
     for _ in range(12):
         svc.agent_book("9.9.9.9", "veh-01", 1, "a@example.com")
     assert code(svc.agent_book, "9.9.9.9", "veh-01", 1, "a@example.com") == "RATE_LIMITED"
