@@ -55,3 +55,14 @@ def test_crop_and_map_back_round_trip():
     assert abs(region[2] - 0.2) < 0.02
     full = gate.map_back([0.25, 0.25, 0.5, 0.5], region)
     assert abs(full[0] - (region[0] + 0.25 * region[2])) < 1e-3
+
+
+def test_a_strip_or_a_non_image_is_refused_before_any_resize():
+    tiny_strip = io.BytesIO()
+    Image.new("RGB", (1, 2000)).save(tiny_strip, "PNG")     # a few hundred bytes that would widen to 1280×2,560,000
+    for data in (tiny_strip.getvalue(), b"not an image at all"):
+        try:
+            gate.check(data)
+        except gate.NotAnImage:
+            continue
+        raise AssertionError("gate accepted an input it cannot judge")

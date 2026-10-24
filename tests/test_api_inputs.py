@@ -55,3 +55,15 @@ def test_a_webhook_that_is_not_json_is_a_400():
     finally:
         api_index._svc = None
     assert r.status_code == 400 and ok.status_code == 200 and svc.db.lrange_json("webhooks", -1, -1)[0]["id"] == "WH-1"
+
+
+def test_an_upload_that_is_not_an_image_is_a_422():
+    svc = make()
+    rid, k = to_out(svc)
+    try:
+        c = client_for(svc)
+        r = c.post(f"/api/rentals/{rid}/photos", data={"phase": "return", "angle": "1"},
+                   files={"file": ("f.jpg", b"definitely not a jpeg")}, headers={"X-Jaminan-Key": k["shop"]})
+    finally:
+        api_index._svc = None
+    assert r.status_code == 422 and r.json()["error"] == "NOT_AN_IMAGE"

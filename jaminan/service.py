@@ -219,13 +219,10 @@ class Service:
     def add_photo(self, rid: str, key: str | None, phase: str, angle: int, data: bytes, closeup_angle: int | None = None) -> dict:
         r = self.get(rid)
         self.auth(r, key, "renter" if phase != "return" else self.role_of(r, key) or "shop")
-        if phase in ("pickup", "pickup_closeup") and r["state"] != "APPROVED":
-            raise ServiceError(409, "BASELINE_LOCKED", "pickup photos are taken before the baseline is confirmed")
-        if phase == "return" and r["state"] != "OUT":
-            raise ServiceError(409, "NOT_OUT", "return photos are taken while the scooter is out")
         if phase not in ("pickup", "pickup_closeup", "return"):
             raise ServiceError(422, "BAD_PHASE", "phase must be pickup, pickup_closeup or return")
-        res, jpeg = gate.check(data)
+        self._photo_phase_open(r, phase)
+        res, jpeg = self._gate(data)
         if phase != "pickup_closeup" and not res.ok:
             return {"accepted": False, "gate": res.public()}
         self.db.set_bytes(f"frame:{res.sha256}", jpeg, ex=self._frame_ttl())
@@ -243,6 +240,20 @@ class Service:
                     r["confirmations"] = {}  # a changed baseline needs both confirmations again
             self._save(r)
         return {"accepted": True, "gate": res.public(), "photo": photo}
+
+    @staticmethod
+    def _photo_phase_open(r: dict, phase: str) -> None:
+        if phase in ("pickup", "pickup_closeup") and r["state"] != "APPROVED":
+            raise ServiceError(409, "BASELINE_LOCKED", "pickup photos are taken before the baseline is confirmed")
+        if phase == "return" and r["state"] != "OUT":
+            raise ServiceError(409, "NOT_OUT", "return photos are taken while the scooter is out")
+
+    @staticmethod
+    def _gate(data: bytes) -> tuple[gate.GateResult, bytes]:
+        try:
+            return gate.check(data)
+        except gate.NotAnImage as e:
+            raise ServiceError(422, "NOT_AN_IMAGE", str(e)) from e
 
     def premark(self, rid: str, key: str | None) -> dict:
         """Model pre-marks visible existing damage per pickup angle and locates the renter's close-ups."""
@@ -695,7 +706,7 @@ class Service:
             raise ServiceError(409, "RENTAL_OPEN", "fines attach to a returned, settled rental")
         has_vault = bool(r.get("vault_id")) and r.get("vault_status") != "DELETED"
         tv = tariff.load(r["tariff_version_id"])
-        res, jpeg = gate.check(image)
+        res, jpeg = self._gate(image)
         self.db.set_bytes(f"frame:{res.sha256}", jpeg, ex=self._frame_ttl())
         call = self.vision.read_ticket(jpeg, list(tv.fine_ceilings))
         read = call.parsed.model_dump() if call.ok else {}

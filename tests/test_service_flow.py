@@ -392,3 +392,4 @@ def test_a_tap_box_must_be_four_finite_numbers_and_a_retake_a_real_angle():
     with pytest.raises(ServiceError) as e:
         svc.request_retake(r["id"], r["keys"]["shop"], 9)
     assert e.value.code == "BAD_ANGLE"
+

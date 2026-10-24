@@ -15,7 +15,7 @@ import io
 from dataclasses import dataclass, field
 
 import numpy as np
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 WIDTH = 1280
 GRID = 4
@@ -28,6 +28,14 @@ THRESHOLDS = {
     "min_short_side": 480,
 }
 MAX_JPEG_BYTES = 150_000
+# Checked from the header, before any pixel is decoded: a few-byte PNG can declare a 1×2000 strip, and widening that to
+# 1280 px would ask for a 1280×2,560,000 image. Phone frames are well inside both bounds.
+MAX_SOURCE_PIXELS = 50_000_000
+MAX_ASPECT = 3.0
+
+
+class NotAnImage(ValueError):
+    """The upload is not a photo this gate can judge (unreadable, too large, or an extreme strip)."""
 
 
 @dataclass
@@ -49,8 +57,16 @@ class GateResult:
 
 
 def normalize(data: bytes) -> Image.Image:
-    opened = Image.open(io.BytesIO(data))
-    img = ImageOps.exif_transpose(opened).convert("RGB")
+    try:
+        opened = Image.open(io.BytesIO(data))
+        w, h = opened.size
+        if w * h > MAX_SOURCE_PIXELS:
+            raise NotAnImage(f"{w}×{h} is over {MAX_SOURCE_PIXELS // 1_000_000} MP")
+        if max(w, h) > MAX_ASPECT * max(1, min(w, h)):
+            raise NotAnImage(f"{w}×{h} is not a photo of a scooter (aspect beyond 1:{MAX_ASPECT:g})")
+        img = ImageOps.exif_transpose(opened).convert("RGB")
+    except (UnidentifiedImageError, Image.DecompressionBombError, OSError) as e:
+        raise NotAnImage("not a readable image") from e
     if img.width != WIDTH:
         img = img.resize((WIDTH, max(1, round(img.height * WIDTH / img.width))), Image.Resampling.LANCZOS)
     return img
