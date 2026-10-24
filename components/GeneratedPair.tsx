@@ -31,7 +31,7 @@ export default function GeneratedPair() {
       <h2 id="gp-h">Recorded model answers on a generated pair</h2>
       <p className="small">A pickup image made by qwen-image-2.0 and a return image edited from it by wan2.6-image, which removed both
         mirrors. The builder pointed two claims; a script running the same crop, model-call and decision steps as the app&apos;s claim path asked{" "}
-        <span className="data">{CLAIMS[0].models}</span> three times each. These are recorded answers, not a benchmark, and not real-world evidence.</p>
+        <span className="data">{CLAIMS[0].models}</span> three times each. One angle, no rental, no close-ups. These are recorded answers, not a benchmark, and not real-world evidence.</p>
       <div className="gp-pair">
         <Frame src="/site/generated-pair/pickup-front-left.jpg" phase="pickup" />
         <Frame src="/site/generated-pair/return-front-left.jpg" phase="return" />
@@ -39,17 +39,19 @@ export default function GeneratedPair() {
       {CLAIMS.map((c) => (
         <div key={c.id} className="gp-claim">
           <p><b>{c.id}</b> · the shop points: <strong>{c.claim}</strong></p>
+          {c.why ? <p className="small muted">{c.why}</p> : null}
           <dl className="kv">
             <dt>True answer</dt><dd>{c.truth}</dd>
             <dt>Model read</dt><dd>{c.read} · <strong className={c.wrong ? "gp-wrong" : "st-ok"}>{c.tally}</strong></dd>
             <dt>Its reason</dt><dd>&ldquo;{c.rationale}&rdquo; <span className="muted">(the model calls these images photos)</span></dd>
-            <dt>App answer</dt><dd>{c.appAnswer} (no model is benchmarked yet)</dd>
+            <dt>Rules&apos; answer</dt><dd>{c.appAnswer} (no model is benchmarked yet)</dd>
           </dl>
         </div>
       ))}
       {pinnedPrice ? (
-        <p className="note small">Nothing was charged. Had this model been pinned without the bench, the rules would have priced C1 at the tariff&apos;s
-          dent price, {usd(pinnedPrice)}, for a scuff that was there at pickup. That is why no model can price a line until it passes the bench on real photos.</p>
+        <p className="note small">No rental or payment was involved. Had this model been pinned without the bench, the rules would have priced C1 at the
+          tariff&apos;s dent price, {usd(pinnedPrice)}, for a scuff that was there at pickup. A false &ldquo;new&rdquo; on an old mark is the error the
+          benchmark has to rule out before any model is pinned, so no model can price a line until it passes the bench on real photos.</p>
       ) : null}
       <p className="small">Recorded {RUN.recorded_at} · <a href="https://github.com/edycutjong/jaminan/blob/main/evidence/generated-pair/README.md">evidence and request ids</a> ·{" "}
         <a href="/evidence/generated-pair/GENERATION.json">how the images were generated</a></p>

@@ -28,13 +28,15 @@ describe("generated pair summary", () => {
     expect(c1.requestIds).toHaveLength(3);
     expect(c2.read).toBe("a mark at return, but not this part and class");
     expect(c2.truth).toBe("new: both mirrors are missing at return");
+    expect(c1.why).toMatch(/no scuff line on the fairing, so the shop names a dent/);
+    expect(c2.why).toMatch(/missing part/);
     expect(c2.pricedIfPinnedCents).toBeNull();
   });
   it("counts a right reading and falls back on unknown values", () => {
     const [c] = summarize(run());
     expect([c.tally, c.wrong, c.read, c.rationale, c.pricedIfPinnedCents]).toEqual(["right in all 1 calls", false, "visible at pickup (old)", "why", null]);
     const [u] = summarize(run({ model_reading: "odd", model: null, request_id: null, answer: null }, "weird"));
-    expect([u.read, u.truth, u.models, u.requestIds[0], u.rationale]).toEqual(["odd", "weird", "unknown", "—", ""]);
+    expect([u.read, u.truth, u.models, u.requestIds[0], u.rationale, u.why]).toEqual(["odd", "weird", "unknown", "—", "", ""]);
     const [none] = summarize({ ...run(), claims: [{ ...run().claims[0], runs: [] }] });
     expect([none.tally, none.wrong, none.rationale]).toEqual(["wrong in all 0 calls", false, ""]);
   });

@@ -1,6 +1,7 @@
 # Generated pair: AI-generated test images (not photographs)
 
-**These two images are AI-generated test images (not photographs).** No scooter was photographed. The pickup image
+**These two images are AI-generated test images (not photographs).** No scooter was photographed: the staged shoot of a
+real scooter for the benchmark has not happened yet, so the vision path was first shown on a generated pair. The pickup image
 was made by `qwen-image-2.0`, and the return image is a `wan2.6-image` edit of it that removed both rear-view mirrors.
 [`GENERATION.json`](GENERATION.json) has both prompts, the pickup image's request id and the ground truth. The paths inside that file
 are the builder's original file names: `pickup/p-front-left.png` is
@@ -29,12 +30,13 @@ same rules would read from the answer if this model were pinned; it is never use
 
 | Claim | The shop points at | True answer | Recorded model reading, 3 calls each | The app's answer |
 |---|---|---|---|---|
-| C1 | `front_fairing` / `dent`, box `[0.435, 0.425, 0.075, 0.135]`: the grey scuff | **old**: the same scuff is in the pickup image | **new since pickup** in all 3 (confidence 0.85): "the same location in the pickup photo shows no such mark". **Wrong** | comparison unavailable — nothing charged from the hold |
-| C2 | `mirror` / `missing_part`, box `[0.36, 0.0, 0.36, 0.24]`: both mirror mounts | **new**: both mirrors are missing at return | a mark at return but **not a missing mirror** in all 3 (confidence 0.3): "a dark smudge on the front fairing near the headlight". **Wrong** | comparison unavailable — nothing charged from the hold |
+| C1 | `front_fairing` / `dent`, box `[0.435, 0.425, 0.075, 0.135]`: the grey scuff | **old**: the same scuff is in the pickup image | **new since pickup** in all 3 (confidence 0.85): "the same location in the pickup photo shows no such mark" (the model calls these images photos). **Wrong** | comparison unavailable — nothing charged from the hold |
+| C2 | `mirror` / `missing_part`, box `[0.36, 0.0, 0.36, 0.24]`: both mirror mounts | **new**: both mirrors are missing at return | a mark at return but **not a missing mirror** in all 3 (confidence 0.3): "a dark smudge on the front fairing near the headlight" (the model calls these images photos). **Wrong** | comparison unavailable — nothing charged from the hold |
 
 The tariff has no `front_fairing` / `scuff` line, so C1 uses the nearest priced line on that part (`dent`, $45.00): a
 shop over-claiming an old mark. Had `qwen3-vl-plus` been pinned without the bench, `rules.decide_claim` (no baseline marks entered) would have priced C1
-at **$45.00** for a mark that was there at pickup. That is the failure the bench gate exists to stop. C2 shows a
+at **$45.00** for a mark that was there at pickup. That is the failure the bench gate exists to stop: a false "new" on an old mark is the error the benchmark has to
+rule out before any model is pinned, and C2's miss of a missing part is the kind of new damage it has to find. C2 shows a
 second weakness: the claim prompt asks about a "mark" at the tap, which fits a missing part badly. The prompt was not
 changed here, because tuning it on the only test pair would make the next result meaningless. Both findings feed the bench.
 
