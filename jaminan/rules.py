@@ -183,7 +183,7 @@ def settle_plan(*, fee_cents: int, deposit_cents: int, authorized_cents: int, fe
             raise SettleBlocked(f"line {l.get('id')} price does not match the published tariff (I1)")
         (accepted if l.get("renter_decision") == "accepted" else contested).append({**l, "price_cents": price})
     for l in accepted:  # I3 is enforced at decide time; re-assert here
-        if l.get("disposition") != "chargeable":
+        if l.get("disposition") != "chargeable":  # pragma: no cover - defensive; `accepted` is built from chargeable lines only
             raise SettleBlocked("only chargeable lines can be paid from the hold (I3)")
     total_accepted = sum(l["price_cents"] for l in accepted)
     capture = min(total_accepted, deposit_cents)
