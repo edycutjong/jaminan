@@ -10,8 +10,6 @@
   [![Judge Path](https://img.shields.io/badge/⚖️_Judge-Path-f59e0b?style=for-the-badge)](https://jaminan.edycu.dev/app/judge)
   [![Landing Page](https://img.shields.io/badge/🧾_Landing-Page-1D7A4A?style=for-the-badge)](https://jaminan.edycu.dev)
   [![Pitch Deck](https://img.shields.io/badge/🗂️_Pitch-Deck-3346A6?style=for-the-badge)](https://jaminan.edycu.dev/pitch/)
-  [![CI](https://img.shields.io/github/actions/workflow/status/edycutjong/jaminan/ci.yml?branch=main&style=for-the-badge&label=CI%20%C2%B7%206%20stages)](https://github.com/edycutjong/jaminan/actions/workflows/ci.yml)
-  [![Release](https://img.shields.io/github/v/release/edycutjong/jaminan?style=for-the-badge&color=1D7A4A)](https://github.com/edycutjong/jaminan/releases)
   [![Built for PayPal AI Hackathon](https://img.shields.io/badge/Devpost-PayPal_AI_Hackathon-8b5cf6?style=for-the-badge)](https://paypalaihackathon.devpost.com/)
 
   <br/>
@@ -22,6 +20,8 @@
   ![PayPal](https://img.shields.io/badge/PayPal_Sandbox-003087?style=flat&logo=paypal&logoColor=white)
   ![Upstash](https://img.shields.io/badge/Upstash_Redis-00E9A3?style=flat&logo=upstash&logoColor=black)
   [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+  [![CI/CD](https://img.shields.io/github/actions/workflow/status/edycutjong/jaminan/ci.yml?branch=main&label=CI%2FCD)](https://github.com/edycutjong/jaminan/actions/workflows/ci.yml)
+  [![Release](https://img.shields.io/github/v/release/edycutjong/jaminan?color=1D7A4A)](https://github.com/edycutjong/jaminan/releases)
 
 </div>
 
@@ -50,8 +50,6 @@ Jaminan replaces the passport with a PayPal authorization and replaces the argum
 ## 🏗️ Architecture & Tech Stack
 
 ![Jaminan architecture](docs/architecture.png)
-
-*Every box names the file, route or endpoint behind it. Source: [`docs/architecture.html`](docs/architecture.html) ([live](https://jaminan.edycu.dev/architecture.html)).*
 
 <details><summary>Mermaid source</summary>
 
