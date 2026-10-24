@@ -20,17 +20,17 @@ The settle screen only stamps after PayPal's read-back, not after our own call r
 
 The same page shows a pickup/return pair of **AI-generated test images (not photographs)**: a white scooter made by
 `qwen-image-2.0`, and a `wan2.6-image` edit of it with both mirrors removed ([`GENERATION.json`](evidence/generated-pair/GENERATION.json)).
-The builder pointed two claims, and the app's own claim path asked `qwen3-vl-plus` about each three times
+The builder pointed two claims, and a script running the same crop, model-call and decision steps as the app's claim path asked `qwen3-vl-plus` about each three times
 ([`evidence/generated-pair/`](evidence/generated-pair/README.md), request ids inside). The answers on screen are those
 recorded calls, not live ones:
 
 | Claim | True answer | Model read (all 3 calls) | App answer |
 |---|---|---|---|
 | C1 `front_fairing` / `dent` on the grey scuff | old: in the pickup image too | new since pickup (wrong) | comparison unavailable — nothing charged from the hold |
-| C2 `mirror` / `missing_part` on the mirror mounts | new: both mirrors gone | a smudge, not a missing mirror (wrong) | comparison unavailable — nothing charged from the hold |
+| C2 `mirror` / `missing_part` on the mirror mounts | new: both mirrors gone | no missing mirror; a smudge elsewhere (wrong) | comparison unavailable — nothing charged from the hold |
 
 Nothing is charged because no model is benchmarked. Had this model been pinned without the bench, C1 would have been
-priced at $45.00 for a mark that was there at pickup. This is not a benchmark and not real-world evidence.
+priced at the tariff's dent price, $45.00, for a mark that was there at pickup. This is not a benchmark and not real-world evidence.
 
 ## 2. The priced path, recorded on the sandbox
 

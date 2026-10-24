@@ -2,13 +2,14 @@
 
 **These two images are AI-generated test images (not photographs).** No scooter was photographed. The pickup image
 was made by `qwen-image-2.0`, and the return image is a `wan2.6-image` edit of it that removed both rear-view mirrors.
-[`GENERATION.json`](GENERATION.json) has both prompts, the request id and the ground truth. The paths inside that file
+[`GENERATION.json`](GENERATION.json) has both prompts, the pickup image's request id and the ground truth. The paths inside that file
 are the builder's original file names: `pickup/p-front-left.png` is
 [`pickup-front-left.png`](pickup-front-left.png) here and `return/r-front-left.png` is
 [`return-front-left.png`](return-front-left.png). The copies here are resized to 1280 px wide, lossless PNG.
 
 **What this is:** the vision model's real, recorded answers to two claims the builder pointed on this pair, through the
-app's own claim path. **What it is not:** a benchmark, an accuracy number, or real-world evidence. One angle, two
+same crop, model-call and decision steps as the app's claim path, run from a script (not through the API: no rental,
+no baseline marks, no close-ups). **What it is not:** a benchmark, an accuracy number, or real-world evidence. One angle, two
 claims, generated images. The bench on real scooter photos has not run, and no model is pinned
 (`JAMINAN_BENCHMARKED_MODEL` is empty), so every line ends `comparison_unavailable` and nothing is charged.
 
@@ -32,7 +33,7 @@ same rules would read from the answer if this model were pinned; it is never use
 | C2 | `mirror` / `missing_part`, box `[0.36, 0.0, 0.36, 0.24]`: both mirror mounts | **new**: both mirrors are missing at return | a mark at return but **not a missing mirror** in all 3 (confidence 0.3): "a dark smudge on the front fairing near the headlight". **Wrong** | comparison unavailable — nothing charged from the hold |
 
 The tariff has no `front_fairing` / `scuff` line, so C1 uses the nearest priced line on that part (`dent`, $45.00): a
-shop over-claiming an old mark. Had `qwen3-vl-plus` been pinned without the bench, `rules.decide_claim` would have priced C1
+shop over-claiming an old mark. Had `qwen3-vl-plus` been pinned without the bench, `rules.decide_claim` (no baseline marks entered) would have priced C1
 at **$45.00** for a mark that was there at pickup. That is the failure the bench gate exists to stop. C2 shows a
 second weakness: the claim prompt asks about a "mark" at the tap, which fits a missing part badly. The prompt was not
 changed here, because tuning it on the only test pair would make the next result meaningless. Both findings feed the bench.

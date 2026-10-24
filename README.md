@@ -39,7 +39,7 @@ Jaminan replaces the passport with a PayPal authorization and replaces the argum
 
 **What runs today, on the PayPal sandbox:** at [`/app/judge`](https://jaminan.edycu.dev/app/judge) one tap authorizes $115.00 on a saved sandbox wallet, captures the $15.00 fee, writes the handover tracking, and releases the hold on a second tap, each stamp waiting for PayPal's read-back. No vision model is pinned as benchmarked yet, so a live rental cannot price a damage line. The priced path is a recorded sandbox run with scripted claim answers ([`evidence/paypal-sandbox-run.json`](evidence/paypal-sandbox-run.json): one $18.00 capture with `final_capture=true`, the other $82.00 released, a second capture refused with 422) and is exercised in the unit and sandbox tests.
 
-**On AI-generated test images (not photographs):** the app's own claim path asked `qwen3-vl-plus` about two pointed claims on a generated pickup/return pair, three times each, and recorded every answer. It read both wrong (the old scuff as new, the missing mirrors as a smudge), and nothing was charged because no model is benchmarked. Not a benchmark: [`evidence/generated-pair/`](evidence/generated-pair/README.md).
+**On AI-generated test images (not photographs):** the same crop, model-call and decision steps as the app's claim path, run from a script, asked `qwen3-vl-plus` about two pointed claims on a generated pickup/return pair, three times each, and recorded every answer. It read both wrong: it called the old scuff new, and at the mirror mounts it found no missing mirror, only a smudge elsewhere. Nothing was charged because no model is benchmarked. Not a benchmark: [`evidence/generated-pair/`](evidence/generated-pair/README.md).
 
 1. The renter scans the shop QR and gives **one PayPal approval** that authorizes the fee plus the deposit and saves the wallet for later fines. The fee is captured when both sides confirm the baseline at pickup; the deposit stays held.
 2. A guided 8-angle walkaround records the scooter at pickup. Renter and shop confirm the baseline together.
@@ -150,7 +150,7 @@ Recorded on 2026-10-24: Claude Code and Codex each booked through `quote_rental 
 | CI | A six-stage GitHub Actions pipeline ([`ci.yml`](.github/workflows/ci.yml)): 1 Quality (ruff, mypy, offline tests with a 100% coverage gate; eslint, `tsc`, Vitest `lib/` tests with a 100% gate) and 2 Security (gitleaks over full history, pip-audit, npm audit, licence check) run in parallel, then 3 Build (`next build`, API boot smoke), 4 E2E (Playwright, no secrets), 5 Performance (Lighthouse CI on `/` and `/pitch`, every category ≥ 0.9, a11y ≥ 0.95) and 6 Deploy gate (every stage green; Vercel deploys only after it). Also gitleaks as its own workflow; CodeQL (Python and TypeScript); GitHub secret scanning with push protection; Dependabot monthly, grouped, no major bumps |
 | Live acceptance script | `scripts/e2e_live.py` (375 px viewport) |
 | Evidence pack | [`evidence/`](evidence): three recorded PayPal sandbox settlements call by call (`scripts/record_paypal_evidence.py`), the full test run, offline coverage and the live e2e log |
-| Vision accuracy | **Not yet measured.** Benchmark on the staged scooter set is pending; the model has been shown only on AI-generated test images so far ([recorded answers](evidence/generated-pair/README.md)) |
+| Vision accuracy | **Not yet measured.** Benchmark on a real-photo scooter set is pending; the model has been shown only on AI-generated test images so far ([recorded answers](evidence/generated-pair/README.md)) |
 
 ### Honest limits (7)
 
