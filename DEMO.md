@@ -31,7 +31,7 @@ The side-panel dent in the `accepted` run is the "already there" case: it was vi
 ## 3. Reproduce
 
 ```bash
-# offline suite (131 tests, no credentials)
+# offline suite (210 tests, no credentials)
 .venv/bin/python -m pytest -m "not sandbox and not live_model and not slow" --cov=jaminan
 
 # the claim-decision sweep (23,040 combinations) and the settle property test
@@ -49,8 +49,8 @@ python scripts/e2e_live.py https://jaminan.edycu.dev/app --shots /tmp/jaminan-e2
 
 | Number | Where it comes from |
 |---|---|
-| 140 tests (131 offline, 8 real-sandbox, 1 live Qwen) | [`evidence/test-run.txt`](evidence/test-run.txt) |
-| 90% offline coverage of `jaminan/` | [`evidence/coverage.txt`](evidence/coverage.txt) |
+| 219 tests (210 offline, 8 real-sandbox, 1 live Qwen) | [`evidence/test-run.txt`](evidence/test-run.txt) |
+| 100% offline line and branch coverage of `jaminan/` | [`evidence/coverage.txt`](evidence/coverage.txt) |
 | 18/18 live acceptance checks at 375 px (2026-10-24) | [`evidence/e2e-live.txt`](evidence/e2e-live.txt) |
 | 23,040-case claim sweep | [`tests/test_invariants.py`](tests/test_invariants.py) |
 | 19 PayPal REST endpoints in the hand-written client | [`evidence/README.md`](evidence/README.md), [`jaminan/paypal.py`](jaminan/paypal.py) |
