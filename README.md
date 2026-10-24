@@ -10,6 +10,7 @@
   [![Judge Path](https://img.shields.io/badge/⚖️_Judge-Path-f59e0b?style=for-the-badge)](https://jaminan.edycu.dev/app/judge)
   [![Landing Page](https://img.shields.io/badge/🧾_Landing-Page-1D7A4A?style=for-the-badge)](https://jaminan.edycu.dev)
   [![Pitch Deck](https://img.shields.io/badge/🗂️_Pitch-Deck-3346A6?style=for-the-badge)](https://jaminan.edycu.dev/pitch/)
+  [![Release](https://img.shields.io/github/v/release/edycutjong/jaminan?style=for-the-badge&color=1D7A4A)](https://github.com/edycutjong/jaminan/releases)
   [![Built for PayPal AI Hackathon](https://img.shields.io/badge/Devpost-PayPal_AI_Hackathon-8b5cf6?style=for-the-badge)](https://paypalaihackathon.devpost.com/)
 
   <br/>
@@ -161,6 +162,8 @@ make ci                                                                       # 
 .venv/bin/python -m pytest                                                    # + real sandbox, live Qwen, headless browser (needs credentials)
 python scripts/e2e_live.py https://jaminan.edycu.dev/app --shots /tmp/jaminan-e2e   # live acceptance as two phones at 375 px
 ```
+
+Commits use Angular prefixes (`feat:`, `fix:`, …); the `release` workflow derives the next semantic version from them — see [CONTRIBUTING](CONTRIBUTING.md).
 
 The sandbox, live-model and browser tests need credentials, so CI runs the offline suite only; run them yourself with the third command. Tests that pin a fixed defect are named for it. [`.env.example`](.env.example) lists every variable.
 
