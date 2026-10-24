@@ -23,7 +23,7 @@ with the app's prompts unchanged and nothing tuned on this set. Raw record: [`ru
   in `a2f7d9c` before any model call; the run records that commit and the file's SHA-256.
 - **Frame gate:** 1 of 48 images was rejected as blurry (`d29`, blur variance 38.3 < 40). An upload the gate rejects is
   never compared, so its 2 marks are not scored. T1 therefore covers **35 marks on 25 images**.
-- **Size:** 26 usable damaged images remained after ambiguous ones were dropped, so n is small.
+- **Size:** 26 damaged images remained after ambiguous ones were dropped (25 after the blur gate), so n is small.
 
 ## Results (`qwen3-vl-plus`, 3 repeats, 246 calls, all served by `qwen3-vl-plus`)
 
@@ -55,8 +55,9 @@ T3 confusion (rows = label, columns = the model's class):
 
 In every one of the 137 false "new" answers the model said the two images show the same view, that there is a mark at
 the tap, that the pickup image is clear enough at that spot, and that the mark is not visible there. Its rationales read like "the same area in the pickup image is clear
-and shows no such mark", although the pickup image is the same photo. The pickup image is the same region cropped twice as
-wide (`gate.crop` ×4 against ×2, the same crops as `Service.claim`), so the mark is smaller in it but present.
+and shows no such mark", although the pickup image is the same photo. The pickup image is the same region cropped up to
+twice as wide (`gate.crop` ×4 against ×2, the same crops as `Service.claim`; near the frame edge or the 192 px minimum
+the ratio is lower), so the mark is no larger in it, but it is there.
 
 ## What this does NOT measure
 
