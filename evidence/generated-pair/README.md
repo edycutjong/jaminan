@@ -21,7 +21,7 @@ claims, generated images. The bench on real scooter photos has not run, and no m
 | [`run-2026-10-25-1.json`](run-2026-10-25-1.json) | The first run of the same script, 47 seconds earlier. It got the same readings on all 6 calls. It is kept because its `matches_expected` flag counted "new, other class" as a match for C2, which was too loose; the flag was fixed before the second run |
 
 Reproduce: `.venv/bin/python scripts/generated_pair.py` (needs a Qwen key). It runs the frame gate on each image, cuts
-the return crop (×2) and the pickup search area (×4) around each tap exactly as `Service.claim` does, calls
+the return crop (×2) and the pickup search area (×4) around each tap with the same geometry as `Service.claim`, calls
 `Vision.claim` on the configured model (`qwen3-vl-plus`), and runs `rules.decide_claim`. `model_reading` is what the
 same rules would read from the answer if this model were pinned; it is never used to price anything.
 
