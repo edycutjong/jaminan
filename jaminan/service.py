@@ -23,6 +23,9 @@ from .store import Store
 ANGLES = range(1, 9)
 FRAME_EXPIRY = datetime(2026, 12, 31, tzinfo=timezone.utc)
 JUDGE_VOID_AFTER_S = 2 * 3600
+# Longer than the function's maxDuration (vercel.json: 120 s): a held lock can only expire after its holder is gone,
+# never mid-capture (one PayPal write may take 3 × 30 s with retries).
+LOCK_TTL_S = 130
 STAGED = Path(__file__).resolve().parents[1] / "fixtures" / "staged"
 
 
@@ -84,7 +87,7 @@ class Service:
     def lock(self, rid: str, wait_s: float = 12.0):
         key, token = f"lock:{rid}", secrets.token_hex(12)
         deadline = time.time() + wait_s
-        while not self.db.set_json(key, token, ex=30, nx=True):
+        while not self.db.set_json(key, token, ex=LOCK_TTL_S, nx=True):
             if time.time() > deadline:
                 raise ServiceError(409, "BUSY", "another request is changing this rental; retry")
             time.sleep(0.15)
