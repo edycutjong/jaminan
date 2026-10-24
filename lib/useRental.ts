@@ -8,7 +8,6 @@ import { ApiError, Rental, api } from "./api";
 export function useRental(rid: string, key: string | null | undefined, pollStates: string[] = []) {
   const [r, setR] = useState<Rental | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const seq = useRef(0);
   const load = useCallback(async () => {
     if (key === undefined) return null;
@@ -27,8 +26,8 @@ export function useRental(rid: string, key: string | null | undefined, pollState
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
     if (!r || !pollStates.includes(r.state)) return;
-    timer.current = setTimeout(load, 3000);
-    return () => { if (timer.current) clearTimeout(timer.current); };
+    const timer = setTimeout(load, 3000);
+    return () => clearTimeout(timer);
   }, [r, load, pollStates]);
   const set = useCallback((x: Rental) => { seq.current++; setR(x); setErr(null); }, []);
   return { r, setR: set, err, load };
