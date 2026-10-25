@@ -29,7 +29,8 @@ function ReadBack({ rid }: { rid: string }) {
 }
 
 export default function Judge() {
-  const [info, setInfo] = useState<any>(null);
+  // Deployed defaults render before /judge/info answers, so the intro paints at once (LCP); the answer replaces them.
+  const [info, setInfo] = useState<any>({ pending: true, staged_set: false, benchmarked_model: null });
   const [r, setR] = useState<Minted | null>(null);
   const [view, setView] = useState<"shop" | "renter">("shop");
   const [busy, setBusy] = useState<string | null>(null);
@@ -63,7 +64,7 @@ export default function Judge() {
     <main className="wrap wide">
       <Bar who="Judge" />
       {!r ? (
-        <div style={{ maxWidth: 560, visibility: info ? "visible" : "hidden" }}>
+        <div style={{ maxWidth: 560 }}>
           <h1 style={{ fontSize: 34 }}>{info?.staged_set ? <>You&apos;re the shop — tap what you&apos;d charge</> : <>You&apos;re the shop — hold the deposit, then release it</>}</h1>
           <p>One tap mints a fresh rental on the PayPal sandbox: a merchant-initiated <span className="data">AUTHORIZE</span> of fee + deposit on a saved sandbox wallet, the fee captured from the hold at handover. {info?.staged_set ? "Then you play the shop at the return counter, and the renter at settle." : "Then you release the hold at the return counter, and the stamp waits for PayPal's read-back."}</p>
           {info && !info.staged_set ? (
@@ -75,7 +76,10 @@ export default function Judge() {
             <button className="btn" onClick={mint} disabled={!!busy || (info && info.pool === 0)}>{busy === "mint" ? <><span className="spin" /> creating the hold on PayPal…</> : "Start a judge rental"}</button>
             <button className="btn ghost" onClick={full} disabled={!!busy}>{busy === "full" ? <span className="spin" /> : "Full path: approve on the real PayPal page"}</button>
           </div>
-          {info?.full_path?.buyer_email ? (
+          {info.pending ? (
+            // same shape as the login line below, so its arrival does not shift the page (CLS)
+            <p className="small" aria-hidden="true" style={{ visibility: "hidden" }}>Full path sandbox buyer login: <span className="data">sb-{"x".repeat(34)}</span> / <span className="data">{"x".repeat(12)}</span> (PayPal sandbox test account, no real money).</p>
+          ) : info?.full_path?.buyer_email ? (
             <p className="small">Full path sandbox buyer login: <span className="data">{info.full_path.buyer_email}</span> / <span className="data">{info.full_path.buyer_password}</span> (PayPal sandbox test account, no real money).</p>
           ) : null}
           {info && info.pool === 0 ? <p className="small muted">Judge wallet pool not configured on this deploy — use the full path.</p> : null}
