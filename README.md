@@ -12,6 +12,8 @@
   [![Pitch Deck](https://img.shields.io/badge/🗂️_Pitch-Deck-3346A6?style=for-the-badge)](https://jaminan.edycu.dev/pitch/)
   [![Demo Video](https://img.shields.io/badge/🎬_Demo-Video-FF0000?style=for-the-badge)](https://youtu.be/E8r-QMLocQo)
   [![Devpost](https://img.shields.io/badge/🏆_Devpost-Project-003E54?style=for-the-badge)](https://devpost.com/software/jaminan)
+  [![Write-up](https://img.shields.io/badge/📝_dev.to-Write--up-0A0A0A?style=for-the-badge)](https://dev.to/edycutjong/making-paypal-refuse-the-wrong-charge-a-scooter-deposit-as-one-authorization-5629)
+  [![X thread](https://img.shields.io/badge/𝕏-Thread-000000?style=for-the-badge)](https://x.com/edycutjong/status/2114227166607225030)
   [![Built for PayPal AI Hackathon](https://img.shields.io/badge/Devpost-PayPal_AI_Hackathon-8b5cf6?style=for-the-badge)](https://paypalaihackathon.devpost.com/)
 
   <br/>
