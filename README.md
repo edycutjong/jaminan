@@ -10,6 +10,8 @@
   [![Judge Path](https://img.shields.io/badge/⚖️_Judge-Path-f59e0b?style=for-the-badge)](https://jaminan.edycu.dev/app/judge)
   [![Landing Page](https://img.shields.io/badge/🧾_Landing-Page-1D7A4A?style=for-the-badge)](https://jaminan.edycu.dev)
   [![Pitch Deck](https://img.shields.io/badge/🗂️_Pitch-Deck-3346A6?style=for-the-badge)](https://jaminan.edycu.dev/pitch/)
+  [![Demo Video](https://img.shields.io/badge/🎬_Demo-Video-FF0000?style=for-the-badge)](https://youtu.be/E8r-QMLocQo)
+  [![Devpost](https://img.shields.io/badge/🏆_Devpost-Project-003E54?style=for-the-badge)](https://devpost.com/software/jaminan)
   [![Built for PayPal AI Hackathon](https://img.shields.io/badge/Devpost-PayPal_AI_Hackathon-8b5cf6?style=for-the-badge)](https://paypalaihackathon.devpost.com/)
 
   <br/>
@@ -24,6 +26,10 @@
   [![Release](https://img.shields.io/github/v/release/edycutjong/jaminan?color=1D7A4A)](https://github.com/edycutjong/jaminan/releases)
 
 </div>
+
+<p align="center">
+  <img src="docs/assets/judge-route.gif" alt="The live judge route on the PayPal sandbox: one tap opens a real $115.00 authorization, Release the hold voids it, and the green RELEASED stamp lands only after PayPal reads back VOIDED." width="100%">
+</p>
 
 ---
 
