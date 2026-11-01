@@ -4,7 +4,7 @@ pytest-cov>=5
 hypothesis>=6
 respx>=0.23.1
 uvicorn>=0.30
-ruff>=0.6
+ruff>=0.17.3
 mypy>=1.11
 pip-audit>=2.7
 # the MCP server for booking agents (jaminan/mcp_server.py); kept out of requirements.txt so the Vercel function stays lean
